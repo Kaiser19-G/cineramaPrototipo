@@ -1,0 +1,1138 @@
+/* Estilos generales para vistas internas web */
+.web-page-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 4rem;
+}
+
+.auth-card {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.2rem;
+  padding-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.auth-tab.active {
+  color: #fff;
+  border-bottom: 2px solid #cc0000;
+  font-weight: bold;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.form-group input, .payment-form input, .payment-form select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 1rem;
+}
+
+.form-group input:focus, .payment-form input:focus {
+  outline: none;
+  border-color: #cc0000;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-auth, .btn-solid {
+  background-color: #cc0000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-auth:hover, .btn-solid:hover {
+  background-color: #a00000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+}
+
+.btn-auth:active, .btn-solid:active {
+  transform: scale(0.97);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: white;
+  border: 1px solid #cc0000;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-outline:hover {
+  background-color: rgba(204, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2);
+}
+
+.btn-outline:active {
+  transform: scale(0.97);
+}
+
+/* === Web Cinemas === */
+.web-list-page {
+  padding: 2rem 4rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cinemas-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.cinemas-filter-bar {
+  display: flex;
+  align-items: center;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 3rem;
+  width: fit-content;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  gap: 0;
+}
+
+.filter-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.cinemas-grid-view {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.cinema-card-visual {
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+  transition: transform 0.2s;
+}
+.cinema-card-visual:hover {
+  transform: translateY(-5px);
+}
+
+.cinema-card-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.cinema-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.cinema-card-visual:hover .cinema-card-img img {
+  transform: scale(1.05);
+}
+
+.cinema-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(229, 9, 20, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cinema-card-visual:hover .cinema-hover-overlay {
+  opacity: 1;
+}
+
+.cinema-hover-overlay span {
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 2px solid white;
+  padding: 10px 20px;
+  border-radius: 30px;
+}
+
+.movie-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.movie-poster:hover .movie-hover-overlay,
+.poster-container:hover .movie-hover-overlay {
+  opacity: 1;
+}
+
+.movie-hover-overlay span {
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 2px solid #e50914;
+  background-color: rgba(229, 9, 20, 0.2);
+  padding: 10px 20px;
+  border-radius: 30px;
+  transform: translateY(15px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+}
+
+.movie-poster:hover .movie-hover-overlay span,
+.poster-container:hover .movie-hover-overlay span {
+  transform: translateY(0);
+}
+
+.cinema-card-details {
+  padding: 1rem 0;
+}
+
+.cinema-card-details h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.cinema-address {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.cinema-formats {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #e50914;
+}
+
+/* === Web Movies (Layout con Sidebar) === */
+.web-movies-layout {
+  display: flex;
+  padding: 2rem 4rem;
+  gap: 3rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cinema-movie-poster-col {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.movies-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  padding-right: 20px;
+}
+
+.filter-header {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.accordion-filter {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 0.5rem;
+}
+
+.filter-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 10px 0;
+  transition: color 0.2s;
+}
+.filter-title:hover { color: #cc0000; }
+.active-text { color: #e50914; }
+
+.filter-options {
+  padding: 10px 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.filter-options p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ccc;
+  cursor: pointer;
+}
+.filter-options p:hover { color: #fff; }
+.filter-options .active-option { color: #e50914; font-weight: bold; }
+
+/* Lista de Películas */
+.movies-list {
+  flex: 1;
+}
+
+.movies-top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.movies-top-bar h3 { margin: 0; font-size: 1.2rem; font-weight: normal; }
+.movies-top-bar .count { color: #e50914; font-weight: bold; font-size: 1.4rem; }
+
+.active-filters-pills {
+  display: flex;
+  gap: 10px;
+}
+.active-filters-pills .pill {
+  border: 1px solid #cc0000;
+  color: #cc0000;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.active-filters-pills .pill:hover { background: rgba(204,0,0,0.1); }
+
+.movies-grid-view {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.movie-grid-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.poster-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.poster-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.diagonal-tag {
+  position: absolute;
+  top: 15px;
+  left: -35px;
+  background-color: #cc0000;
+  color: white;
+  padding: 5px 40px;
+  transform: rotate(-45deg);
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.hover-overlay {
+  display: none; /* removed */
+}
+
+.btn-comprar {
+  background-color: #cc0000;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 80%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-comprar:hover { 
+  background-color: #a00000; 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+}
+.btn-comprar:active {
+  transform: scale(0.97);
+}
+
+.btn-detalles {
+  background-color: #0055a4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 80%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-detalles:hover { 
+  background-color: #004080;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 85, 164, 0.4);
+}
+.btn-detalles:active {
+  transform: scale(0.97);
+}
+
+.movie-card-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  color: #fff;
+}
+.movie-card-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+/* === Web Booking (Butacas & Pago) === */
+.web-booking-layout {
+  display: flex;
+  padding: 2rem 4rem;
+  gap: 3rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.booking-main {
+  flex: 1;
+  background: white; /* Basado en tu wireframe de butacas donde el fondo es blanco */
+  color: #111;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.seats-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.seats-legend .occupied { color: #cc0000; }
+.seats-legend .selected { color: #00cc00; }
+
+.screen-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.screen {
+  width: 60%;
+  height: 30px;
+  background: #eee;
+  border: 1px solid #ccc;
+  text-align: center;
+  line-height: 30px;
+  color: #666;
+  border-radius: 4px;
+}
+
+.seats-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seat {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.seat.aisle {
+  margin-right: 2rem;
+}
+
+.row-label {
+  margin-left: 1rem;
+  font-weight: bold;
+  color: #666;
+}
+
+.col-labels {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-right: 2rem;
+}
+.col-labels span {
+  width: 30px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+}
+.col-labels .spacer {
+  width: 2rem;
+}
+
+.booking-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.booking-sidebar {
+  width: 350px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.movie-summary-card {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.movie-info-compact p { margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #ccc; }
+
+.booking-sidebar h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; }
+.highlight-text { font-weight: bold; color: #ff3333; margin: 0 0 0.5rem 0; }
+.booking-sidebar p { margin: 0 0 0.5rem 0; }
+
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  margin: 1.5rem 0;
+}
+
+.seats-selected-list { margin-top: 1rem; }
+.cant { text-align: right; color: #ccc; }
+.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; }
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.payment-row { display: flex; gap: 1rem; }
+.payment-row input { flex: 1; }
+
+/* === Web Movie Details Page === */
+.movie-details-page {
+  background-color: #6a1a1b;
+  min-height: 100vh;
+}
+
+/* Banner de Video */
+.movie-detail-banner {
+  height: 450px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-play-trailer {
+  position: relative;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid white;
+  color: white;
+  border-radius: 50px;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.btn-play-trailer:hover {
+  background: white;
+  color: black;
+  transform: scale(1.05);
+}
+
+.play-icon {
+  font-size: 1.5rem;
+}
+
+/* Contenido Principal del Detalle */
+.movie-detail-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 4rem;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Cabecera */
+.movie-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
+}
+
+.movie-title-info h1 {
+  font-size: 3rem;
+  color: #fff;
+  margin: 0 0 10px 0;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  font-weight: 800;
+}
+
+.movie-meta-tags {
+  font-size: 1.1rem;
+  color: #ccc;
+  margin: 0;
+  font-weight: 500;
+}
+
+.btn-comprar-top {
+  background-color: white;
+  color: #cc0000;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.btn-comprar-top:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+.btn-comprar-top:active {
+  transform: scale(0.97);
+}
+
+/* Columnas de Información */
+.movie-info-cols {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+.movie-info-left {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.poster-wrapper {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.poster-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.movie-info-right {
+  flex: 1;
+}
+
+.synopsis-card {
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  position: relative;
+  border-bottom: 8px solid #cc0000;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.synopsis-card h2 {
+  font-size: 1.8rem;
+  color: #ff3333;
+  margin: 0 0 1rem 0;
+  font-weight: bold;
+}
+
+.synopsis-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  color: #ddd;
+}
+
+.info-meta-group {
+  margin-bottom: 1.5rem;
+}
+
+.info-meta-group h3 {
+  font-size: 1rem;
+  color: #fff;
+  margin: 0 0 0.8rem 0;
+}
+
+.lang-tags {
+  display: flex;
+  gap: 10px;
+}
+
+.lang-badge {
+  border: 1.5px solid #cc0000;
+  color: #ff3333;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.formats-available {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Sección de Horarios y Funciones */
+.movie-showtimes-section {
+  background-color: transparent;
+  padding-top: 2rem;
+}
+
+.section-title-fun {
+  font-size: 2.2rem;
+  color: white;
+  margin-bottom: 2rem;
+  font-weight: 800;
+}
+
+/* Barra de Filtros de Horarios */
+.showtimes-filters-bar {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  color: #fff;
+  gap: 0;
+}
+
+/* Custom Dropdown */
+.custom-dd-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.custom-dd-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  color: #fff;
+  text-align: left;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.custom-dd-btn:hover {
+  background: rgba(255,255,255,0.06);
+}
+.custom-dd-btn.open {
+  background: rgba(255,255,255,0.08);
+}
+
+.custom-dd-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.custom-dd-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #d8b78f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.custom-dd-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-dd-chevron {
+  flex-shrink: 0;
+  color: #aaa;
+  transition: transform 0.2s ease;
+}
+.custom-dd-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.custom-dd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  background: #1e0a0b;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  z-index: 100;
+  animation: ddFadeIn 0.15s ease;
+}
+
+@keyframes ddFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.custom-dd-item {
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.custom-dd-item:hover {
+  background: rgba(204,0,0,0.15);
+  color: #fff;
+}
+.custom-dd-item.selected {
+  color: #ff4444;
+  font-weight: 700;
+}
+.custom-dd-item.clear-item {
+  color: #888;
+  font-size: 0.82rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 4px;
+  padding-bottom: 10px;
+}
+.custom-dd-item.clear-item:hover {
+  color: #fff;
+  background: transparent;
+}
+
+.filter-divider-showtime {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+/* Acordeón de Cines */
+.cinemas-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.accordion-item-cinema {
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-left: 5px solid #cc0000;
+}
+
+.accordion-header-cinema {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.accordion-header-cinema:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.accordion-header-cinema h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.accordion-header-cinema .arrow {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ff3333;
+}
+
+.accordion-body-cinema {
+  padding: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  background-color: rgba(0,0,0,0.6);
+}
+
+.room-type-tag {
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  color: #ccc;
+}
+
+.showtime-buttons-grid {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.showtime-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  color: #cc0000;
+  padding: 10px 24px;
+  border: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ticket shape using CSS mask */
+  -webkit-mask-image: radial-gradient(circle at 0 50%, transparent 6px, black 6.5px), radial-gradient(circle at 100% 50%, transparent 6px, black 6.5px);
+  -webkit-mask-size: 51% 100%;
+  -webkit-mask-position: 0 0, 100% 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: radial-gradient(circle at 0 50%, transparent 6px, black 6.5px), radial-gradient(circle at 100% 50%, transparent 6px, black 6.5px);
+  mask-size: 51% 100%;
+  mask-position: 0 0, 100% 0;
+  mask-repeat: no-repeat;
+  
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+}
+
+.showtime-btn:hover:not(.disabled) {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+}
+
+.showtime-btn:active:not(.disabled) {
+  transform: scale(0.97);
+}
+
+.showtime-btn.disabled {
+  border-color: rgba(255,255,255,0.2);
+  color: #666;
+  background-color: rgba(255,255,255,0.05);
+  cursor: not-allowed;
+}
+
+.chair-icon {
+  font-size: 1.2rem;
+}
+
+/* --------------------------------------------------- */
+/* WebCinemaDetails styles                             */
+/* --------------------------------------------------- */
+.cinema-details-page {
+  /* Inherit main app background/color */
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.cinema-details-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cinema-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.cinema-title-blue {
+  color: #fff;
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.cinema-header-tabs {
+  display: flex;
+  gap: 20px;
+}
+
+.cinema-tab-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-bottom: 3px solid transparent;
+}
+
+.cinema-tab-btn.active {
+  border-bottom: 3px solid #e50914;
+}
+
+.cinema-horarios-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 30px;
+}
+
+.cinema-movie-list-item {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.cinema-movie-poster-col {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.cinema-movie-poster-col .poster-wrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cinema-movie-poster-col img {
+  width: 100%;
+  display: block;
+}
+
+.cinema-movie-info-col {
+  flex-grow: 1;
+}
+
+.cinema-movie-title {
+  font-size: 1.5rem;
+  margin: 0 0 5px 0;
+}
+
+.cinema-movie-meta {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0 0 15px 0;
+}
+
+/* Ensure the custom dropdown fits with the dark theme */
+.cinema-details-page .custom-dropdown-header {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

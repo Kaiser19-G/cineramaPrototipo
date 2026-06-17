@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte de Diseño UX/UI y Arquitectura - Cinerama</title>
+  
+  <!-- Tipografías Premium desde Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Carga de Mermaid.js para renderizar los diagramas de flujo automáticamente -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'forest',
+      securityLevel: 'loose',
+      flowchart: { useWidth: true, htmlLabels: true }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-color: #E50914; /* Rojo Cine */
+      --text-main: #2D3748;
+      --text-muted: #718096;
+      --bg-main: #FFFFFF;
+      --bg-panel: #F7FAFC;
+      --border-color: #E2E8F0;
+      --font-body: 'Inter', sans-serif;
+      --font-title: 'Poppins', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-main);
+      background-color: var(--bg-main);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 40px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Estilos de Impresión y PDF */
+    @media print {
+      body {
+        background-color: #FFF;
+        color: #000;
+      }
+      .container {
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+
+    .header-banner {
+      border-left: 5px solid var(--primary-color);
+      padding-left: 20px;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 28px;
+      color: #1A202C;
+      margin: 0 0 8px 0;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    h2 {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 20px;
+      color: #2D3748;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 15px;
+      color: #4A5568;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+
+    p, li {
+      font-size: 14px;
+      color: var(--text-main);
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    /* Contenedores de Mermaid diagramas */
+    .diagram-container {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    .mermaid {
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Tablas Estilizadas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--bg-panel);
+      font-weight: 600;
+      color: #2D3748;
+    }
+
+    tr:nth-child(even) {
+      background-color: #F8FAFC;
+    }
+
+    /* Bloque de código / Wireframe estático */
+    pre {
+      background-color: #1A202C;
+      color: #EDF2F7;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    /* Alertas visuales */
+    .alert-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #FFF;
+    }
+    .badge-red { background-color: #E53E3E; }
+    .badge-yellow { background-color: #D69E2E; color: #1A202C; }
+    .badge-green { background-color: #38A169; }
+
+    /* Barra informativa superior no imprimible */
+    .export-bar {
+      background-color: #EDF2F7;
+      border: 1px dashed var(--text-muted);
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin-bottom: 30px;
+      font-size: 13px;
+      color: #4A5568;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Barra instructiva para exportación -->
+    <div class="export-bar no-print">
+      💡 <strong>¿Cómo guardar este archivo como PDF o pasarlo a Word?</strong>
+      <ul>
+        <li><strong>Para PDF:</strong> Presiona <kbd>Ctrl + P</kbd> (o cmd + P en Mac), selecciona <strong>Guardar como PDF</strong>, asegúrate de activar la casilla de "Gráficos de fondo" en la configuración de la impresora de tu navegador, y listo. ¡Los diagramas se renderizarán en calidad vectorial perfecta!</li>
+        <li><strong>Para Word:</strong> Abre este archivo en tu navegador, presiona <kbd>Ctrl + A</kbd> para seleccionar todo, luego <kbd>Ctrl + C</kbd> para copiar, y pégalo directamente en Microsoft Word (<kbd>Ctrl + V</kbd>). Mantendrá las tablas, textos y los diagramas generados.</li>
+      </ul>
+    </div>
+
+    <!-- Encabezado del Reporte -->
+    <div class="header-banner">
+      <h1>Reporte de Diseño UX/UI y Arquitectura de Cinerama</h1>
+      <p class="subtitle">Documento de Entrega de Proyecto y Lógica de Interacción</p>
+    </div>
+
+    <!-- 2. Diagramas de Flujo -->
+    <h2>2. Diagrama de Flujo de Usuario (User Flow)</h2>
+    <p>El sistema gestiona dos flujos de trabajo muy diferenciados basados en el rol del usuario (<em>Admin Central</em> y <em>Admin Local</em>). Esto optimiza la operatividad al evitar errores de escala global y asegurar un control de permisos estricto.</p>
+
+    <h3>Flujo de Usuario - Administrador Central</h3>
+    <p>El administrador global tiene control total y puede cambiar el contexto de visualización.</p>
+    
+    <div class="diagram-container">
+      <div class="mermaid">
+        graph TD
+            A[Inicio de Sesión] --> B{¿Es Admin Central?}
+            B -- Sí --> C[Carga de Contexto Global: 'Todos los Cines']
+            C --> D[Visualiza KPI Globales y Reportes Consolidados]
+            
+            %% Flujo Películas
+            C --> E[Módulo: Catálogo de Películas]
+            E --> E1[Crear Película Global]
+            E1 --> E2[Completar Ficha Técnica & Clasificación]
+            E2 --> E3[Asignar a Cines Específicos]
+            E3 --> E4[Publicar Película]
+            
+            %% Flujo Cines
+            C --> F[Módulo: Gestión de Cines]
+            F --> F1[Crear Nueva Sede / Sucursal]
+            F --> F2[Crear/Editar Salas por Cine]
+            F --> F3[Definir Precios y Mapear Asientos]
+            
+            %% Flujo Usuarios
+            C --> G[Módulo: Usuarios y Accesos]
+            G --> G1[Crear Usuario Personal]
+            G1 --> G2[Definir Rol]
+            G2 --> G3[Asignar Cine Específico si no es Admin]
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h3>Flujo de Usuario - Administrador Local (Gerente de Sucursal)</h3>
+    <p>El gerente de un cine está restringido al contexto de su sede.</p>
+    
+    <div class="diagram-container">
+      <div class="mermaid">
+        graph TD
+            A[Inicio de Sesión] --> B{¿Es Admin Local?}
+            B -- Sí --> H[Carga de Contexto Local Obligatorio]
+            H --> I[Selector de Cine Bloqueado - Solo lectura]
+            I --> J[Visualiza KPIs y Ventas únicamente de su Cine]
+            
+            %% Programación Local
+            H --> K[Módulo: Programar Función]
+            K --> K1[Selecciona Película Habilitada]
+            K1 --> K2{¿Está habilitada por Admin Central?}
+            K2 -- No --> K3[Error: Acción Bloqueada]
+            K2 -- Sí --> K4[Selecciona Sala de la Sucursal]
+            K4 --> K5[Establece Fecha e Inicio de Función]
+            K5 --> K6{¿Hay traslape u ocupación en Sala?}
+            K6 -- Sí --> K7[Alerta: Conflicto de Horario detectado]
+            K6 -- No --> K8[Publicar Función en Cartelera Local]
+      </div>
+    </div>
+
+    <!-- 3. Wireframes -->
+    <h2>3. Wireframes</h2>
+    
+    <h3>3.1 Wireframes Estáticos</h3>
+    <p>El diseño de la interfaz sigue una estructura de cuadrícula de 3 áreas principales para maximizar la consistencia cognitiva:</p>
+    <ol>
+      <li><strong>Sidebar de Navegación (Izquierda):</strong> Columna vertical estática. Muestra enlaces rápidos a los módulos autorizados.</li>
+      <li><strong>Topbar de Estado (Superior):</strong> Cabecera horizontal persistente que aloja el selector de contexto, buscador global, notificaciones de alertas y avatar de perfil.</li>
+      <li><strong>Área de Trabajo (Centro):</strong> Espacio dinámico donde se cargan los dashboards, tablas, rejillas de películas o mapas interactivos de asientos.</li>
+    </ol>
+
+<pre>
++-------------------------------------------------------------------------+
+|  C  |  🌍 Todos los Cines  [v]     [ Buscar... ]      (o) [Alerts] [AC] |
+|-----|-------------------------------------------------------------------|
+| (d) |  Vista Global - Todos los Cines                                   |
+| (c) |  +--------------------+  +--------------------+  +--------------+ |
+| (m) |  | Ingresos del Día   |  | Tickets Vendidos   |  | Ocupación    | |
+| (s) |  | $156,200           |  | 1,240              |  | 74%          | |
+| (r) |  +--------------------+  +--------------------+  +--------------+ |
+| (u) |                                                                   |
+| (s) |  +--------------------------------------------+  +--------------+ |
+|     |  | Gráfico de Ventas Semanales               |  | Actividad    | |
+|     |  |                                            |  | - Nueva func | |
+| (v) |  |                                            |  | - Pago fall  | |
++-------------------------------------------------------------------------+
+</pre>
+
+    <h3>3.2 Wireframes Interactivos</h3>
+    <p>La interactividad en Cinerama se rige por dos pilares de diseño responsivo y disclosure progresivo:</p>
+    <ul>
+      <li><strong>Interactividad del Contexto Activo:</strong> Al cambiar la selección en el selector de cine del Topbar (ej. de <em>"Todos los Cines"</em> a <em>"Cinerama Centro"</em>), el sistema actualiza reactivamente los datos cargados en pantalla (los gráficos de Recharts se recalculan, las salas mostradas pertenecen únicamente a esa sucursal, etc.) sin recargar la página.</li>
+      <li><strong>Bloqueo y Seguridad Visual (Candados):</strong> Para administradores locales, los elementos globales del menú en el Sidebar muestran un icono de candado. Si el usuario intenta hacer clic, no se ejecuta ninguna navegación y se muestra un tooltip flotante: <em>"Requiere permisos de Admin Central"</em>.</li>
+      <li><strong>Asistentes Paso a Paso (Wizards):</strong> Tanto la creación de películas globales como la programación de funciones se abren en modales interactivos tipo "Wizard" con una línea de tiempo superior indicando la fase del proceso. Esto reduce la carga cognitiva dividiendo formularios complejos en pasos lógicos de entrada única.</li>
+    </ul>
+
+    <!-- 4. Pruebas de Usabilidad -->
+    <h2>4. Pruebas de Usabilidad</h2>
+    <p>Se aplicó una <strong>Evaluación Heurística</strong> combinada con <strong>Pruebas de Usabilidad Moderadas Remotas</strong> (Cognitive Walkthrough) utilizando un prototipo funcional en React.</p>
+    
+    <p><strong>Usuarios evaluados:</strong> 2 Administradores Corporativos (Admin Central) y 3 Gerentes de Cine (Admin Local).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Problema Detectado</th>
+          <th>Gravedad</th>
+          <th>Causa Raíz</th>
+          <th>Solución Aplicada en Cinerama</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Error en Programación:</strong> Los gerentes de cine programaban películas en salas que no soportaban el formato (ej. 3D en sala tradicional).</td>
+          <td><span class="alert-badge badge-red">🔴 Alta</span></td>
+          <td>El formulario de programación era un solo listado masivo sin validación cruzada.</td>
+          <td>Se implementó el asistente de **5 Pasos (Wizard)** en <code>Scheduling.jsx</code>. Ahora primero seleccionas el cine, luego la película y el sistema autodefine qué formatos y salas tiene disponibles el cine para esa película específica.</td>
+        </tr>
+        <tr>
+          <td><strong>Fuga de Información:</strong> Gerentes locales de una ciudad pequeña podían ver el dashboard consolidado del corporativo.</td>
+          <td><span class="alert-badge badge-yellow">🟡 Media</span></td>
+          <td>El dashboard mostraba datos consolidados globales por defecto para todos los roles.</td>
+          <td>Se integró el <code>CurrentCinemaContext</code> de manera estricta. Si el usuario no tiene rol <code>admin</code>, el dashboard carga únicamente el ID asignado a su sucursal, bloqueando por código cualquier intento de cambiar la vista a global.</td>
+        </tr>
+        <tr>
+          <td><strong>Confusión en Catálogo:</strong> El Admin Local creía que el botón "Nueva Película" le permitía programarla directamente, pero en realidad creaba un registro global vacío.</td>
+          <td><span class="alert-badge badge-green">🟢 Baja</span></td>
+          <td>Falta de retroalimentación de permisos en la vista del catálogo.</td>
+          <td>Se implementó un banner amarillo de advertencia interactivo (<code>perm-notice</code>) en <code>MovieManagement.jsx</code> indicando que la vista es de solo lectura y requiere acción de administración central.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- 5. Iteraciones del Prototipo -->
+    <h2>5. Iteraciones del Prototipo</h2>
+    <p>El prototipo de Cinerama evolucionó a través de tres fases clave:</p>
+    <ol>
+      <li><strong>Iteración 1 (Baja Fidelidad - Esqueletos):</strong> Listas simples de películas y salas sin relación lógica. Cualquier película podía ser programada en cualquier sala, lo que resultaba en errores humanos en operaciones reales.</li>
+      <li><strong>Iteración 2 (Mediana Fidelidad - Funcionalidad del Contexto):</strong> Se introdujo el selector de cine en la cabecera. Sin embargo, los permisos seguían sin aplicarse de manera estricta y los usuarios debían filtrar manualmente los datos en cada pantalla.</li>
+      <li><strong>Iteración 3 (Alta Fidelidad - Arquitectura Actual):</strong> Implementación del contexto reactivo completo (<code>CinemaContext.jsx</code>). La base de datos simulada en <code>store.js</code> incluye una tabla de asociación intermedia (<code>movieCinema</code>). El flujo ahora es robusto: el Admin Central distribuye películas globales y el Admin Local opera exclusivamente sobre su cine asignado de forma segura y simplificada.</li>
+    </ol>
+
+    <!-- 6. Prototipo de Alta Fidelidad -->
+    <h2>6. Prototipo de Alta Fidelidad (UI)</h2>
+    <p>Cinerama utiliza una interfaz de usuario optimizada para entornos operativos reales de cine (habitualmente con baja iluminación en cabinas o taquillas), por lo cual emplea un <strong>Tema Oscuro Sleek (Glassmorphism & Neon accents)</strong>.</p>
+
+    <h3>Aplicación de Colores</h3>
+    <ul>
+      <li><strong>Superficies y Fondos:</strong> Utiliza una escala de grises puros y oscuros (<code>#000000</code> para fondo principal, <code>#121212</code> para paneles contenedores, <code>#1e1e1e</code> para elementos interactivos). Esto reduce drásticamente el cansancio ocular.</li>
+      <li><strong>Color de Acentuación Primario (Rojo Cine):</strong> <code>#E50914</code>. Utilizado para llamadas a la acción principales, estados activos importantes, marcas y notificaciones críticas.</li>
+      <li><strong>Acentuaciones Operativas (Código de Color Semántico):</strong>
+        <ul>
+          <li><strong>Dorado Premium (<code>#D4AF37</code>):</strong> Utilizado para salas VIP, películas destacadas y métricas destacadas.</li>
+          <li><strong>Verde Esmeralda (<code>#10B981</code>):</strong> Operaciones exitosas, estados "Activo", ingresos y tickets validados.</li>
+          <li><strong>Azul Eléctrico (<code>#3B82F6</code>):</strong> Información técnica, formatos en cartelera y programación del calendario.</li>
+          <li><strong>Naranja Intenso (<code>#F59E0B</code>):</strong> Modos de mantenimiento y advertencias.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Aplicación de Tipografía</h3>
+    <ul>
+      <li><strong>Familia Tipográfica:</strong> Se utiliza <code>Poppins</code> u <code>Outfit</code> para encabezados principales y KPIs destacados, logrando una estética geométrica limpia y de impacto tecnológico. Para datos tabulares y formularios complejos, se implementa <code>Inter</code> o <code>Roboto</code> debido a su excelente legibilidad en tamaños reducidos.</li>
+      <li><strong>Jerarquía Tipográfica Implementada:</strong>
+        <ul>
+          <li><em>Título de Página:</em> <code>24px</code>, Negrita, color blanco de alto contraste.</li>
+          <li><em>Sección / Card Title:</em> <code>16px</code>, Semi-negrita.</li>
+          <li><em>Texto de Datos / Tablas:</em> <code>13px</code>, Regular, optimizado para visualización densa de información.</li>
+          <li><em>Etiquetas de Sistema / Metadata:</em> <code>11px</code> con transformación a mayúsculas y espaciado de letras aumentado (<code>letter-spacing: 0.6px</code>) para facilitar el escaneo visual rápido.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Componentes UI Desarrollados</h3>
+    <ul>
+      <li><strong>Tarjetas KPI con Micro-Animaciones:</strong> Indicadores numéricos de ingresos, tickets, salas y ocupación con barras de progreso de color semántico que representan visualmente el cumplimiento del objetivo.</li>
+      <li><strong>Mapeador Interactivo de Asientos (<code>CinemaManagement.jsx</code>):</strong> Cuadrícula dinámica donde cada botón representa un asiento físico en la sala. Los estados de los asientos (disponible, reservado, VIP, bloqueado, discapacidad) se comunican mediante colores con una leyenda informativa.</li>
+      <li><strong>Asistente Wizard Modular (<code>MovieManagement.jsx</code>):</strong> Navegación por pasos integrados que desglosan la información de las películas: Información General, Multimedia, Clasificación, Formatos, Fechas, Cines y Publicación.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- 7. Principios de Diseño -->
+    <h2>7. Aplicación de Principios de Diseño</h2>
+
+    <h3>7.1 Leyes de Gestalt</h3>
+    <p>La interfaz de Cinerama fue diseñada implementando conscientemente las siguientes Leyes de la Psicología de la Gestalt para optimizar la interacción:</p>
+    <ul>
+      <li><strong>Ley de Proximidad:</strong> En la vista del catálogo de películas (<code>MovieManagement.jsx</code>), la información técnica (género, clasificación, duración) y los botones de acción (<em>Editar</em>, <em>Destacar</em>, <em>Archivar</em>) se agrupan estrechamente dentro del contenedor visual de su respectiva tarjeta. El usuario asocia de forma natural que las acciones controlan únicamente a esa película.</li>
+      <li><strong>Ley de Semejanza:</strong> Los estados operativos utilizan exactamente el mismo color en toda la aplicación. Por ejemplo, si una sede o sala está en <em>"Mantenimiento"</em>, se representa consistentemente con el color naranja tanto en la tarjeta del cine, la tabla de salas, las notificaciones y los reportes de rendimiento. Esto reduce el esfuerzo mental de traducción del usuario.</li>
+      <li><strong>Ley de Región Común (Common Region):</strong> Los KPIs y las secciones de gráficos están claramente delimitados dentro de paneles contenedores tipo tarjeta con bordes definidos y fondos ligeramente más claros que el fondo general (<code>#121212</code> vs <code>#000000</code>). Esto crea una separación clara entre las áreas de reporte consolidado, control de alertas y listas de actividad.</li>
+    </ul>
+
+    <h3>7.2 Color y Tipografía en el Control Operativo</h3>
+    <ul>
+      <li><strong>Contraste de Acentuación:</strong> La pantalla mantiene una atmósfera mayormente oscura, lo que permite que los colores semánticos (Rojo, Verde y Azul) destaquen exponencialmente sobre el fondo. Un conflicto de programación (Alerta de Traslape de Horarios) se tiñe inmediatamente de rojo brillante, capturando la atención del operador instantáneamente sin saturar visualmente el resto del flujo operativo.</li>
+      <li><strong>Escala Visual Proporcional:</strong> Los números de los KPIs tienen un peso visual superior (<code>28px</code> y negrita) en comparación con sus etiquetas descriptivas (<code>12px</code> en gris claro). Esto permite que un gerente que eche un vistazo rápido a su pantalla conozca la salud operativa de su sucursal en menos de un segundo.</li>
+    </ul>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin-top: 40px; margin-bottom: 20px;">
+    <p style="text-align: center; font-size: 11px; color: var(--text-muted);">Cinerama OS © 2026. Documentación técnica confidencial y de uso exclusivo interno.</p>
+
+  </div>
+
+</body>
+</html>
