@@ -3,6 +3,7 @@ import './WebHome.css';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
+import cineramaBanner from '../assets/CineramaBanner.png';
 
 export default function WebHome() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function WebHome() {
       <section className="web-hero">
         <div className="hero-carousel">
           <button className="carousel-control prev" onClick={() => setCurrentSlide(prev => (prev > 0 ? prev - 1 : 4))}>〈</button>
-          <img src="https://placehold.co/1200x400/3a0000/ffffff?text=Banner+Promocional+Cinerama" alt="Banner Default" className="hero-img" />
+          <img src={cineramaBanner} alt="Cinerama Banner" className="hero-img" />
           <button className="carousel-control next" onClick={() => setCurrentSlide(prev => (prev < 4 ? prev + 1 : 0))}>〉</button>
           <div className="carousel-indicators">
             {[0, 1, 2, 3, 4].map((idx) => (
