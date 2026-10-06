@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from 'react-router-dom';
+import AccessibilityWidget from '../AccessibilityWidget';
 import './WebLayout.css';
 
 export default function WebLayout() {
@@ -6,6 +7,7 @@ export default function WebLayout() {
 
   return (
     <div className="web-container">
+      <AccessibilityWidget />
       <nav className="web-navbar">
         <div className="web-brand" onClick={() => navigate('/WebHome')}>
           <h1>CINERAMA</h1>
