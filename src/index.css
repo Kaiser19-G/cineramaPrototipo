@@ -117,6 +117,19 @@ html[data-theme="light"] .web-container {
   --shadow-lg: 0 8px 48px rgba(0,0,0,0.14);
 }
 
+/* ══════════════════════════════════════════
+   ESCALA DE LETRA (4 niveles)
+   Se aplica al <html> globalmente: ninguna hoja de estilo del admin usa
+   unidades rem (verificado — Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css, App.css solo usan px), así que esto no afecta al panel de
+   administración aunque comparta el mismo <html>; solo reescala el texto de
+   las páginas Web* que sí usan rem para font-size.
+   ══════════════════════════════════════════ */
+html[data-font-scale="100"] { font-size: 100%; }
+html[data-font-scale="115"] { font-size: 115%; }
+html[data-font-scale="130"] { font-size: 130%; }
+html[data-font-scale="150"] { font-size: 150%; }
+
 html, body, #root {
   height: 100%;
   font-family: 'Inter', 'Roboto', sans-serif;
