@@ -67,8 +67,13 @@
 
 @media (max-width: 768px) {
   .web-navbar {
-    padding: 1rem 2rem;
+    padding: 1rem 1.5rem;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
   }
+  .web-brand h1 { font-size: 1.8rem; }
+  .web-nav-links { gap: 1rem; flex-wrap: wrap; }
+  .nav-link { font-size: 0.95rem; }
 }
 
 /* === Footer Público === */
