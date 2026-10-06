@@ -114,9 +114,15 @@
    ══════════════════════════════════════════ */
 html[data-theme="light"] .web-container {
   --page-bg:      #F5F5F5;
-  --navbar-bg:    #FFFFFF;
-  --footer-bg:    #FFFFFF;
-  --dropdown-menu-bg: #FFFFFF;
+  /* "Hueso"/crema ligado al dorado de marca (--label-accent de los
+     dropdowns) para las zonas que en oscuro son negras (navbar, footer,
+     menú desplegable) — en oscuro el sitio combina rojo + negro; sin esto
+     el claro quedaba casi todo blanco, sin ese segundo color. Contraste
+     verificado: texto principal 15.8:1, rojo de marca 6.1:1, texto
+     secundario 5.9:1 sobre este tono (todos >=4.5:1). */
+  --navbar-bg:    #F2EAD9;
+  --footer-bg:    #F2EAD9;
+  --dropdown-menu-bg: #F2EAD9;
 
   --surface:    #FFFFFF;
   --surface-2:  #F7F7F7;
@@ -254,11 +260,13 @@ html[data-vision="mono"] .web-container {
   --accent-solid-success: var(--emerald);
   --label-accent: var(--text-secondary);
 
-  /* "Mono" es escala de grises de verdad: el fondo de página oscuro
-     (--page-bg) y el del menú desplegable son un rojo/marrón oscuro, no
-     neutros — en tema claro ya son grises (#F5F5F5/#FFFFFF), así que esto
-     solo cambia algo en tema oscuro. */
+  /* "Mono" es escala de grises de verdad: el fondo de página, el navbar/
+     footer y el menú desplegable tienen un tinte de marca (rojo en oscuro,
+     hueso/dorado en claro), no neutro — se igualan a los tonos de
+     superficie ya grises del tema activo. */
   --page-bg: var(--surface);
+  --navbar-bg: var(--surface-2);
+  --footer-bg: var(--surface-2);
   --dropdown-menu-bg: var(--surface-2);
 }
 
