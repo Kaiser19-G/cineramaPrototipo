@@ -86,7 +86,15 @@ export default function WebCinemaDetails() {
                           key={index}
                           className={`showtime-btn ${!st.active ? 'disabled' : ''}`}
                           disabled={!st.active}
-                          onClick={() => navigate('/web/compra')}
+                          onClick={() => navigate('/web/compra', {
+                            state: {
+                              movie,
+                              cinema: cinema.name,
+                              date: selectedDate,
+                              time: st.time,
+                              roomType: '2D Regular',
+                            }
+                          })}
                         >
                           <span className="time-lbl">{st.time}</span>
                           {st.active && (
