@@ -39,30 +39,30 @@ export default function WebAuth() {
           {!isLogin && (
             <div className="form-row">
               <div className="form-group">
-                <label>Nombre</label>
-                <input type="text" placeholder="Tu nombre" required />
+                <label htmlFor="auth-firstname">Nombre</label>
+                <input id="auth-firstname" type="text" placeholder="Tu nombre" required />
               </div>
               <div className="form-group">
-                <label>Apellido</label>
-                <input type="text" placeholder="Tu apellido" required />
+                <label htmlFor="auth-lastname">Apellido</label>
+                <input id="auth-lastname" type="text" placeholder="Tu apellido" required />
               </div>
             </div>
           )}
-          
+
           <div className="form-group">
-            <label>Correo</label>
-            <input type="email" placeholder="correo@ejemplo.com" required />
+            <label htmlFor="auth-email">Correo</label>
+            <input id="auth-email" type="email" placeholder="correo@ejemplo.com" required />
           </div>
-          
+
           <div className="form-group">
-            <label>Contraseña</label>
-            <input type="password" placeholder="••••••••" required />
+            <label htmlFor="auth-password">Contraseña</label>
+            <input id="auth-password" type="password" placeholder="••••••••" required />
           </div>
 
           {!isLogin && (
             <div className="form-group">
-              <label>Confirmar contraseña</label>
-              <input type="password" placeholder="••••••••" required />
+              <label htmlFor="auth-password-confirm">Confirmar contraseña</label>
+              <input id="auth-password-confirm" type="password" placeholder="••••••••" required />
             </div>
           )}
 
