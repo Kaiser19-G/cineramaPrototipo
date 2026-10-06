@@ -78,6 +78,10 @@
   .web-footer { padding: 2.5rem 1.5rem 1.5rem; }
   .footer-col { min-width: 0; }
   .footer-logo { overflow-wrap: anywhere; }
+
+  /* El botón flotante de accesibilidad (56px + 20px de margen) no debe tapar
+     botones como "Pagar"/"Continuar" al final del contenido en móvil. */
+  .web-content-area { padding-bottom: 92px; }
 }
 
 /* === Footer Público === */

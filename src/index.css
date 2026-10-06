@@ -5,6 +5,18 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Respeta la preferencia de reducir movimiento del sistema operativo, sin
+   necesidad de un control propio en el widget — aplica en todo el sitio
+   (admin + público), no es una decisión de diseño del sitio público. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 :root {
   /* ── Core Palette ── */
   --action-red:    #E50914;
