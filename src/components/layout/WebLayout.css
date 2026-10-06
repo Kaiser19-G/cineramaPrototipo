@@ -3,8 +3,8 @@
   min-height: 100vh;
   height: 100vh;
   overflow-y: auto;
-  background-color: #6a1a1b; /* Rojo oscuro de fondo */
-  color: #ffffff;
+  background-color: var(--page-bg);
+  color: var(--text-main);
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;
@@ -15,21 +15,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #1a1a1a;
+  background-color: var(--navbar-bg);
   padding: 1rem 4rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-sm);
   z-index: 10;
 }
 
 .web-brand h1 {
   margin: 0;
-  color: #ff3333;
+  color: var(--action-red-light);
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.5rem;
   letter-spacing: 2px;
   cursor: pointer;
   text-transform: uppercase;
-  -webkit-text-stroke: 1px #cc0000;
+  -webkit-text-stroke: 1px var(--action-red);
 }
 
 .web-nav-links {
@@ -41,7 +41,7 @@
 .nav-link {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   cursor: pointer;
   transition: color 0.2s;
@@ -50,12 +50,12 @@
 }
 
 .nav-link:hover {
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 .nav-link.highlight {
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 /* Área de contenido para el Outlet */
@@ -67,17 +67,30 @@
 
 @media (max-width: 768px) {
   .web-navbar {
-    padding: 1rem 2rem;
+    padding: 1rem 1.5rem;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
   }
+  .web-brand h1 { font-size: 1.8rem; }
+  .web-nav-links { gap: 1rem; flex-wrap: wrap; }
+  .nav-link { font-size: 0.95rem; }
+
+  .web-footer { padding: 2.5rem 1.5rem 1.5rem; }
+  .footer-col { min-width: 0; }
+  .footer-logo { overflow-wrap: anywhere; }
+
+  /* El botón flotante de accesibilidad (56px + 20px de margen) no debe tapar
+     botones como "Pagar"/"Continuar" al final del contenido en móvil. */
+  .web-content-area { padding-bottom: 92px; }
 }
 
 /* === Footer Público === */
 .web-footer {
-  background-color: #111111;
-  color: #fff;
+  background-color: var(--footer-bg);
+  color: var(--text-main);
   padding: 4rem 4rem 2rem 4rem;
   margin-top: auto;
-  border-top: 3px solid #cc0000;
+  border-top: 3px solid var(--action-red);
 }
 
 .footer-top {
@@ -100,16 +113,16 @@
 .footer-logo {
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.2rem;
-  color: #ff3333;
+  color: var(--action-red-light);
   margin: 0 0 1rem 0;
   letter-spacing: 1px;
   text-transform: uppercase;
-  -webkit-text-stroke: 1px #cc0000;
+  -webkit-text-stroke: 1px var(--action-red);
 }
 
 .footer-desc {
   font-size: 0.95rem;
-  color: #aaa;
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.5rem;
   max-width: 320px;
@@ -119,21 +132,21 @@
   font-size: 0.9rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: #ddd;
+  color: var(--text-primary);
 }
 
 .footer-powered {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .footer-powered span {
-  color: #cc0000;
+  color: var(--action-red);
   font-weight: bold;
 }
 
 .footer-col h3 {
-  color: #ff3333;
+  color: var(--action-red-light);
   font-size: 1.1rem;
   margin: 0 0 1.5rem 0;
   font-weight: bold;
@@ -148,18 +161,18 @@
 .links-col li {
   margin-bottom: 1rem;
   font-size: 0.95rem;
-  color: #ddd;
+  color: var(--text-primary);
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .links-col li:hover {
-  color: #fff;
+  color: var(--text-main);
 }
 
 .social-col p {
   font-size: 0.95rem;
-  color: #aaa;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
@@ -172,18 +185,18 @@
 .social-icons svg {
   cursor: pointer;
   transition: transform 0.2s, color 0.2s;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .social-icons svg:hover {
   transform: scale(1.1);
-  color: #cc0000;
+  color: var(--action-red);
 }
 
 .footer-bottom {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border);
   padding-top: 2rem;
 }
 
@@ -195,7 +208,7 @@
 
 .payment-methods span {
   font-size: 0.9rem;
-  color: #aaa;
+  color: var(--text-secondary);
 }
 
 .payment-icons {
@@ -203,9 +216,11 @@
   gap: 8px;
 }
 
+/* Chip de marca de tarjeta: siempre blanco con texto oscuro a propósito,
+   como el logo real de VISA — no debe cambiar con el tema. */
 .pay-card {
-  background: white;
-  color: #111;
+  background: #ffffff;
+  color: #111111;
   font-size: 0.7rem !important;
   font-weight: bold;
   padding: 4px 8px;

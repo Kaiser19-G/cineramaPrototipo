@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
@@ -156,7 +156,15 @@ export default function WebMovieDetails() {
                             key={index}
                             className={`showtime-btn ${!st.active ? 'disabled' : ''}`}
                             disabled={!st.active}
-                            onClick={() => navigate('/web/compra')}
+                            onClick={() => navigate('/web/compra', {
+                              state: {
+                                movie,
+                                cinema: cine.name,
+                                date: filterDate || dates[0],
+                                time: st.time,
+                                roomType: '2D Regular',
+                              }
+                            })}
                           >
                             <span className="time-lbl">{st.time}</span>
                             {st.active && (

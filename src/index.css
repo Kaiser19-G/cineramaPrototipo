@@ -5,12 +5,51 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Respeta la preferencia de reducir movimiento del sistema operativo, sin
+   necesidad de un control propio en el widget — aplica en todo el sitio
+   (admin + público), no es una decisión de diseño del sitio público. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 :root {
   /* ── Core Palette ── */
   --action-red:    #E50914;
   --action-red-light: #FF1F2E;
   --action-red-dim: rgba(229,9,20,0.12);
   --action-red-glow: rgba(229,9,20,0.35);
+
+  /* Semánticamente distinto de --action-red: en modo protan-deutan la marca
+     pasa a azul pero el error sigue necesitando su propio color (naranja),
+     así que no pueden compartir variable. En modo "default" valen lo mismo
+     que --action-red (cero cambio visual). */
+  --error:      #E50914;
+  --error-dim:  rgba(229,9,20,0.12);
+
+  /* Para botones de relleno sólido + texto blanco encima (p.ej. .btn-solid).
+     En modo "mono" + tema oscuro, --action-red/--emerald pasan a ser blancos
+     (= var(--text-main)) para funcionar como TEXTO sobre la superficie
+     oscura — pero eso dejaría texto blanco sobre un botón blanco. Estas dos
+     variables existen solo para ese caso de uso (relleno) y se fijan a un
+     gris oscuro neutro únicamente en esa combinación; en todo lo demás
+     siguen el color de marca/éxito normalmente. */
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+
+  /* Para el "contorno" del hover de pósters/cines (.movie-hover-overlay,
+     .cinema-hover-overlay): ese elemento siempre va encima de una foto
+     oscurecida, nunca de la superficie de la página, así que NO debe
+     cambiar con el tema claro/oscuro — pero SÍ debe cambiar con el modo de
+     daltonismo (si no, queda rojo fijo pase lo que pase en Accesibilidad,
+     que es exactamente el bug reportado). Por eso vive fuera del bloque de
+     tema claro: una sola declaración le sirve a ambos temas.  */
+  --overlay-accent: #E50914;
 
   --deep-night:   #0F0F0F;
   --dark-grey:    #1C1C1C;
@@ -60,7 +99,216 @@
 
   --transition:      0.2s ease;
   --transition-slow: 0.35s ease;
+
+  /* ── Public site (Web*) — promoted from former hardcoded values ── */
+  --page-bg:           #6a1a1b;
+  --navbar-bg:          #1a1a1a;
+  --footer-bg:          #111111;
+  --dropdown-menu-bg:   #1e0a0b;
+  --label-accent:       #d8b78f;
+  --border-interactive: var(--border);
 }
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — SOLO SITIO PÚBLICO
+   Scoped a .web-container (no a :root) a propósito: --surface, --text-*,
+   --action-red, --emerald, --border, etc. son tokens compartidos con el
+   panel de administración (Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css). Si se sobreescribieran en :root[data-theme="light"], el
+   cambio de tema del sitio público se filtraría al admin (fuera de alcance)
+   porque ambos cuelgan del mismo <html>. Por eso el selector exige estar
+   dentro de .web-container.
+   Valores verificados con la fórmula de luminancia relativa WCAG
+   (contraste ≥4.5:1 texto normal, ≥3:1 texto grande / bordes interactivos).
+   ══════════════════════════════════════════ */
+html[data-theme="light"] .web-container {
+  --page-bg:      #F5F5F5;
+  /* "Hueso"/crema ligado al dorado de marca (--label-accent de los
+     dropdowns) para las zonas que en oscuro son negras (navbar, footer,
+     menú desplegable) — en oscuro el sitio combina rojo + negro; sin esto
+     el claro quedaba casi todo blanco, sin ese segundo color. Contraste
+     verificado: texto principal 15.8:1, rojo de marca 6.1:1, texto
+     secundario 5.9:1 sobre este tono (todos >=4.5:1). */
+  --navbar-bg:    #F2EAD9;
+  --footer-bg:    #F2EAD9;
+  --dropdown-menu-bg: #F2EAD9;
+
+  --surface:    #FFFFFF;
+  --surface-2:  #F7F7F7;
+  --surface-3:  #ECECEC;
+  --surface-hover: #E4E4E4;
+  --border:         #E2E2E2;
+  --border-subtle:  #EDEDED;
+  --border-interactive: #8C8C8C;
+
+  --text-main:      #111111;
+  --text-primary:   #1A1A1A;
+  --text-secondary: #595959;
+  --text-muted:     #707070;
+  --text-dim:       #9A9A9A;
+
+  --action-red:        #B00710;
+  --action-red-light:  #D10A14;
+  --action-red-dim:    rgba(176,7,16,0.10);
+  --action-red-glow:   rgba(176,7,16,0.25);
+
+  --error:      #B00710;
+  --error-dim:  rgba(176,7,16,0.10);
+
+  --emerald:      #1C7A43;
+  --emerald-dim:  rgba(28,122,67,0.10);
+
+  /* Reafirma la referencia: una custom property se resuelve en el elemento
+     donde se DECLARA, no donde se hereda. Si --accent-solid solo existiera
+     en :root (html), quedaría "congelada" con el --action-red de :root y
+     nunca vería este --action-red más específico de .web-container. */
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+
+  --label-accent: #8A6A1F;
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,0.14);
+}
+
+/* ══════════════════════════════════════════
+   MODOS DE VISIÓN (daltonismo) — SOLO SITIO PÚBLICO
+   Scoped a .web-container por la misma razón que el tema claro (ver arriba):
+   no debe filtrarse al panel de administración. Cada modo redefine
+   variables de color de marca/estado — NO son filtros que "simulan"
+   daltonismo, son una paleta alternativa pensada para esos usuarios.
+   "default" no necesita regla: hereda los valores del tema activo.
+
+   Los pares (--action-red / --emerald) comparten color a propósito en
+   protan-deutan y tritan: ambos significan "positivo/selección", y la
+   distinción entre "butaca seleccionada" y "éxito" siempre se refuerza con
+   ícono/texto (✓, la palabra "Seleccionada", el modal de éxito), nunca solo
+   color — igual que exige WCAG 1.4.1.
+
+   Selectores compuestos con [data-theme] a propósito: el azul/naranja de
+   protan-deutan y el magenta/verde-azulado de tritan necesitan un matiz
+   distinto sobre fondo oscuro vs. claro para mantener contraste >=4.5:1
+   (verificado con /tmp/contrast-check-vision.mjs durante el desarrollo);
+   usar var(--text-main) no sirve aquí porque sí son colores con significado
+   propio, a diferencia de "mono" más abajo.
+   ══════════════════════════════════════════ */
+
+/* Protanopia/Deuteranopia (rojo-verde) — paleta Okabe-Ito */
+html[data-theme="dark"][data-vision="protan-deutan"] .web-container {
+  --action-red:       #4FA6D9;
+  --action-red-light: #6FBBE8;
+  --action-red-dim:   rgba(79,166,217,0.15);
+  --action-red-glow:  rgba(79,166,217,0.35);
+  --emerald:      #4FA6D9;
+  --emerald-dim:  rgba(79,166,217,0.15);
+  --error:      #E69F00;
+  --error-dim:  rgba(230,159,0,0.15);
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+  /* Mismo valor en ambos temas a propósito: ver nota de --overlay-accent en :root. */
+  --overlay-accent: #4FA6D9;
+}
+html[data-theme="light"][data-vision="protan-deutan"] .web-container {
+  --action-red:       #0072B2;
+  --action-red-light: #1C84C4;
+  --action-red-dim:   rgba(0,114,178,0.10);
+  --action-red-glow:  rgba(0,114,178,0.25);
+  --emerald:      #0072B2;
+  --emerald-dim:  rgba(0,114,178,0.10);
+  --error:      #8A5A00;
+  --error-dim:  rgba(138,90,0,0.10);
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+  --overlay-accent: #4FA6D9;
+}
+
+/* Tritanopia (azul-amarillo) — rojo/magenta + verde azulado, nunca azul/amarillo */
+html[data-theme="dark"][data-vision="tritan"] .web-container {
+  --action-red:       #E8569A;
+  --action-red-light: #F17FB0;
+  --action-red-dim:   rgba(232,86,154,0.15);
+  --action-red-glow:  rgba(232,86,154,0.35);
+  --emerald:      #4FBFB0;
+  --emerald-dim:  rgba(79,191,176,0.15);
+  --error:      #FF6659;
+  --error-dim:  rgba(255,102,89,0.15);
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+  --overlay-accent: #E8569A;
+}
+html[data-theme="light"][data-vision="tritan"] .web-container {
+  --action-red:       #C2185B;
+  --action-red-light: #D6478B;
+  --action-red-dim:   rgba(194,24,91,0.10);
+  --action-red-glow:  rgba(194,24,91,0.25);
+  --emerald:      #00695C;
+  --emerald-dim:  rgba(0,105,92,0.10);
+  --error:      #C62828;
+  --error-dim:  rgba(198,40,40,0.10);
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+  --overlay-accent: #E8569A;
+}
+
+/* Monocromático / alto contraste: todo el acento de color colapsa al tinte
+   "tinta" neutro del tema activo (ya es texto/superficie, no color), y se
+   refuerzan borde grueso + patrón en los componentes clave (ver WebPages.css
+   y WebHome.css) porque el color deja de ser una señal disponible. */
+html[data-vision="mono"] .web-container {
+  --action-red:       var(--text-main);
+  --action-red-light: var(--text-main);
+  --action-red-dim:   var(--surface-3);
+  --action-red-glow:  transparent;
+  --emerald:      var(--text-main);
+  --emerald-dim:  var(--surface-3);
+  --error:      var(--text-main);
+  --error-dim:  var(--surface-3);
+  --accent-solid:         var(--action-red);
+  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-success: var(--emerald);
+  --label-accent: var(--text-secondary);
+
+  /* "Mono" es escala de grises de verdad: el fondo de página, el navbar/
+     footer y el menú desplegable tienen un tinte de marca (rojo en oscuro,
+     hueso/dorado en claro), no neutro — se igualan a los tonos de
+     superficie ya grises del tema activo. */
+  --page-bg: var(--surface);
+  --navbar-bg: var(--surface-2);
+  --footer-bg: var(--surface-2);
+  --dropdown-menu-bg: var(--surface-2);
+
+  /* Blanco fijo (no var(--text-main), que en claro sería negro — casi
+     invisible sobre la foto oscurecida de .movie-hover-overlay). */
+  --overlay-accent: #FFFFFF;
+}
+
+/* Único caso donde mono necesita distinguir tema: en oscuro, --text-main es
+   blanco, y los botones de relleno sólido llevan texto blanco escrito
+   encima — sin esto el texto desaparecería sobre su propio fondo. */
+html[data-theme="dark"][data-vision="mono"] .web-container {
+  --accent-solid:         #2B2B2B;
+  --accent-solid-light:   #3D3D3D;
+  --accent-solid-success: #2B2B2B;
+}
+
+/* ══════════════════════════════════════════
+   ESCALA DE LETRA (4 niveles)
+   Se aplica al <html> globalmente: ninguna hoja de estilo del admin usa
+   unidades rem (verificado — Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css, App.css solo usan px), así que esto no afecta al panel de
+   administración aunque comparta el mismo <html>; solo reescala el texto de
+   las páginas Web* que sí usan rem para font-size.
+   ══════════════════════════════════════════ */
+html[data-font-scale="100"] { font-size: 100%; }
+html[data-font-scale="115"] { font-size: 115%; }
+html[data-font-scale="130"] { font-size: 130%; }
+html[data-font-scale="150"] { font-size: 150%; }
 
 html, body, #root {
   height: 100%;

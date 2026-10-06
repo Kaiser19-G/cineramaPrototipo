@@ -8,28 +8,27 @@
 }
 
 .auth-card {
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 3rem;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-lg);
 }
 
 .auth-tabs {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid var(--border);
 }
 
 .auth-tab {
   flex: 1;
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-muted);
   font-size: 1.2rem;
   padding-bottom: 1rem;
   cursor: pointer;
@@ -37,8 +36,8 @@
 }
 
 .auth-tab.active {
-  color: #fff;
-  border-bottom: 2px solid #cc0000;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--action-red);
   font-weight: bold;
 }
 
@@ -62,27 +61,27 @@
 
 .form-group label {
   font-size: 0.9rem;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 .form-group input, .payment-form input, .payment-form select {
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: white;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
 .form-group input:focus, .payment-form input:focus {
   outline: none;
-  border-color: #cc0000;
-  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--action-red);
+  background-color: var(--surface-3);
 }
 
 .btn-auth, .btn-solid {
-  background-color: #cc0000;
+  background-color: var(--accent-solid);
   color: white;
   border: none;
   border-radius: 8px;
@@ -94,9 +93,9 @@
 }
 
 .btn-auth:hover, .btn-solid:hover {
-  background-color: #a00000;
+  background-color: var(--accent-solid-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+  box-shadow: 0 4px 12px var(--action-red-glow);
 }
 
 .btn-auth:active, .btn-solid:active {
@@ -105,8 +104,8 @@
 
 .btn-outline {
   background-color: transparent;
-  color: white;
-  border: 1px solid #cc0000;
+  color: var(--text-main);
+  border: 1px solid var(--action-red);
   border-radius: 8px;
   padding: 0.8rem 1.5rem;
   font-size: 1.1rem;
@@ -115,9 +114,9 @@
 }
 
 .btn-outline:hover {
-  background-color: rgba(204, 0, 0, 0.1);
+  background-color: var(--action-red-dim);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2);
+  box-shadow: 0 4px 12px var(--action-red-dim);
 }
 
 .btn-outline:active {
@@ -135,32 +134,32 @@
 .cinemas-title {
   font-size: 2.5rem;
   margin-bottom: 1rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .cinemas-filter-bar {
   display: flex;
   align-items: center;
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.25rem 0.5rem;
   margin-bottom: 3rem;
   width: fit-content;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-md);
   gap: 0;
 }
 
 .filter-divider {
   width: 1px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--border);
   flex-shrink: 0;
 }
 
 .cinemas-grid-view {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
 }
 
@@ -181,7 +180,7 @@
   aspect-ratio: 16/9;
   overflow: hidden;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-md);
 }
 
 .cinema-card-img img {
@@ -195,10 +194,15 @@
   transform: scale(1.05);
 }
 
+/* Overlays sobre fotografías: no cambian con el tema claro/oscuro (necesitan
+   contraste contra la foto, no contra la superficie), pero SÍ deben cambiar
+   con el modo de daltonismo — por eso usan --overlay-accent en vez de un
+   rojo fijo (bug reportado: el "Ver detalle" quedaba rojo pasara lo que
+   pasara en el panel de Accesibilidad). */
 .cinema-hover-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(229, 9, 20, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -239,13 +243,13 @@
   color: white;
   font-weight: bold;
   font-size: 1.2rem;
-  border: 2px solid #e50914;
-  background-color: rgba(229, 9, 20, 0.2);
+  border: 2px solid var(--overlay-accent);
+  background-color: rgba(255, 255, 255, 0.12);
   padding: 10px 20px;
   border-radius: 30px;
   transform: translateY(15px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .movie-poster:hover .movie-hover-overlay span,
@@ -260,20 +264,20 @@
 .cinema-card-details h4 {
   margin: 0 0 5px 0;
   font-size: 1.2rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .cinema-address {
   margin: 0 0 5px 0;
   font-size: 0.9rem;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 .cinema-formats {
   margin: 0;
   font-size: 0.9rem;
   font-weight: bold;
-  color: #e50914;
+  color: var(--action-red);
 }
 
 /* === Web Movies (Layout con Sidebar) === */
@@ -294,7 +298,7 @@
 .movies-sidebar {
   width: 280px;
   flex-shrink: 0;
-  border-right: 1px solid rgba(255,255,255,0.1);
+  border-right: 1px solid var(--border);
   padding-right: 20px;
 }
 
@@ -304,11 +308,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-main);
 }
 
 .accordion-filter {
   margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
 }
 
@@ -321,9 +326,10 @@
   font-weight: bold;
   padding: 10px 0;
   transition: color 0.2s;
+  color: var(--text-main);
 }
-.filter-title:hover { color: #cc0000; }
-.active-text { color: #e50914; }
+.filter-title:hover { color: var(--action-red); }
+.active-text { color: var(--action-red); }
 
 .filter-options {
   padding: 10px 0 10px 10px;
@@ -334,11 +340,11 @@
 .filter-options p {
   margin: 0;
   font-size: 0.9rem;
-  color: #ccc;
+  color: var(--text-secondary);
   cursor: pointer;
 }
-.filter-options p:hover { color: #fff; }
-.filter-options .active-option { color: #e50914; font-weight: bold; }
+.filter-options p:hover { color: var(--text-main); }
+.filter-options .active-option { color: var(--action-red); font-weight: bold; }
 
 /* Lista de Películas */
 .movies-list {
@@ -351,26 +357,26 @@
   gap: 1rem;
   margin-bottom: 2rem;
 }
-.movies-top-bar h3 { margin: 0; font-size: 1.2rem; font-weight: normal; }
-.movies-top-bar .count { color: #e50914; font-weight: bold; font-size: 1.4rem; }
+.movies-top-bar h3 { margin: 0; font-size: 1.2rem; font-weight: normal; color: var(--text-primary); }
+.movies-top-bar .count { color: var(--action-red); font-weight: bold; font-size: 1.4rem; }
 
 .active-filters-pills {
   display: flex;
   gap: 10px;
 }
 .active-filters-pills .pill {
-  border: 1px solid #cc0000;
-  color: #cc0000;
+  border: 1px solid var(--action-red);
+  color: var(--action-red);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
   cursor: pointer;
 }
-.active-filters-pills .pill:hover { background: rgba(204,0,0,0.1); }
+.active-filters-pills .pill:hover { background: var(--action-red-dim); }
 
 .movies-grid-view {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
 }
 
@@ -386,7 +392,7 @@
   aspect-ratio: 2/3;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-md);
 }
 
 .poster-container img {
@@ -400,13 +406,13 @@
   position: absolute;
   top: 15px;
   left: -35px;
-  background-color: #cc0000;
+  background-color: var(--accent-solid);
   color: white;
   padding: 5px 40px;
   transform: rotate(-45deg);
   font-weight: bold;
   font-size: 0.9rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-sm);
 }
 
 .hover-overlay {
@@ -414,7 +420,7 @@
 }
 
 .btn-comprar {
-  background-color: #cc0000;
+  background-color: var(--accent-solid);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -425,17 +431,17 @@
   width: 80%;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-comprar:hover { 
-  background-color: #a00000; 
+.btn-comprar:hover {
+  background-color: var(--accent-solid-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+  box-shadow: 0 4px 12px var(--action-red-glow);
 }
 .btn-comprar:active {
   transform: scale(0.97);
 }
 
 .btn-detalles {
-  background-color: #0055a4;
+  background-color: var(--electric-blue);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -446,10 +452,10 @@
   width: 80%;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-detalles:hover { 
-  background-color: #004080;
+.btn-detalles:hover {
+  filter: brightness(1.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 85, 164, 0.4);
+  box-shadow: 0 4px 12px var(--electric-blue-dim);
 }
 .btn-detalles:active {
   transform: scale(0.97);
@@ -458,12 +464,12 @@
 .movie-card-info h4 {
   margin: 0 0 5px 0;
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-main);
 }
 .movie-card-info p {
   margin: 0;
   font-size: 0.85rem;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 /* === Web Booking (Butacas & Pago) === */
@@ -474,104 +480,254 @@
   max-width: 1300px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
 }
 
 .booking-main {
   flex: 1;
-  background: white; /* Basado en tu wireframe de butacas donde el fondo es blanco */
-  color: #111;
-  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
 }
+
+/* Indicador de pasos */
+.booking-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+.booking-step-wrap { display: flex; align-items: center; gap: 10px; }
+.booking-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.booking-step .step-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--border);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.booking-step.current { color: var(--text-main); }
+.booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: #fff; }
+.booking-step.done .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: #fff; }
+.step-arrow { color: var(--text-muted); }
+
+/* width:100% evita que .booking-main (align-items:center) encoja este
+   contenedor a su max-content — sin esto, el mapa de butacas con overflow-x
+   empuja el ancho de todos sus ancestros en vez de desbordar solo adentro. */
+.seats-selection { width: 100%; }
+
+/* Pantalla */
+.screen-indicator { margin-bottom: 2.5rem; text-align: center; width: 100%; }
+.screen-bar {
+  height: 6px;
+  background: var(--action-red-dim);
+  border: 1px solid var(--action-red);
+  border-radius: 4px;
+  margin: 0 auto 12px;
+  width: 70%;
+  box-shadow: 0 0 15px var(--action-red-glow);
+}
+.screen-label {
+  font-size: 0.75rem;
+  color: var(--action-red);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+/* Mapa de butacas — el scroll horizontal, si ocurre, queda contenido aquí */
+.seats-map-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 1.5rem;
+}
+.seats-map {
+  display: grid;
+  grid-template-columns: repeat(10, 2.25rem);
+  gap: 0.625rem;
+  justify-content: center;
+  width: max-content;
+  margin: 0 auto;
+}
+
+/* El tamaño de la butaca se expresa en rem (no px) junto con su texto, para
+   que ambos escalen como unidad: con texto más grande a 150% pero caja fija
+   en px, el número de butaca se cortaría. */
+.seat-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition);
+}
+.seat-btn:hover:not(:disabled) { border-color: var(--action-red); color: var(--text-primary); }
+.seat-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+
+.seat-btn.seat-selected {
+  background: var(--accent-solid);
+  border-color: var(--action-red);
+  color: #fff;
+}
+.seat-btn.seat-occupied {
+  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
+  background-color: var(--surface);
+  border-color: var(--border-subtle);
+  border-style: dashed;
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+.seat-icon {
+  position: absolute;
+  top: -0.4375rem;
+  right: -0.4375rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  line-height: 1;
+}
+.seat-selected .seat-icon { background: #fff; color: var(--accent-solid); }
+.seat-occupied .seat-icon { background: var(--surface-3); color: var(--text-muted); }
 
 .seats-legend {
   display: flex;
   justify-content: center;
   gap: 2rem;
+  flex-wrap: wrap;
   margin-bottom: 2rem;
   font-size: 0.9rem;
+  color: var(--text-secondary);
+  list-style: none;
+  padding: 0;
 }
-
-.seats-legend .occupied { color: #cc0000; }
-.seats-legend .selected { color: #00cc00; }
-
-.screen-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 3rem;
+.seats-legend li { display: flex; align-items: center; gap: 8px; }
+.legend-swatch {
+  width: 1.125rem; height: 1.125rem; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.625rem; flex-shrink: 0;
+  border: 2px solid var(--border);
 }
-
-.screen {
-  width: 60%;
-  height: 30px;
-  background: #eee;
-  border: 1px solid #ccc;
-  text-align: center;
-  line-height: 30px;
-  color: #666;
-  border-radius: 4px;
-}
-
-.seats-grid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.seat-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.seat {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.seat.aisle {
-  margin-right: 2rem;
-}
-
-.row-label {
-  margin-left: 1rem;
-  font-weight: bold;
-  color: #666;
-}
-
-.col-labels {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-right: 2rem;
-}
-.col-labels span {
-  width: 30px;
-  text-align: center;
-  font-size: 0.8rem;
-  color: #666;
-}
-.col-labels .spacer {
-  width: 2rem;
+.legend-available { background: transparent; }
+.legend-selected { background: var(--accent-solid); border-color: var(--action-red); color: #fff; font-weight: 800; }
+.legend-occupied {
+  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
+  background-color: var(--surface);
+  border-color: var(--border-subtle);
+  border-style: dashed;
+  color: var(--text-muted);
+  font-weight: 800;
 }
 
 .booking-actions {
   display: flex;
   justify-content: flex-end;
   margin-top: 2rem;
+  width: 100%;
 }
+.booking-actions-center { justify-content: center; }
+.booking-actions-split { justify-content: space-between; }
+
+@media (max-width: 768px) {
+  .web-booking-layout {
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+  .booking-sidebar { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .web-booking-layout { padding: 1rem; }
+  .booking-main { padding: 1.25rem; }
+  /* El botón flotante de accesibilidad vive en la esquina inferior derecha;
+     en pantallas angostas "Pagar"/"Continuar" quedaban justo debajo. Se
+     apilan a ancho completo (la acción principal arriba, más alejada de la
+     esquina) y se recorta el espaciado vertical de arriba para abrir una
+     separación real (no solo un margin-bottom, que no mueve el botón). */
+  .booking-steps { margin-bottom: 1.25rem; }
+  .payment-section { padding: 1rem 0; }
+  .payment-form { gap: 1rem; }
+  .booking-actions { margin-top: 1.25rem; }
+  .booking-actions-split {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-bottom: 96px;
+  }
+  .booking-actions-center { margin-bottom: 96px; }
+  .seats-map { grid-template-columns: repeat(10, 2rem); gap: 0.375rem; }
+  .seat-btn { width: 2rem; height: 2rem; font-size: 0.5625rem; }
+}
+
+.booking-success-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  display: flex; justify-content: center; align-items: center;
+  backdrop-filter: blur(5px);
+}
+.booking-success-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3rem;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+}
+.success-icon-circle {
+  width: 80px; height: 80px;
+  background: var(--emerald-dim);
+  border-radius: 50%;
+  display: flex; justify-content: center; align-items: center;
+  margin: 0 auto 1.5rem;
+  border: 2px solid var(--emerald);
+  color: var(--emerald);
+}
+.booking-success-modal h2 { color: var(--text-main); font-size: 1.8rem; margin-bottom: 1rem; }
+.booking-success-modal p { color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.5; }
 
 .booking-sidebar {
   width: 350px;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
 }
 
 .movie-summary-card {
@@ -579,39 +735,96 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+.movie-img-placeholder {
+  width: 80px; height: 120px; flex-shrink: 0;
+  background: var(--surface-3);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  color: var(--text-muted);
+}
+.movie-img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
 
-.movie-info-compact p { margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #ccc; }
+.movie-info-compact p { margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary); }
+.info-strong { color: var(--text-main); font-weight: bold; }
 
-.booking-sidebar h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; }
-.highlight-text { font-weight: bold; color: #ff3333; margin: 0 0 0.5rem 0; }
-.booking-sidebar p { margin: 0 0 0.5rem 0; }
+.summary-movie-title { margin: 0 0 8px 0; font-size: 1.5rem; color: var(--text-main); }
+.highlight-text { font-weight: bold; color: var(--action-red); margin: 0 0 8px 0; }
+.summary-meta { color: var(--text-secondary); margin: 0 0 4px 0; }
+.summary-subtitle { color: var(--text-main); margin-bottom: 1rem; }
+.summary-label { color: var(--text-secondary); margin: 0 0 10px 0; }
 
 .divider {
   height: 1px;
-  background: rgba(255,255,255,0.2);
+  background: var(--border);
   margin: 1.5rem 0;
 }
 
-.seats-selected-list { margin-top: 1rem; }
-.cant { text-align: right; color: #ccc; }
-.total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; }
+.seats-selected-list { margin-bottom: 1rem; }
+.selected-seats-chips { display: flex; gap: 8px; flex-wrap: wrap; min-height: 30px; }
+.seat-chip {
+  background: var(--action-red-dim);
+  border: 1px solid var(--action-red);
+  color: var(--text-main);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+.no-seats-text { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
+
+.price-breakdown { color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 1rem 0; text-align: right; }
+
+.total-row { display: flex; justify-content: space-between; align-items: center; }
+.total-label { color: var(--text-main); margin: 0; }
+.total-row .price { color: var(--emerald); font-size: 1.8rem; font-weight: 900; margin: 0; }
+
+.payment-section { width: 100%; max-width: 500px; padding: 2rem 0; }
+.payment-title { font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--text-main); }
 
 .payment-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 1.25rem;
 }
-.payment-row { display: flex; gap: 1rem; }
-.payment-row input { flex: 1; }
+.payment-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.payment-row .form-field { flex: 1; min-width: 140px; }
+
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-label-web { font-size: 0.85rem; color: var(--text-secondary); }
+.input-web {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+}
+.input-web:focus {
+  outline: none;
+  border-color: var(--action-red);
+  box-shadow: 0 0 0 3px var(--action-red-dim);
+}
+.input-web[aria-invalid="true"] { border-color: var(--error); }
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
 
 /* === Web Movie Details Page === */
 .movie-details-page {
-  background-color: #6a1a1b;
+  background-color: var(--page-bg);
   min-height: 100vh;
 }
 
-/* Banner de Video */
+/* Banner de Video: chrome sobre una fotografía — se queda fijo a propósito. */
 .movie-detail-banner {
   height: 450px;
   background-size: cover;
@@ -669,7 +882,7 @@
 
 .movie-title-info h1 {
   font-size: 3rem;
-  color: #fff;
+  color: var(--text-main);
   margin: 0 0 10px 0;
   text-shadow: 0 4px 10px rgba(0,0,0,0.5);
   font-weight: 800;
@@ -677,27 +890,30 @@
 
 .movie-meta-tags {
   font-size: 1.1rem;
-  color: #ccc;
+  color: var(--text-secondary);
   margin: 0;
   font-weight: 500;
 }
 
+/* Botón "Comprar" invertido (superficie + borde de marca) en vez de blanco
+   fijo: en tema claro un botón blanco sobre fondo claro sería invisible. */
 .btn-comprar-top {
-  background-color: white;
-  color: #cc0000;
-  border: none;
+  background-color: var(--surface);
+  color: var(--action-red);
+  border: 2px solid var(--action-red);
   border-radius: 30px;
   padding: 12px 30px;
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-md);
 }
 .btn-comprar-top:hover {
-  background-color: #f0f0f0;
+  background-color: var(--accent-solid);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow-lg);
 }
 .btn-comprar-top:active {
   transform: scale(0.97);
@@ -720,7 +936,7 @@
   aspect-ratio: 2/3;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
   position: relative;
 }
 
@@ -735,19 +951,19 @@
 }
 
 .synopsis-card {
-  background-color: rgba(0, 0, 0, 0.4);
-  color: #fff;
+  background-color: var(--surface);
+  color: var(--text-primary);
   border-radius: 12px;
   padding: 2.5rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
   position: relative;
-  border-bottom: 8px solid #cc0000;
-  border: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 8px solid var(--action-red);
+  border: 1px solid var(--border);
 }
 
 .synopsis-card h2 {
   font-size: 1.8rem;
-  color: #ff3333;
+  color: var(--action-red-light);
   margin: 0 0 1rem 0;
   font-weight: bold;
 }
@@ -756,7 +972,7 @@
   font-size: 1rem;
   line-height: 1.6;
   margin-bottom: 2rem;
-  color: #ddd;
+  color: var(--text-secondary);
 }
 
 .info-meta-group {
@@ -765,7 +981,7 @@
 
 .info-meta-group h3 {
   font-size: 1rem;
-  color: #fff;
+  color: var(--text-main);
   margin: 0 0 0.8rem 0;
 }
 
@@ -775,8 +991,8 @@
 }
 
 .lang-badge {
-  border: 1.5px solid #cc0000;
-  color: #ff3333;
+  border: 1.5px solid var(--action-red);
+  color: var(--action-red-light);
   padding: 4px 12px;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -786,7 +1002,7 @@
 .formats-available {
   font-size: 1rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-main);
 }
 
 /* Sección de Horarios y Funciones */
@@ -797,7 +1013,7 @@
 
 .section-title-fun {
   font-size: 2.2rem;
-  color: white;
+  color: var(--text-main);
   margin-bottom: 2rem;
   font-weight: 800;
 }
@@ -806,13 +1022,13 @@
 .showtimes-filters-bar {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.25rem 0.5rem;
   margin-bottom: 2.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  color: #fff;
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
   gap: 0;
 }
 
@@ -832,16 +1048,16 @@
   border: none;
   padding: 1rem 1.5rem;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-primary);
   text-align: left;
   border-radius: 8px;
   transition: background 0.15s;
 }
 .custom-dd-btn:hover {
-  background: rgba(255,255,255,0.06);
+  background: var(--surface-hover);
 }
 .custom-dd-btn.open {
-  background: rgba(255,255,255,0.08);
+  background: var(--surface-3);
 }
 
 .custom-dd-inner {
@@ -853,7 +1069,7 @@
 .custom-dd-label {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #d8b78f;
+  color: var(--label-accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -861,7 +1077,7 @@
 .custom-dd-value {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -869,7 +1085,7 @@
 
 .custom-dd-chevron {
   flex-shrink: 0;
-  color: #aaa;
+  color: var(--text-muted);
   transition: transform 0.2s ease;
 }
 .custom-dd-chevron.rotated {
@@ -881,10 +1097,10 @@
   top: calc(100% + 6px);
   left: 0;
   min-width: 200px;
-  background: #1e0a0b;
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--dropdown-menu-bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
   list-style: none;
   margin: 0;
   padding: 6px 0;
@@ -900,34 +1116,34 @@
 .custom-dd-item {
   padding: 10px 18px;
   font-size: 0.9rem;
-  color: #ddd;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 .custom-dd-item:hover {
-  background: rgba(204,0,0,0.15);
-  color: #fff;
+  background: var(--action-red-dim);
+  color: var(--text-main);
 }
 .custom-dd-item.selected {
-  color: #ff4444;
+  color: var(--action-red-light);
   font-weight: 700;
 }
 .custom-dd-item.clear-item {
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.82rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 4px;
   padding-bottom: 10px;
 }
 .custom-dd-item.clear-item:hover {
-  color: #fff;
+  color: var(--text-main);
   background: transparent;
 }
 
 .filter-divider-showtime {
   width: 1px;
   height: 36px;
-  background: rgba(255,255,255,0.15);
+  background: var(--border);
   flex-shrink: 0;
 }
 
@@ -939,13 +1155,13 @@
 }
 
 .accordion-item-cinema {
-  background: rgba(0,0,0,0.4);
+  background: var(--surface-2);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-left: 5px solid #cc0000;
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--action-red);
 }
 
 .accordion-header-cinema {
@@ -958,36 +1174,36 @@
 }
 
 .accordion-header-cinema:hover {
-  background-color: rgba(255,255,255,0.05);
+  background-color: var(--surface-hover);
 }
 
 .accordion-header-cinema h3 {
   margin: 0;
   font-size: 1.3rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .accordion-header-cinema .arrow {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #ff3333;
+  color: var(--action-red-light);
 }
 
 .accordion-body-cinema {
   padding: 2rem;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  background-color: rgba(0,0,0,0.6);
+  border-top: 1px solid var(--border);
+  background-color: var(--surface-3);
 }
 
 .room-type-tag {
   display: inline-block;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid var(--border-interactive);
   padding: 4px 10px;
   border-radius: 4px;
   font-weight: bold;
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 .showtime-buttons-grid {
@@ -995,19 +1211,21 @@
   gap: 1.5rem;
 }
 
+/* "Ticket" de horario: metáfora de boleto de papel, se queda blanco con
+   texto en rojo-marca a propósito en ambos temas (como el chip de VISA). */
 .showtime-btn {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: white;
-  color: #cc0000;
+  background: #ffffff;
+  color: var(--accent-solid);
   padding: 10px 24px;
   border: none;
   font-weight: bold;
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Ticket shape using CSS mask */
   -webkit-mask-image: radial-gradient(circle at 0 50%, transparent 6px, black 6.5px), radial-gradient(circle at 100% 50%, transparent 6px, black 6.5px);
   -webkit-mask-size: 51% 100%;
@@ -1017,7 +1235,7 @@
   mask-size: 51% 100%;
   mask-position: 0 0, 100% 0;
   mask-repeat: no-repeat;
-  
+
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
@@ -1032,9 +1250,9 @@
 }
 
 .showtime-btn.disabled {
-  border-color: rgba(255,255,255,0.2);
-  color: #666;
-  background-color: rgba(255,255,255,0.05);
+  border-color: var(--border);
+  color: var(--text-muted);
+  background-color: var(--surface-3);
   cursor: not-allowed;
 }
 
@@ -1064,7 +1282,7 @@
 }
 
 .cinema-title-blue {
-  color: #fff;
+  color: var(--text-main);
   font-size: 2.5rem;
   margin: 0;
 }
@@ -1079,14 +1297,14 @@
   border: none;
   font-size: 1.1rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-main);
   cursor: pointer;
   padding: 5px 10px;
   border-bottom: 3px solid transparent;
 }
 
 .cinema-tab-btn.active {
-  border-bottom: 3px solid #e50914;
+  border-bottom: 3px solid var(--action-red);
 }
 
 .cinema-horarios-controls {
@@ -1127,12 +1345,80 @@
 }
 
 .cinema-movie-meta {
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.95rem;
   margin: 0 0 15px 0;
 }
 
-/* Ensure the custom dropdown fits with the dark theme */
+/* Ensure the custom dropdown fits with the current theme */
 .cinema-details-page .custom-dropdown-header {
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════
+   MODO MONO (acromatopsia / alto contraste)
+   El color ya no es una señal disponible: se refuerza con borde grueso en
+   controles interactivos y un patrón propio para "seleccionada" (distinto
+   del rayado de "ocupada"), además del ícono que ya existe en todos los modos.
+   ══════════════════════════════════════════ */
+html[data-vision="mono"] .seat-btn,
+html[data-vision="mono"] .legend-swatch {
+  border-width: 3px;
+}
+html[data-vision="mono"] .input-web,
+html[data-vision="mono"] .custom-dd-btn {
+  border-width: 2px;
+}
+html[data-vision="mono"] .btn-outline {
+  border-width: 2px;
+}
+html[data-vision="mono"] .seat-btn.seat-selected,
+html[data-vision="mono"] .legend-selected {
+  background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVIDAD — Cines, Películas, Detalle de película/cine
+   Verificado sin overflow horizontal a 375px con 100% y 150% de letra.
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .web-page-center { padding: 1.5rem; }
+  .auth-card { padding: 2rem 1.5rem; }
+  .form-row { flex-direction: column; gap: 1.5rem; }
+
+  .web-list-page { padding: 1.5rem; }
+  .cinemas-filter-bar { flex-wrap: wrap; width: 100%; }
+  .cinemas-grid-view { grid-template-columns: minmax(0, 1fr); }
+
+  .web-movies-layout { flex-direction: column; padding: 1.5rem; gap: 1.5rem; }
+  .movies-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+  .movies-grid-view { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .movie-detail-content { padding: 1.5rem; }
+  .movie-header-section { flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+  .movie-title-info h1 { font-size: 2rem; }
+  .movie-info-cols { flex-direction: column; gap: 1.5rem; }
+  .movie-info-left { width: 100%; max-width: 280px; }
+  .showtimes-filters-bar { flex-wrap: wrap; }
+  .showtimes-filters-bar .filter-divider-showtime { display: none; }
+  .showtime-buttons-grid { flex-wrap: wrap; gap: 0.75rem; }
+  .accordion-header-cinema { padding: 1rem 1.25rem; }
+  .accordion-body-cinema { padding: 1.25rem; }
+
+  .cinema-details-page { padding: 24px 16px; }
+  .cinema-details-header { flex-wrap: wrap; gap: 1rem; }
+  .cinema-movie-list-item { flex-direction: column; gap: 1rem; }
+  .cinema-movie-poster-col { width: 100%; max-width: 220px; }
+}
+
+@media (max-width: 480px) {
+  .cinemas-grid-view { gap: 1.25rem; }
+  .movies-grid-view { grid-template-columns: minmax(0, 1fr); }
+  .active-filters-pills { flex-wrap: wrap; }
 }
