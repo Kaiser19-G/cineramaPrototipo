@@ -74,6 +74,10 @@
   .web-brand h1 { font-size: 1.8rem; }
   .web-nav-links { gap: 1rem; flex-wrap: wrap; }
   .nav-link { font-size: 0.95rem; }
+
+  .web-footer { padding: 2.5rem 1.5rem 1.5rem; }
+  .footer-col { min-width: 0; }
+  .footer-logo { overflow-wrap: anywhere; }
 }
 
 /* === Footer Público === */

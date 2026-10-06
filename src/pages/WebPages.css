@@ -159,7 +159,7 @@
 
 .cinemas-grid-view {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
 }
 
@@ -373,7 +373,7 @@
 
 .movies-grid-view {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
 }
 
@@ -477,6 +477,7 @@
   max-width: 1300px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
 }
 
 .booking-main {
@@ -523,6 +524,11 @@
 .booking-step.done .step-num { background: var(--emerald); border-color: var(--emerald); color: #fff; }
 .step-arrow { color: var(--text-muted); }
 
+/* width:100% evita que .booking-main (align-items:center) encoja este
+   contenedor a su max-content — sin esto, el mapa de butacas con overflow-x
+   empuja el ancho de todos sus ancestros en vez de desbordar solo adentro. */
+.seats-selection { width: 100%; }
+
 /* Pantalla */
 .screen-indicator { margin-bottom: 2.5rem; text-align: center; width: 100%; }
 .screen-bar {
@@ -535,7 +541,7 @@
   box-shadow: 0 0 15px var(--action-red-glow);
 }
 .screen-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--action-red);
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -552,23 +558,26 @@
 }
 .seats-map {
   display: grid;
-  grid-template-columns: repeat(10, 36px);
-  gap: 10px;
+  grid-template-columns: repeat(10, 2.25rem);
+  gap: 0.625rem;
   justify-content: center;
   width: max-content;
   margin: 0 auto;
 }
 
+/* El tamaño de la butaca se expresa en rem (no px) junto con su texto, para
+   que ambos escalen como unidad: con texto más grande a 150% pero caja fija
+   en px, el número de butaca se cortaría. */
 .seat-btn {
-  width: 36px;
-  height: 36px;
-  min-width: 32px;
-  min-height: 32px;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2rem;
+  min-height: 2rem;
   border-radius: 8px;
   border: 2px solid var(--border);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   font-family: inherit;
   display: flex;
@@ -596,15 +605,15 @@
 }
 .seat-icon {
   position: absolute;
-  top: -7px;
-  right: -7px;
-  width: 15px;
-  height: 15px;
+  top: -0.4375rem;
+  right: -0.4375rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 0.5625rem;
   line-height: 1;
 }
 .seat-selected .seat-icon { background: #fff; color: var(--action-red); }
@@ -623,9 +632,9 @@
 }
 .seats-legend li { display: flex; align-items: center; gap: 8px; }
 .legend-swatch {
-  width: 18px; height: 18px; border-radius: 4px;
+  width: 1.125rem; height: 1.125rem; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 10px; flex-shrink: 0;
+  font-size: 0.625rem; flex-shrink: 0;
   border: 2px solid var(--border);
 }
 .legend-available { background: transparent; }
@@ -660,8 +669,8 @@
 @media (max-width: 480px) {
   .web-booking-layout { padding: 1rem; }
   .booking-main { padding: 1.25rem; }
-  .seats-map { grid-template-columns: repeat(10, 32px); gap: 6px; }
-  .seat-btn { width: 32px; height: 32px; font-size: 9px; }
+  .seats-map { grid-template-columns: repeat(10, 2rem); gap: 0.375rem; }
+  .seat-btn { width: 2rem; height: 2rem; font-size: 0.5625rem; }
 }
 
 .booking-success-overlay {
@@ -1326,4 +1335,50 @@
 /* Ensure the custom dropdown fits with the current theme */
 .cinema-details-page .custom-dropdown-header {
   border: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVIDAD — Cines, Películas, Detalle de película/cine
+   Verificado sin overflow horizontal a 375px con 100% y 150% de letra.
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .web-page-center { padding: 1.5rem; }
+  .auth-card { padding: 2rem 1.5rem; }
+  .form-row { flex-direction: column; gap: 1.5rem; }
+
+  .web-list-page { padding: 1.5rem; }
+  .cinemas-filter-bar { flex-wrap: wrap; width: 100%; }
+  .cinemas-grid-view { grid-template-columns: minmax(0, 1fr); }
+
+  .web-movies-layout { flex-direction: column; padding: 1.5rem; gap: 1.5rem; }
+  .movies-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+  .movies-grid-view { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .movie-detail-content { padding: 1.5rem; }
+  .movie-header-section { flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+  .movie-title-info h1 { font-size: 2rem; }
+  .movie-info-cols { flex-direction: column; gap: 1.5rem; }
+  .movie-info-left { width: 100%; max-width: 280px; }
+  .showtimes-filters-bar { flex-wrap: wrap; }
+  .showtimes-filters-bar .filter-divider-showtime { display: none; }
+  .showtime-buttons-grid { flex-wrap: wrap; gap: 0.75rem; }
+  .accordion-header-cinema { padding: 1rem 1.25rem; }
+  .accordion-body-cinema { padding: 1.25rem; }
+
+  .cinema-details-page { padding: 24px 16px; }
+  .cinema-details-header { flex-wrap: wrap; gap: 1rem; }
+  .cinema-movie-list-item { flex-direction: column; gap: 1rem; }
+  .cinema-movie-poster-col { width: 100%; max-width: 220px; }
+}
+
+@media (max-width: 480px) {
+  .cinemas-grid-view { gap: 1.25rem; }
+  .movies-grid-view { grid-template-columns: minmax(0, 1fr); }
+  .active-filters-pills { flex-wrap: wrap; }
 }

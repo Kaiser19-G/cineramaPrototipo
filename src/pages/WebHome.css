@@ -157,6 +157,8 @@
   padding: 0 4rem 4rem;
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  min-width: 0; /* evita que el grid interno fuerce el ancho del flex item */
 }
 
 .section-title {
@@ -223,7 +225,7 @@
 
 .movies-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2rem;
 }
 
@@ -253,7 +255,7 @@
     flex-wrap: wrap;
   }
   .movies-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -271,6 +273,14 @@
     padding: 0 2rem 2rem;
   }
   .movies-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .movies-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .movies-tabs {
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 }
