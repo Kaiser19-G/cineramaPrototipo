@@ -194,12 +194,15 @@
   transform: scale(1.05);
 }
 
-/* Overlays sobre fotografías: se quedan en blanco/rojo-marca fijo a propósito
-   en ambos temas (necesitan contraste contra la foto, no contra la superficie). */
+/* Overlays sobre fotografías: no cambian con el tema claro/oscuro (necesitan
+   contraste contra la foto, no contra la superficie), pero SÍ deben cambiar
+   con el modo de daltonismo — por eso usan --overlay-accent en vez de un
+   rojo fijo (bug reportado: el "Ver detalle" quedaba rojo pasara lo que
+   pasara en el panel de Accesibilidad). */
 .cinema-hover-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(229, 9, 20, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -240,13 +243,13 @@
   color: white;
   font-weight: bold;
   font-size: 1.2rem;
-  border: 2px solid #e50914;
-  background-color: rgba(229, 9, 20, 0.2);
+  border: 2px solid var(--overlay-accent);
+  background-color: rgba(255, 255, 255, 0.12);
   padding: 10px 20px;
   border-radius: 30px;
   transform: translateY(15px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .movie-poster:hover .movie-hover-overlay span,
@@ -1372,17 +1375,6 @@ html[data-vision="mono"] .btn-outline {
 html[data-vision="mono"] .seat-btn.seat-selected,
 html[data-vision="mono"] .legend-selected {
   background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
-}
-/* Overlays decorativos sobre fotos: los dos únicos lugares del sitio con un
-   rgba() de marca escrito literal (no variable) — se neutralizan aparte
-   para que "mono" sea escala de grises real, no solo los acentos semánticos. */
-html[data-vision="mono"] .cinema-hover-overlay {
-  background: rgba(0, 0, 0, 0.75);
-}
-html[data-vision="mono"] .movie-hover-overlay span {
-  border-color: #fff;
-  background-color: rgba(0, 0, 0, 0.5);
-  box-shadow: none;
 }
 
 /* ══════════════════════════════════════════

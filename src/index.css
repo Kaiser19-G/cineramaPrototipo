@@ -42,6 +42,15 @@
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
 
+  /* Para el "contorno" del hover de pósters/cines (.movie-hover-overlay,
+     .cinema-hover-overlay): ese elemento siempre va encima de una foto
+     oscurecida, nunca de la superficie de la página, así que NO debe
+     cambiar con el tema claro/oscuro — pero SÍ debe cambiar con el modo de
+     daltonismo (si no, queda rojo fijo pase lo que pase en Accesibilidad,
+     que es exactamente el bug reportado). Por eso vive fuera del bloque de
+     tema claro: una sola declaración le sirve a ambos temas.  */
+  --overlay-accent: #E50914;
+
   --deep-night:   #0F0F0F;
   --dark-grey:    #1C1C1C;
   --surface:      #161616;
@@ -199,6 +208,8 @@ html[data-theme="dark"][data-vision="protan-deutan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  /* Mismo valor en ambos temas a propósito: ver nota de --overlay-accent en :root. */
+  --overlay-accent: #4FA6D9;
 }
 html[data-theme="light"][data-vision="protan-deutan"] .web-container {
   --action-red:       #0072B2;
@@ -212,6 +223,7 @@ html[data-theme="light"][data-vision="protan-deutan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --overlay-accent: #4FA6D9;
 }
 
 /* Tritanopia (azul-amarillo) — rojo/magenta + verde azulado, nunca azul/amarillo */
@@ -227,6 +239,7 @@ html[data-theme="dark"][data-vision="tritan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --overlay-accent: #E8569A;
 }
 html[data-theme="light"][data-vision="tritan"] .web-container {
   --action-red:       #C2185B;
@@ -240,6 +253,7 @@ html[data-theme="light"][data-vision="tritan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --overlay-accent: #E8569A;
 }
 
 /* Monocromático / alto contraste: todo el acento de color colapsa al tinte
@@ -268,6 +282,10 @@ html[data-vision="mono"] .web-container {
   --navbar-bg: var(--surface-2);
   --footer-bg: var(--surface-2);
   --dropdown-menu-bg: var(--surface-2);
+
+  /* Blanco fijo (no var(--text-main), que en claro sería negro — casi
+     invisible sobre la foto oscurecida de .movie-hover-overlay). */
+  --overlay-accent: #FFFFFF;
 }
 
 /* Único caso donde mono necesita distinguir tema: en oscuro, --text-main es
