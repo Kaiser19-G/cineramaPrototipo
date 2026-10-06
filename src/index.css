@@ -60,6 +60,61 @@
 
   --transition:      0.2s ease;
   --transition-slow: 0.35s ease;
+
+  /* ── Public site (Web*) — promoted from former hardcoded values ── */
+  --page-bg:           #6a1a1b;
+  --navbar-bg:          #1a1a1a;
+  --footer-bg:          #111111;
+  --dropdown-menu-bg:   #1e0a0b;
+  --label-accent:       #d8b78f;
+  --border-interactive: var(--border);
+}
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — SOLO SITIO PÚBLICO
+   Scoped a .web-container (no a :root) a propósito: --surface, --text-*,
+   --action-red, --emerald, --border, etc. son tokens compartidos con el
+   panel de administración (Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css). Si se sobreescribieran en :root[data-theme="light"], el
+   cambio de tema del sitio público se filtraría al admin (fuera de alcance)
+   porque ambos cuelgan del mismo <html>. Por eso el selector exige estar
+   dentro de .web-container.
+   Valores verificados con la fórmula de luminancia relativa WCAG
+   (contraste ≥4.5:1 texto normal, ≥3:1 texto grande / bordes interactivos).
+   ══════════════════════════════════════════ */
+html[data-theme="light"] .web-container {
+  --page-bg:      #F5F5F5;
+  --navbar-bg:    #FFFFFF;
+  --footer-bg:    #FFFFFF;
+  --dropdown-menu-bg: #FFFFFF;
+
+  --surface:    #FFFFFF;
+  --surface-2:  #F7F7F7;
+  --surface-3:  #ECECEC;
+  --surface-hover: #E4E4E4;
+  --border:         #E2E2E2;
+  --border-subtle:  #EDEDED;
+  --border-interactive: #8C8C8C;
+
+  --text-main:      #111111;
+  --text-primary:   #1A1A1A;
+  --text-secondary: #595959;
+  --text-muted:     #707070;
+  --text-dim:       #9A9A9A;
+
+  --action-red:        #B00710;
+  --action-red-light:  #D10A14;
+  --action-red-dim:    rgba(176,7,16,0.10);
+  --action-red-glow:   rgba(176,7,16,0.25);
+
+  --emerald:      #1C7A43;
+  --emerald-dim:  rgba(28,122,67,0.10);
+
+  --label-accent: #8A6A1F;
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,0.14);
 }
 
 html, body, #root {
