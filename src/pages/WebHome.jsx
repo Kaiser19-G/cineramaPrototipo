@@ -3,12 +3,17 @@ import './WebHome.css';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
+import { getNextDays } from '../data/dateHelpers';
+import { handlePosterError } from '../utils/posterFallback';
+import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import cineramaBanner from '../assets/CineramaBanner.png';
 
 export default function WebHome() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cartelera');
   const { branches, enabledMovies } = useCinema();
+  const carteleraMovies = enabledMovies.slice(0, 5);
+  const posterGrid = useGridKeyboardNav(carteleraMovies.length, 5);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -17,7 +22,7 @@ export default function WebHome() {
   const [selectedDate, setSelectedDate] = useState(null);
 
   const cities = [...new Set(branches.map(b => b.city))];
-  const dateOptions = ['Hoy Lunes', 'Martes 19', 'Miércoles 20'];
+  const dateOptions = getNextDays(3).map((d) => d.label);
 
   const handleSearch = () => {
     let movieId;
@@ -137,17 +142,22 @@ export default function WebHome() {
         </div>
         <div className="movies-divider"></div>
 
-        <div className="movies-grid">
-          {enabledMovies.slice(0, 5).map(movie => (
+        <div className="movies-grid" role="grid" aria-label="Películas en cartelera" onKeyDown={posterGrid.handleGridKeyDown}>
+          {carteleraMovies.map((movie, i) => (
             <button
               type="button"
               key={movie.id}
+              ref={posterGrid.registerItemRef(i)}
+              data-grid-index={i}
+              tabIndex={i === Math.min(posterGrid.focusedIndex, carteleraMovies.length - 1) ? 0 : -1}
+              role="gridcell"
               className="movie-poster"
               onClick={() => navigate(`/web/pelicula/${movie.id}`)}
+              onFocus={() => posterGrid.setFocusedIndex(i)}
               style={{ position: 'relative' }}
               aria-label={`Ver detalle de ${movie.title}`}
             >
-              <img src={movie.poster} alt="" />
+              <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
               <div className="movie-hover-overlay">
                 <span aria-hidden="true">Ver detalle ⟩</span>
               </div>

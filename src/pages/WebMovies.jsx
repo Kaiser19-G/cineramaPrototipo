@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
+import { getNextDays } from '../data/dateHelpers';
+import { handlePosterError } from '../utils/posterFallback';
+import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import './WebPages.css';
 
 export default function WebMovies() {
@@ -38,7 +41,7 @@ export default function WebMovies() {
     const formats = [...new Set(enabledMovies.map(m => m.format).flat())];
     
     // Days logic (simplified mock)
-    const days = ['Hoy Lunes', 'Martes 19', 'Miércoles 20'];
+    const days = getNextDays(3).map((d) => d.label);
 
     return { cities, cinemas, genres, languages, formats, days };
   }, [branches, enabledMovies]);
@@ -67,8 +70,10 @@ export default function WebMovies() {
     });
   }, [enabledMovies, branches, activeScreenings, filters]);
 
+  const posterGrid = useGridKeyboardNav(filteredMovies.length, 3);
+
   // Render active filter pills
-  const activePills = Object.entries(filters).filter(([_, val]) => val !== null);
+  const activePills = Object.entries(filters).filter(([, val]) => val !== null);
 
   return (
     <div className="web-movies-layout">
@@ -207,11 +212,21 @@ export default function WebMovies() {
           </div>
         </div>
         
-        <div className="movies-grid-view">
-          {filteredMovies.map(movie => (
+        <div className="movies-grid-view" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
+          {filteredMovies.map((movie, i) => (
             <div key={movie.id} className="movie-grid-card">
-              <button type="button" className="poster-container" onClick={() => navigate(`/web/pelicula/${movie.id}`)} aria-label={`Ver detalle de ${movie.title}`}>
-                <img src={movie.poster} alt="" />
+              <button
+                type="button"
+                ref={posterGrid.registerItemRef(i)}
+                data-grid-index={i}
+                tabIndex={i === Math.min(posterGrid.focusedIndex, filteredMovies.length - 1) ? 0 : -1}
+                role="gridcell"
+                className="poster-container"
+                onClick={() => navigate(`/web/pelicula/${movie.id}`)}
+                onFocus={() => posterGrid.setFocusedIndex(i)}
+                aria-label={`Ver detalle de ${movie.title}`}
+              >
+                <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
 
                 {movie.featured && (
                   <div className="diagonal-tag">Estreno</div>

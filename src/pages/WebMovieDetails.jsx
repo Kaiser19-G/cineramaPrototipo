@@ -2,47 +2,64 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
+import StepIndicator from '../components/StepIndicator';
+import { getNextDays } from '../data/dateHelpers';
+import { handlePosterError } from '../utils/posterFallback';
 import './WebPages.css';
+
+// Funciones con estos estados sí se pueden comprar; "draft" aún no se
+// publica, "finished"/"cancelled"/"sold_out" no admiten nuevas butacas.
+const BOOKABLE_STATUSES = new Set(['active', 'scheduled']);
 
 export default function WebMovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const showtimesRef = useRef(null);
-  const { enabledMovies, branches } = useCinema();
+  const { enabledMovies, branches, activeScreenings } = useCinema();
 
   const movie = enabledMovies.find(m => m.id === parseInt(id)) || enabledMovies[0];
 
-  const [expandedCinema, setExpandedCinema] = useState('CP Arequipa Mall Plaza');
-  const [filterCity, setFilterCity]   = useState(location.state?.city || null);
+  const days = getNextDays(3);
+  const [filterCity, setFilterCity] = useState(location.state?.city || null);
   const [filterCinema, setFilterCinema] = useState(location.state?.cinema || null);
-  const [filterDate, setFilterDate]   = useState(location.state?.date || null);
+  const [filterDate, setFilterDate] = useState(location.state?.date || null);
 
-  const cities  = [...new Set(branches.map(b => b.city))];
+  const cities = [...new Set(branches.map(b => b.city))];
   const cinemaNames = branches.map(b => b.name);
-
-  const dates = ['Hoy Lunes', 'Martes 19', 'Miércoles 20'];
-
-  const toggleCinema = (cinemaName) => {
-    setExpandedCinema(expandedCinema === cinemaName ? null : cinemaName);
-  };
+  const dateLabels = days.map(d => d.label);
 
   const handleScrollToShowtimes = () => {
     showtimesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const cinemas = [
-    { name: 'CP Arequipa Mall Plaza', showtimes: [{ time: '16:50', active: false }, { time: '21:30', active: true }] },
-    { name: 'CP Brasil', showtimes: [{ time: '18:00', active: true }, { time: '20:30', active: true }] },
-    { name: 'CP Centro Jr. De La Unión', showtimes: [{ time: '14:20', active: false }, { time: '19:15', active: true }] },
-    { name: 'CP Chiclayo Mall Aventura', showtimes: [{ time: '16:00', active: false }, { time: '21:00', active: true }] },
-    { name: 'CP Chiclayo Real Plaza', showtimes: [{ time: '17:30', active: true }, { time: '22:00', active: true }] },
-    { name: 'CP Comas', showtimes: [{ time: '15:10', active: false }, { time: '20:00', active: true }] }
-  ];
+  // H-01/H-02 (evaluación heurística): antes esta sección listaba sedes de
+  // otra cadena, fijas en el código, y los filtros de ciudad/cine/fecha no
+  // afectaban en nada a la lista. Ahora se construye desde las sedes reales
+  // de Cinerama (CinemaContext) y las funciones reales de esta película.
+  const selectedDateValue = filterDate ? days.find(d => d.label === filterDate)?.value : null;
+
+  const movieScreenings = activeScreenings.filter(
+    (s) => s.movieId === movie.id && BOOKABLE_STATUSES.has(s.status)
+  );
+
+  const cinemasWithShowtimes = branches
+    .map((branch) => {
+      const matchesLocationFilter = (!filterCity || branch.city === filterCity)
+        && (!filterCinema || branch.name === filterCinema);
+      const showtimes = matchesLocationFilter
+        ? movieScreenings
+            .filter((s) => s.branchId === branch.id)
+            .filter((s) => !selectedDateValue || s.date === selectedDateValue)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        : [];
+      return { branch, showtimes };
+    })
+    .filter(({ showtimes }) => showtimes.length > 0);
 
   return (
     <div className="movie-details-page">
-      
+
       {/* 1. Banner superior con trailer */}
       <div className="movie-detail-banner" style={{ backgroundImage: `url(${movie.backdrop || movie.poster})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <button className="btn-play-trailer">
@@ -56,7 +73,9 @@ export default function WebMovieDetails() {
       </div>
 
       <div className="movie-detail-content">
-        
+
+        <StepIndicator current={2} />
+
         {/* 2. Cabecera principal con título y botón de comprar */}
         <div className="movie-header-section">
           <div className="movie-title-info">
@@ -77,7 +96,7 @@ export default function WebMovieDetails() {
         <div className="movie-info-cols">
           <div className="movie-info-left">
             <div className="poster-wrapper">
-              <img src={movie.poster} alt={movie.title} />
+              <img src={movie.poster} alt={movie.title} data-fallback-title={movie.title} onError={handlePosterError} />
               {movie.featured && <div className="diagonal-tag">Estreno</div>}
             </div>
           </div>
@@ -86,7 +105,7 @@ export default function WebMovieDetails() {
             <div className="synopsis-card">
               <h2>Sinopsis.</h2>
               <p className="synopsis-text">{movie.synopsis}</p>
-              
+
               <div className="info-meta-group">
                 <h3>Idioma</h3>
                 <div className="lang-tags">
@@ -102,11 +121,11 @@ export default function WebMovieDetails() {
           </div>
         </div>
 
-        {/* 4. Sección de funciones y horarios */}
+        {/* 4. Sección de funciones y horarios — H-03/H-05: siempre visibles,
+            sin acordeón, con el indicador de pasos ya activo desde aquí. */}
         <div className="movie-showtimes-section" ref={showtimesRef}>
           <h2 className="section-title-fun">La función perfecta para ti.</h2>
 
-          {/* Filtros de la función */}
           <div className="showtimes-filters-bar">
             <CustomDropdown
               label="Por ciudad"
@@ -127,69 +146,53 @@ export default function WebMovieDetails() {
             <CustomDropdown
               label="Por fecha"
               placeholder="Elige un día"
-              options={dates}
+              options={dateLabels}
               value={filterDate}
               onChange={setFilterDate}
             />
           </div>
 
-          {/* Acordeón de cines */}
-          <div className="cinemas-accordion">
-            {cinemas.map(cine => {
-              const isExpanded = expandedCinema === cine.name;
-              return (
-                <div key={cine.name} className="accordion-item-cinema">
-                  <button
-                    type="button"
-                    className="accordion-header-cinema"
-                    aria-expanded={isExpanded}
-                    aria-controls={`cinema-panel-${cine.name}`}
-                    onClick={() => toggleCinema(cine.name)}
-                  >
-                    <h3>{cine.name}</h3>
-                    <span className="arrow" aria-hidden="true">{isExpanded ? '−' : '+'}</span>
-                  </button>
+          {cinemasWithShowtimes.length === 0 ? (
+            <p className="no-functions-message" role="status">
+              No hay funciones para esta selección. Prueba con otra ciudad, cine o fecha.
+            </p>
+          ) : (
+            <div className="cinemas-showtimes-list">
+              {cinemasWithShowtimes.map(({ branch, showtimes }) => (
+                <div key={branch.id} className="cinema-showtimes-block">
+                  <div className="cinema-showtimes-header">
+                    <h3>{branch.name}</h3>
+                    <span className="cinema-showtimes-city">{branch.city}</span>
+                  </div>
 
-                  {isExpanded && (
-                    <div className="accordion-body-cinema" id={`cinema-panel-${cine.name}`}>
-                      <div className="room-type-tag">
-                        2D REGULAR DOBLADA
-                      </div>
-                      
-                      <div className="showtime-buttons-grid">
-                        {cine.showtimes.map((st, index) => (
-                          <button
-                            key={index}
-                            className={`showtime-btn ${!st.active ? 'disabled' : ''}`}
-                            disabled={!st.active}
-                            onClick={() => navigate('/web/compra', {
-                              state: {
-                                movie,
-                                cinema: cine.name,
-                                date: filterDate || dates[0],
-                                time: st.time,
-                                roomType: '2D Regular',
-                              }
-                            })}
-                          >
-                            <span className="time-lbl">{st.time}</span>
-                            {st.active && (
-                              <span className="chair-icon" style={{display: 'flex'}}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-                                </svg>
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="showtime-buttons-grid">
+                    {showtimes.map((s) => (
+                      <button
+                        key={s.id}
+                        className="showtime-btn"
+                        onClick={() => navigate('/web/compra', {
+                          state: {
+                            movie,
+                            cinema: branch.name,
+                            date: days.find((d) => d.value === s.date)?.label || s.date,
+                            time: s.startTime,
+                            roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
+                          }
+                        })}
+                      >
+                        <span className="time-lbl">{s.startTime}</span>
+                        <span className="chair-icon" style={{display: 'flex'}}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                          </svg>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

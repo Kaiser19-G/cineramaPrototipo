@@ -59,6 +59,11 @@
   --surface-hover: #2a2a2a;
   --border:       #2E2E2E;
   --border-subtle: #222222;
+  /* H-11 (evaluación heurística): el borde de la butaca "ocupada" tenía
+     1.33:1 de contraste en tema oscuro (--border-subtle), muy por debajo del
+     3:1 mínimo de WCAG 1.4.11 para límites de componentes de interfaz.
+     Verificado: #707070 da 3.65:1 contra --surface. */
+  --border-interactive: #707070;
 
   --cinema-gold:  #F5C518;
   --cinema-gold-dim: rgba(245,197,24,0.13);
@@ -106,7 +111,6 @@
   --footer-bg:          #111111;
   --dropdown-menu-bg:   #1e0a0b;
   --label-accent:       #d8b78f;
-  --border-interactive: var(--border);
 }
 
 /* ══════════════════════════════════════════

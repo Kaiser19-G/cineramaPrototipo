@@ -2,10 +2,11 @@ import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import FieldError from '../components/FieldError';
+import StepIndicator from '../components/StepIndicator';
+import { handlePosterError } from '../utils/posterFallback';
 import './WebPages.css';
 
 const SEAT_PRICE = 15;
-const STEPS = ['Butacas', 'Pago', 'Confirmación'];
 
 export default function WebBooking() {
   const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago
@@ -125,7 +126,8 @@ export default function WebBooking() {
     setShowSuccessModal(true);
   };
 
-  const currentStep = showSuccessModal ? 3 : step;
+  // Pasos globales del flujo: 1 Película · 2 Función · 3 Butacas · 4 Pago · 5 Confirmación
+  const currentStep = showSuccessModal ? 5 : step === 1 ? 3 : 4;
 
   return (
     <div className="web-booking-layout">
@@ -149,21 +151,7 @@ export default function WebBooking() {
       )}
 
       <div className="booking-main">
-        <nav className="booking-steps" aria-label="Progreso de la compra">
-          {STEPS.map((label, idx) => {
-            const n = idx + 1;
-            const state = n < currentStep ? 'done' : n === currentStep ? 'current' : 'upcoming';
-            return (
-              <div className="booking-step-wrap" key={label}>
-                {idx > 0 && <span className="step-arrow" aria-hidden="true">→</span>}
-                <div className={`booking-step ${state}`} aria-current={state === 'current' ? 'step' : undefined}>
-                  <span className="step-num">{state === 'done' ? '✓' : n}</span>
-                  <span className="step-label">{label}</span>
-                </div>
-              </div>
-            );
-          })}
-        </nav>
+        <StepIndicator current={currentStep} />
 
         {step === 1 ? (
           <div className="seats-selection">
@@ -328,7 +316,7 @@ export default function WebBooking() {
         <div className="movie-summary-card">
           <div className="movie-img-placeholder">
             {movie?.poster
-              ? <img src={movie.poster} alt={`Póster de ${movie.title}`} />
+              ? <img src={movie.poster} alt={`Póster de ${movie.title}`} data-fallback-title={movie.title} onError={handlePosterError} />
               : <span>Póster</span>}
           </div>
           <div className="movie-info-compact">

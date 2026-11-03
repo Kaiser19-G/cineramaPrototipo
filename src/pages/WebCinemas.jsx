@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
+import { handlePosterError } from '../utils/posterFallback';
+import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import './WebPages.css';
 
 export default function WebCinemas() {
@@ -20,6 +22,8 @@ export default function WebCinemas() {
     const matchesFormat = selectedFormat === 'Todos los formatos' || formatsString.includes(selectedFormat);
     return matchesCity && matchesFormat;
   });
+
+  const cinemaGrid = useGridKeyboardNav(filteredBranches.length, 3);
 
   return (
     <div className="web-list-page">
@@ -47,18 +51,23 @@ export default function WebCinemas() {
         />
       </div>
 
-      <div className="cinemas-grid-view">
+      <div className="cinemas-grid-view" role="grid" aria-label="Cines" onKeyDown={filteredBranches.length > 0 ? cinemaGrid.handleGridKeyDown : undefined}>
         {filteredBranches.length > 0 ? (
-          filteredBranches.map(cine => (
+          filteredBranches.map((cine, i) => (
             <button
               type="button"
               key={cine.id}
+              ref={cinemaGrid.registerItemRef(i)}
+              data-grid-index={i}
+              tabIndex={i === Math.min(cinemaGrid.focusedIndex, filteredBranches.length - 1) ? 0 : -1}
+              role="gridcell"
               className="cinema-card-visual"
               onClick={() => navigate(`/web/cine/${cine.id}`)}
+              onFocus={() => cinemaGrid.setFocusedIndex(i)}
               aria-label={`Ver cartelera de ${cine.name}`}
             >
               <div className="cinema-card-img">
-                <img src={cine.img} alt="" />
+                <img src={cine.img} alt="" data-fallback-title={cine.name} onError={handlePosterError} />
                 <div className="cinema-hover-overlay">
                   <span aria-hidden="true">Ver Cartelera ⟩</span>
                 </div>
