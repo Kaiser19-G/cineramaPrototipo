@@ -12,7 +12,7 @@ export default function WebBooking() {
   const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // null | 'cancel' | 'change'
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showCvvHelp, setShowCvvHelp] = useState(false);
   const navigate = useNavigate();
@@ -137,11 +137,20 @@ export default function WebBooking() {
     }, 1200);
   };
 
-  // H-06: cancelar la compra descarta butacas y datos de pago ya
-  // ingresados, así que se confirma antes de hacerlo en vez de perderlos
-  // con un solo click accidental.
-  const handleCancelPurchase = () => setShowCancelConfirm(true);
-  const confirmCancelPurchase = () => navigate('/WebHome');
+  // H-06/R3: cancelar la compra o cambiar de función descartan butacas (y
+  // datos de pago, si ya se llegó ahí), así que se confirma antes en vez de
+  // perderlos con un solo click accidental. Cambiar función no pide
+  // confirmación si todavía no hay nada que perder.
+  const handleCancelPurchase = () => setConfirmAction('cancel');
+  const handleChangeFunction = () => {
+    if (selectedSeats.length === 0) navigate(-1);
+    else setConfirmAction('change');
+  };
+  const runConfirmedAction = () => {
+    if (confirmAction === 'cancel') navigate('/WebHome');
+    else if (confirmAction === 'change') navigate(-1);
+    setConfirmAction(null);
+  };
 
   // Pasos globales del flujo: 1 Película · 2 Función · 3 Butacas · 4 Pago · 5 Confirmación
   const currentStep = showSuccessModal ? 5 : step === 1 ? 3 : 4;
@@ -167,19 +176,21 @@ export default function WebBooking() {
         </div>
       )}
 
-      {showCancelConfirm && (
+      {confirmAction && (
         <div className="booking-success-overlay">
-          <div className="booking-success-modal" role="alertdialog" aria-labelledby="cancel-title" aria-describedby="cancel-desc">
-            <h2 id="cancel-title">¿Cancelar tu compra?</h2>
-            <p id="cancel-desc">
-              Perderás la selección de butacas{step === 2 ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.
+          <div className="booking-success-modal" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
+            <h2 id="confirm-title">{confirmAction === 'cancel' ? '¿Cancelar tu compra?' : '¿Cambiar de función?'}</h2>
+            <p id="confirm-desc">
+              {confirmAction === 'cancel'
+                ? `Perderás la selección de butacas${step === 2 ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.`
+                : 'Perderás la selección de butacas actual. Podrás elegir otro horario.'}
             </p>
             <div className="booking-actions booking-actions-split" style={{ marginTop: '8px' }}>
-              <button className="btn-outline" onClick={() => setShowCancelConfirm(false)} autoFocus>
-                Seguir comprando
+              <button className="btn-outline" onClick={() => setConfirmAction(null)} autoFocus>
+                {confirmAction === 'cancel' ? 'Seguir comprando' : 'Seguir aquí'}
               </button>
-              <button className="btn-solid" onClick={confirmCancelPurchase}>
-                Sí, cancelar
+              <button className="btn-solid" onClick={runConfirmedAction}>
+                {confirmAction === 'cancel' ? 'Sí, cancelar' : 'Sí, cambiar'}
               </button>
             </div>
           </div>
@@ -251,7 +262,8 @@ export default function WebBooking() {
               <li><span className="legend-swatch legend-occupied" aria-hidden="true">✕</span>Ocupada</li>
             </ul>
 
-            <div className="booking-actions booking-actions-center">
+            <div className="booking-actions booking-actions-split">
+              <button className="btn-outline" onClick={handleChangeFunction}>⟨ Cambiar función</button>
               <button className="btn-solid" disabled={selectedSeats.length === 0} onClick={() => setStep(2)}>
                 Continuar ⟩
               </button>

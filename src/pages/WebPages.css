@@ -712,7 +712,6 @@
   margin-top: 2rem;
   width: 100%;
 }
-.booking-actions-center { justify-content: center; }
 .booking-actions-split { justify-content: space-between; }
 
 @media (max-width: 768px) {
@@ -741,7 +740,6 @@
     gap: 0.75rem;
     margin-bottom: 96px;
   }
-  .booking-actions-center { margin-bottom: 96px; }
   .seats-map { grid-template-columns: repeat(10, 2rem); gap: 0.375rem; }
   .seat-btn { width: 2rem; height: 2rem; font-size: 0.5625rem; }
 }
@@ -1287,53 +1285,6 @@
   color: var(--text-secondary);
 }
 
-.cinemas-accordion {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.accordion-item-cinema {
-  background: var(--surface-2);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-left: 5px solid var(--action-red);
-}
-
-.accordion-header-cinema {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.accordion-header-cinema:hover {
-  background-color: var(--surface-hover);
-}
-
-.accordion-header-cinema h3 {
-  margin: 0;
-  font-size: 1.3rem;
-  color: var(--text-main);
-}
-
-.accordion-header-cinema .arrow {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--action-red-light);
-}
-
-.accordion-body-cinema {
-  padding: 2rem;
-  border-top: 1px solid var(--border);
-  background-color: var(--surface-3);
-}
-
 .room-type-tag {
   display: inline-block;
   border: 1px solid var(--border-interactive);
@@ -1529,7 +1480,6 @@ html[data-vision="mono"] .legend-selected {
 .cinema-card-visual,
 .filter-title,
 .active-filters-pills .pill,
-.accordion-header-cinema,
 .custom-dd-item {
   background: none;
   border: none;
@@ -1562,7 +1512,6 @@ html[data-vision="mono"] .legend-selected {
 .cinema-card-visual:focus-visible,
 .filter-title:focus-visible,
 .active-filters-pills .pill:focus-visible,
-.accordion-header-cinema:focus-visible,
 .custom-dd-item:focus-visible,
 .carousel-indicators .dot:focus-visible,
 .carousel-control:focus-visible,
@@ -1604,8 +1553,6 @@ html[data-vision="mono"] .legend-selected {
   .showtimes-filters-bar { flex-wrap: wrap; }
   .showtimes-filters-bar .filter-divider-showtime { display: none; }
   .showtime-buttons-grid { flex-wrap: wrap; gap: 0.75rem; }
-  .accordion-header-cinema { padding: 1rem 1.25rem; }
-  .accordion-body-cinema { padding: 1.25rem; }
 
   .cinema-details-page { padding: 24px 16px; }
   .cinema-details-header { flex-wrap: wrap; gap: 1rem; }
