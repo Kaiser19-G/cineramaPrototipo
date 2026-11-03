@@ -1,14 +1,27 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import './WebHome.css';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
+import { getNextDays } from '../data/dateHelpers';
+import { handlePosterError } from '../utils/posterFallback';
+import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
+import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import cineramaBanner from '../assets/CineramaBanner.png';
+
+const HOME_DIMENSIONS = {
+  movie: (e) => e.movie.title,
+  city: (e) => e.branch.city,
+  cinema: (e) => e.branch.name,
+  date: (e) => e.dayLabel,
+};
 
 export default function WebHome() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cartelera');
-  const { branches, enabledMovies } = useCinema();
+  const { branches, enabledMovies, activeScreenings } = useCinema();
+  const carteleraMovies = enabledMovies.slice(0, 5);
+  const posterGrid = useGridKeyboardNav(carteleraMovies.length, 5);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -16,8 +29,22 @@ export default function WebHome() {
   const [selectedCinema, setSelectedCinema] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const cities = [...new Set(branches.map(b => b.city))];
-  const dateOptions = ['Hoy Lunes', 'Martes 19', 'Miércoles 20'];
+  const days = useMemo(() => getNextDays(3), []);
+  const entries = useMemo(
+    () => buildScreeningEntries({ movies: enabledMovies, branches, screenings: activeScreenings, days }),
+    [enabledMovies, branches, activeScreenings, days]
+  );
+
+  // Buscador en cascada: cada opción que se ofrece, combinada con lo que ya
+  // se eligió en los otros campos, tiene al menos una función real — así no
+  // se puede armar una búsqueda que termine en "no hay funciones".
+  const searchFilters = { movie: selectedMovie, city: selectedCity, cinema: selectedCinema, date: selectedDate };
+  const cascading = computeCascadingOptions(entries, searchFilters, HOME_DIMENSIONS);
+
+  const movieTitles = enabledMovies.map(m => m.title).filter(t => cascading.movie.includes(t));
+  const cities = [...new Set(branches.map(b => b.city))].filter(c => cascading.city.includes(c));
+  const cinemaNames = branches.map(b => b.name).filter(c => cascading.cinema.includes(c));
+  const dateOptions = days.map((d) => d.label).filter(l => cascading.date.includes(l));
 
   const handleSearch = () => {
     let movieId;
@@ -44,16 +71,20 @@ export default function WebHome() {
       {/* Hero Banner */}
       <section className="web-hero">
         <div className="hero-carousel">
-          <button className="carousel-control prev" onClick={() => setCurrentSlide(prev => (prev > 0 ? prev - 1 : 4))}>〈</button>
+          <button className="carousel-control prev" aria-label="Diapositiva anterior" onClick={() => setCurrentSlide(prev => (prev > 0 ? prev - 1 : 4))}>〈</button>
           <img src={cineramaBanner} alt="Cinerama Banner" className="hero-img" />
-          <button className="carousel-control next" onClick={() => setCurrentSlide(prev => (prev < 4 ? prev + 1 : 0))}>〉</button>
-          <div className="carousel-indicators">
+          <button className="carousel-control next" aria-label="Siguiente diapositiva" onClick={() => setCurrentSlide(prev => (prev < 4 ? prev + 1 : 0))}>〉</button>
+          <div className="carousel-indicators" role="tablist" aria-label="Diapositivas del banner">
             {[0, 1, 2, 3, 4].map((idx) => (
-              <span 
-                key={idx} 
+              <button
+                type="button"
+                key={idx}
+                role="tab"
+                aria-label={`Ir a la diapositiva ${idx + 1}`}
+                aria-selected={currentSlide === idx}
                 className={`dot ${currentSlide === idx ? 'active' : ''}`}
                 onClick={() => setCurrentSlide(idx)}
-              ></span>
+              ></button>
             ))}
           </div>
         </div>
@@ -65,7 +96,7 @@ export default function WebHome() {
           <CustomDropdown
             label="Por Película"
             placeholder="¿Qué quieres ver?"
-            options={enabledMovies.map(m => m.title)}
+            options={movieTitles}
             value={selectedMovie}
             onChange={setSelectedMovie}
           />
@@ -85,7 +116,7 @@ export default function WebHome() {
           <CustomDropdown
             label="Por Cine"
             placeholder="¿En qué cine?"
-            options={branches.map(b => b.name)}
+            options={cinemaNames}
             value={selectedCinema}
             onChange={setSelectedCinema}
           />
@@ -133,14 +164,26 @@ export default function WebHome() {
         </div>
         <div className="movies-divider"></div>
 
-        <div className="movies-grid">
-          {enabledMovies.slice(0, 5).map(movie => (
-            <div key={movie.id} className="movie-poster" onClick={() => navigate(`/web/pelicula/${movie.id}`)} style={{position: 'relative'}}>
-              <img src={movie.poster} alt={movie.title} />
+        <div className="movies-grid" role="grid" aria-label="Películas en cartelera" onKeyDown={posterGrid.handleGridKeyDown}>
+          {carteleraMovies.map((movie, i) => (
+            <button
+              type="button"
+              key={movie.id}
+              ref={posterGrid.registerItemRef(i)}
+              data-grid-index={i}
+              tabIndex={i === Math.min(posterGrid.focusedIndex, carteleraMovies.length - 1) ? 0 : -1}
+              role="gridcell"
+              className="movie-poster"
+              onClick={() => navigate(`/web/pelicula/${movie.id}`)}
+              onFocus={() => posterGrid.setFocusedIndex(i)}
+              style={{ position: 'relative' }}
+              aria-label={`Ver detalle de ${movie.title}`}
+            >
+              <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
               <div className="movie-hover-overlay">
-                <span>Ver detalle ⟩</span>
+                <span aria-hidden="true">Ver detalle ⟩</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>

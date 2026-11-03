@@ -1,28 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
+import FieldError from '../components/FieldError';
+import StepIndicator from '../components/StepIndicator';
+import { handlePosterError } from '../utils/posterFallback';
 import './WebPages.css';
 
 const SEAT_PRICE = 15;
-const STEPS = ['Butacas', 'Pago', 'Confirmación'];
-
-function FieldError({ message, id }) {
-  return (
-    <span className="field-error" role="alert" id={id}>
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      {message}
-    </span>
-  );
-}
 
 export default function WebBooking() {
   const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // null | 'cancel' | 'change'
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showCvvHelp, setShowCvvHelp] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { enabledMovies, branches } = useCinema();
@@ -46,6 +38,36 @@ export default function WebBooking() {
   const toggleSeatSelect = (seatName) => {
     if (occupied.has(seatName)) return;
     setSelectedSeats(p => p.includes(seatName) ? p.filter(x => x !== seatName) : [...p, seatName]);
+  };
+
+  // --- Navegación de butacas como grilla accesible (patrón ARIA grid) ---
+  // Con 80 butacas, recorrerlas una por una con Tab es inviable (y si te
+  // pasas, hay que rehacer todo el camino). Solo UNA butaca está en el
+  // orden de tabulación a la vez (roving tabindex): Tab entra/sale de la
+  // grilla en un solo paso; dentro, las flechas mueven el foco.
+  const [focusedSeat, setFocusedSeat] = useState('A1');
+  const seatRefs = useRef({});
+
+  const handleSeatGridKeyDown = (e) => {
+    // Lee la posición del elemento con foco REAL en el DOM (e.target), no del
+    // estado de React: si las teclas llegan más rápido que un re-render,
+    // el estado podría ir un paso atrás y la navegación saltaría mal.
+    let r = parseInt(e.target.dataset.row, 10);
+    let c = parseInt(e.target.dataset.col, 10);
+    if (Number.isNaN(r) || Number.isNaN(c)) return;
+
+    if (e.key === 'ArrowRight') c = Math.min(c + 1, COLS - 1);
+    else if (e.key === 'ArrowLeft') c = Math.max(c - 1, 0);
+    else if (e.key === 'ArrowDown') r = Math.min(r + 1, ROWS - 1);
+    else if (e.key === 'ArrowUp') r = Math.max(r - 1, 0);
+    else if (e.key === 'Home') c = 0;
+    else if (e.key === 'End') c = COLS - 1;
+    else return; // Enter/Espacio los maneja el <button> nativo; Tab sale de la grilla
+
+    e.preventDefault();
+    const newSeat = `${String.fromCharCode(65 + r)}${c + 1}`;
+    setFocusedSeat(newSeat);
+    seatRefs.current[newSeat]?.focus();
   };
 
   const total = selectedSeats.length * SEAT_PRICE;
@@ -102,27 +124,51 @@ export default function WebBooking() {
 
   const handleCvvChange = (e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4));
 
+  // H-09: el pago no se confirma al instante — se muestra un estado de
+  // "procesando" (con aria-live para quien usa lector de pantalla) antes
+  // de pasar a la confirmación, para que la espera real no se perciba como
+  // que el click no funcionó.
   const handlePayment = () => {
-    if (!isPaymentValid) return;
-    setShowSuccessModal(true);
+    if (!isPaymentValid || isProcessingPayment) return;
+    setIsProcessingPayment(true);
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      setShowSuccessModal(true);
+    }, 1200);
   };
 
-  const currentStep = showSuccessModal ? 3 : step;
+  // H-06/R3: cancelar la compra o cambiar de función descartan butacas (y
+  // datos de pago, si ya se llegó ahí), así que se confirma antes en vez de
+  // perderlos con un solo click accidental. Cambiar función no pide
+  // confirmación si todavía no hay nada que perder.
+  const handleCancelPurchase = () => setConfirmAction('cancel');
+  const handleChangeFunction = () => {
+    if (selectedSeats.length === 0) navigate(-1);
+    else setConfirmAction('change');
+  };
+  const runConfirmedAction = () => {
+    if (confirmAction === 'cancel') navigate('/WebHome');
+    else if (confirmAction === 'change') navigate(-1);
+    setConfirmAction(null);
+  };
+
+  // Pasos globales del flujo: 1 Película · 2 Función · 3 Butacas · 4 Pago · 5 Confirmación
+  const currentStep = showSuccessModal ? 5 : step === 1 ? 3 : 4;
 
   return (
     <div className="web-booking-layout">
 
       {showSuccessModal && (
         <div className="booking-success-overlay">
-          <div className="booking-success-modal">
+          <div className="booking-success-modal" role="alertdialog" aria-labelledby="success-title" aria-describedby="success-desc">
             <div className="success-icon-circle">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <h2>¡Compra Exitosa!</h2>
-            <p>Tus boletos han sido enviados a tu correo electrónico. Disfruta de la función.</p>
+            <h2 id="success-title">¡Compra Exitosa!</h2>
+            <p id="success-desc">Tus boletos han sido enviados a tu correo electrónico. Disfruta de la función.</p>
             <button className="btn-solid" onClick={() => navigate('/WebHome')} style={{ width: '100%' }}>
               Volver al Inicio
             </button>
@@ -130,22 +176,34 @@ export default function WebBooking() {
         </div>
       )}
 
+      {confirmAction && (
+        <div className="booking-success-overlay">
+          <div className="booking-success-modal" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
+            <h2 id="confirm-title">{confirmAction === 'cancel' ? '¿Cancelar tu compra?' : '¿Cambiar de función?'}</h2>
+            <p id="confirm-desc">
+              {confirmAction === 'cancel'
+                ? `Perderás la selección de butacas${step === 2 ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.`
+                : 'Perderás la selección de butacas actual. Podrás elegir otro horario.'}
+            </p>
+            <div className="booking-actions booking-actions-split" style={{ marginTop: '8px' }}>
+              <button className="btn-outline" onClick={() => setConfirmAction(null)} autoFocus>
+                {confirmAction === 'cancel' ? 'Seguir comprando' : 'Seguir aquí'}
+              </button>
+              <button className="btn-solid" onClick={runConfirmedAction}>
+                {confirmAction === 'cancel' ? 'Sí, cancelar' : 'Sí, cambiar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="booking-main">
-        <nav className="booking-steps" aria-label="Progreso de la compra">
-          {STEPS.map((label, idx) => {
-            const n = idx + 1;
-            const state = n < currentStep ? 'done' : n === currentStep ? 'current' : 'upcoming';
-            return (
-              <div className="booking-step-wrap" key={label}>
-                {idx > 0 && <span className="step-arrow" aria-hidden="true">→</span>}
-                <div className={`booking-step ${state}`} aria-current={state === 'current' ? 'step' : undefined}>
-                  <span className="step-num">{state === 'done' ? '✓' : n}</span>
-                  <span className="step-label">{label}</span>
-                </div>
-              </div>
-            );
-          })}
-        </nav>
+        <div className="booking-header-row">
+          <StepIndicator current={currentStep} />
+          <button type="button" className="btn-cancel-purchase" onClick={handleCancelPurchase}>
+            Cancelar compra
+          </button>
+        </div>
 
         {step === 1 ? (
           <div className="seats-selection">
@@ -155,7 +213,12 @@ export default function WebBooking() {
             </div>
 
             <div className="seats-map-scroll">
-              <div className="seats-map">
+              <div
+                className="seats-map"
+                role="grid"
+                aria-label="Mapa de butacas"
+                onKeyDown={handleSeatGridKeyDown}
+              >
                 {Array.from({ length: ROWS }).map((_, r) =>
                   Array.from({ length: COLS }).map((_, c) => {
                     const rowLetter = String.fromCharCode(65 + r);
@@ -168,12 +231,20 @@ export default function WebBooking() {
                     return (
                       <button
                         key={seatName}
+                        ref={(el) => { seatRefs.current[seatName] = el; }}
                         type="button"
+                        role="gridcell"
                         className={`seat-btn seat-${seatState}`}
-                        disabled={isOccupied}
+                        tabIndex={seatName === focusedSeat ? 0 : -1}
+                        data-row={r}
+                        data-col={c}
+                        aria-disabled={isOccupied || undefined}
                         aria-pressed={isSelected}
+                        aria-rowindex={r + 1}
+                        aria-colindex={c + 1}
                         aria-label={`Butaca ${seatName}, ${seatStateLabel}`}
                         onClick={() => toggleSeatSelect(seatName)}
+                        onFocus={() => setFocusedSeat(seatName)}
                       >
                         {seatName}
                         {seatState === 'selected' && <span className="seat-icon" aria-hidden="true">✓</span>}
@@ -191,7 +262,8 @@ export default function WebBooking() {
               <li><span className="legend-swatch legend-occupied" aria-hidden="true">✕</span>Ocupada</li>
             </ul>
 
-            <div className="booking-actions booking-actions-center">
+            <div className="booking-actions booking-actions-split">
+              <button className="btn-outline" onClick={handleChangeFunction}>⟨ Cambiar función</button>
               <button className="btn-solid" disabled={selectedSeats.length === 0} onClick={() => setStep(2)}>
                 Continuar ⟩
               </button>
@@ -263,7 +335,17 @@ export default function WebBooking() {
                   {touched.expiry && errors.expiry && <FieldError id="error-pay-exp" message={errors.expiry} />}
                 </div>
                 <div className="form-field">
-                  <label htmlFor="pay-cvv" className="form-label-web">CVV</label>
+                  <label htmlFor="pay-cvv" className="form-label-web">
+                    CVV
+                    <button
+                      type="button"
+                      className="cvv-help-btn"
+                      aria-expanded={showCvvHelp}
+                      aria-controls="cvv-help-text"
+                      aria-label="Ayuda: ¿dónde encuentro mi CVV?"
+                      onClick={() => setShowCvvHelp(v => !v)}
+                    >?</button>
+                  </label>
                   <input
                     id="pay-cvv"
                     type="text"
@@ -276,19 +358,30 @@ export default function WebBooking() {
                     onChange={handleCvvChange}
                     onBlur={() => markTouched('cvv')}
                     aria-invalid={Boolean(touched.cvv && errors.cvv)}
-                    aria-describedby={errors.cvv ? 'error-pay-cvv' : undefined}
+                    aria-describedby={[errors.cvv ? 'error-pay-cvv' : null, showCvvHelp ? 'cvv-help-text' : null].filter(Boolean).join(' ') || undefined}
                   />
+                  {showCvvHelp && (
+                    <p id="cvv-help-text" className="cvv-help-text" role="note">
+                      Son los 3 números al reverso de tu tarjeta (4 en American Express, al frente).
+                    </p>
+                  )}
                   {touched.cvv && errors.cvv && <FieldError id="error-pay-cvv" message={errors.cvv} />}
                 </div>
               </div>
             </form>
 
             <div className="booking-actions booking-actions-split">
-              <button className="btn-outline" onClick={() => setStep(1)}>⟨ Volver</button>
-              <button className="btn-solid" disabled={!isPaymentValid} onClick={handlePayment}>
-                Pagar S/ {total.toFixed(2)} ⟩
+              <button className="btn-outline" onClick={() => setStep(1)} disabled={isProcessingPayment}>⟨ Volver</button>
+              <button className="btn-solid" disabled={!isPaymentValid || isProcessingPayment} onClick={handlePayment}>
+                {isProcessingPayment ? 'Procesando...' : `Pagar S/ ${total.toFixed(2)} ⟩`}
               </button>
             </div>
+            <p className="payment-processing-status" role="status">
+              {isProcessingPayment ? 'Procesando tu pago, por favor espera.' : ''}
+            </p>
+            <p className="payment-support-link">
+              ¿Problemas con tu pago? Escríbenos a <a href="mailto:soporte@cinerama.com.pe">soporte@cinerama.com.pe</a>
+            </p>
           </div>
         )}
       </div>
@@ -297,7 +390,7 @@ export default function WebBooking() {
         <div className="movie-summary-card">
           <div className="movie-img-placeholder">
             {movie?.poster
-              ? <img src={movie.poster} alt={`Póster de ${movie.title}`} />
+              ? <img src={movie.poster} alt={`Póster de ${movie.title}`} data-fallback-title={movie.title} onError={handlePosterError} />
               : <span>Póster</span>}
           </div>
           <div className="movie-info-compact">
