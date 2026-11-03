@@ -1,23 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
+import FieldError from '../components/FieldError';
 import './WebPages.css';
 
 const SEAT_PRICE = 15;
 const STEPS = ['Butacas', 'Pago', 'Confirmación'];
-
-function FieldError({ message, id }) {
-  return (
-    <span className="field-error" role="alert" id={id}>
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      {message}
-    </span>
-  );
-}
 
 export default function WebBooking() {
   const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago

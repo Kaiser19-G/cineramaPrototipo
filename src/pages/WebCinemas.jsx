@@ -50,15 +50,17 @@ export default function WebCinemas() {
       <div className="cinemas-grid-view">
         {filteredBranches.length > 0 ? (
           filteredBranches.map(cine => (
-            <div 
-              key={cine.id} 
-              className="cinema-card-visual" 
+            <button
+              type="button"
+              key={cine.id}
+              className="cinema-card-visual"
               onClick={() => navigate(`/web/cine/${cine.id}`)}
+              aria-label={`Ver cartelera de ${cine.name}`}
             >
               <div className="cinema-card-img">
-                <img src={cine.img} alt={cine.name} />
+                <img src={cine.img} alt="" />
                 <div className="cinema-hover-overlay">
-                  <span>Ver Cartelera ⟩</span>
+                  <span aria-hidden="true">Ver Cartelera ⟩</span>
                 </div>
               </div>
               <div className="cinema-card-details">
@@ -66,7 +68,7 @@ export default function WebCinemas() {
                 <p className="cinema-address">{cine.address}</p>
                 <p className="cinema-formats">{Array.isArray(cine.formats) ? cine.formats.join(', ') : (cine.formats || '2D, REGULAR')}</p>
               </div>
-            </div>
+            </button>
           ))
         ) : (
           <div className="no-cinemas-message" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>

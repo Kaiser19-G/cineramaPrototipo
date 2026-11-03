@@ -79,79 +79,115 @@ export default function WebMovies() {
         </h3>
         
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Ciudad')}>
-            <span>Ciudad</span> <span>{openAccordion === 'Ciudad' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Ciudad'}
+            aria-controls="filter-panel-city"
+            onClick={() => toggleAccordion('Ciudad')}
+          >
+            <span>Ciudad</span> <span aria-hidden="true">{openAccordion === 'Ciudad' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Ciudad' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-city">
               {filterOptions.cities.map(city => (
-                <p key={city} className={filters.city === city ? 'active-option' : ''} onClick={() => setFilter('city', city)}>{city}</p>
+                <button type="button" key={city} className={filters.city === city ? 'active-option' : ''} aria-pressed={filters.city === city} onClick={() => setFilter('city', city)}>{city}</button>
               ))}
             </div>
           )}
         </div>
         
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Cine')}>
-            <span>Cine</span> <span>{openAccordion === 'Cine' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Cine'}
+            aria-controls="filter-panel-cinema"
+            onClick={() => toggleAccordion('Cine')}
+          >
+            <span>Cine</span> <span aria-hidden="true">{openAccordion === 'Cine' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Cine' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-cinema">
               {filterOptions.cinemas.map(cine => (
-                <p key={cine} className={filters.cinema === cine ? 'active-option' : ''} onClick={() => setFilter('cinema', cine)}>{cine}</p>
+                <button type="button" key={cine} className={filters.cinema === cine ? 'active-option' : ''} aria-pressed={filters.cinema === cine} onClick={() => setFilter('cinema', cine)}>{cine}</button>
               ))}
             </div>
           )}
         </div>
 
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Día')}>
-            <span className={openAccordion === 'Día' ? 'active-text' : ''}>Día</span> 
-            <span>{openAccordion === 'Día' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Día'}
+            aria-controls="filter-panel-day"
+            onClick={() => toggleAccordion('Día')}
+          >
+            <span className={openAccordion === 'Día' ? 'active-text' : ''}>Día</span>
+            <span aria-hidden="true">{openAccordion === 'Día' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Día' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-day">
               {filterOptions.days.map(day => (
-                <p key={day} className={filters.day === day ? 'active-option' : ''} onClick={() => setFilter('day', day)}>{day}</p>
+                <button type="button" key={day} className={filters.day === day ? 'active-option' : ''} aria-pressed={filters.day === day} onClick={() => setFilter('day', day)}>{day}</button>
               ))}
             </div>
           )}
         </div>
 
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Género')}>
-            <span>Género</span> <span>{openAccordion === 'Género' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Género'}
+            aria-controls="filter-panel-genre"
+            onClick={() => toggleAccordion('Género')}
+          >
+            <span>Género</span> <span aria-hidden="true">{openAccordion === 'Género' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Género' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-genre">
               {filterOptions.genres.map(genre => (
-                <p key={genre} className={filters.genre === genre ? 'active-option' : ''} onClick={() => setFilter('genre', genre)}>{genre}</p>
+                <button type="button" key={genre} className={filters.genre === genre ? 'active-option' : ''} aria-pressed={filters.genre === genre} onClick={() => setFilter('genre', genre)}>{genre}</button>
               ))}
             </div>
           )}
         </div>
 
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Idioma')}>
-            <span>Idioma</span> <span>{openAccordion === 'Idioma' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Idioma'}
+            aria-controls="filter-panel-language"
+            onClick={() => toggleAccordion('Idioma')}
+          >
+            <span>Idioma</span> <span aria-hidden="true">{openAccordion === 'Idioma' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Idioma' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-language">
               {filterOptions.languages.map(lang => (
-                <p key={lang} className={filters.language === lang ? 'active-option' : ''} onClick={() => setFilter('language', lang)}>{lang}</p>
+                <button type="button" key={lang} className={filters.language === lang ? 'active-option' : ''} aria-pressed={filters.language === lang} onClick={() => setFilter('language', lang)}>{lang}</button>
               ))}
             </div>
           )}
         </div>
 
         <div className="accordion-filter">
-          <div className="filter-title" onClick={() => toggleAccordion('Formato')}>
-            <span>Formato</span> <span>{openAccordion === 'Formato' ? '-' : '+'}</span>
-          </div>
+          <button
+            type="button"
+            className="filter-title"
+            aria-expanded={openAccordion === 'Formato'}
+            aria-controls="filter-panel-format"
+            onClick={() => toggleAccordion('Formato')}
+          >
+            <span>Formato</span> <span aria-hidden="true">{openAccordion === 'Formato' ? '-' : '+'}</span>
+          </button>
           {openAccordion === 'Formato' && (
-            <div className="filter-options">
+            <div className="filter-options" id="filter-panel-format">
               {filterOptions.formats.map(format => (
-                <p key={format} className={filters.format === format ? 'active-option' : ''} onClick={() => setFilter('format', format)}>{format}</p>
+                <button type="button" key={format} className={filters.format === format ? 'active-option' : ''} aria-pressed={filters.format === format} onClick={() => setFilter('format', format)}>{format}</button>
               ))}
             </div>
           )}
@@ -161,12 +197,12 @@ export default function WebMovies() {
       {/* Grilla de Películas */}
       <main className="movies-list">
         <div className="movies-top-bar">
-          <h3><span className="count">{filteredMovies.length}</span> Películas encontradas</h3>
+          <h3 aria-live="polite"><span className="count">{filteredMovies.length}</span> Películas encontradas</h3>
           <div className="active-filters-pills">
             {activePills.map(([key, val]) => (
-              <span key={key} className="pill" onClick={() => removeFilter(key)}>
-                {val} ✕
-              </span>
+              <button type="button" key={key} className="pill" onClick={() => removeFilter(key)} aria-label={`Quitar filtro ${val}`}>
+                {val} <span aria-hidden="true">✕</span>
+              </button>
             ))}
           </div>
         </div>
@@ -174,18 +210,18 @@ export default function WebMovies() {
         <div className="movies-grid-view">
           {filteredMovies.map(movie => (
             <div key={movie.id} className="movie-grid-card">
-              <div className="poster-container" style={{cursor: 'pointer'}} onClick={() => navigate(`/web/pelicula/${movie.id}`)}>
-                <img src={movie.poster} alt={movie.title} />
-                
+              <button type="button" className="poster-container" onClick={() => navigate(`/web/pelicula/${movie.id}`)} aria-label={`Ver detalle de ${movie.title}`}>
+                <img src={movie.poster} alt="" />
+
                 {movie.featured && (
                   <div className="diagonal-tag">Estreno</div>
                 )}
-                
+
                 {/* Overlay de Hover unificado */}
                 <div className="movie-hover-overlay">
-                  <span>Ver detalle ⟩</span>
+                  <span aria-hidden="true">Ver detalle ⟩</span>
                 </div>
-              </div>
+              </button>
               
               <div className="movie-card-info">
                 <h4>{movie.title}</h4>

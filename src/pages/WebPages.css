@@ -102,6 +102,13 @@
   transform: scale(0.97);
 }
 
+.btn-auth:disabled, .btn-solid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .btn-outline {
   background-color: transparent;
   color: var(--text-main);
@@ -337,14 +344,21 @@
   flex-direction: column;
   gap: 12px;
 }
-.filter-options p {
+.filter-options button {
+  background: none;
+  border: none;
+  padding: 0;
   margin: 0;
+  font: inherit;
+  text-align: left;
+  width: 100%;
   font-size: 0.9rem;
   color: var(--text-secondary);
   cursor: pointer;
 }
-.filter-options p:hover { color: var(--text-main); }
+.filter-options button:hover { color: var(--text-main); }
 .filter-options .active-option { color: var(--action-red); font-weight: bold; }
+.filter-options button:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
 
 /* Lista de Películas */
 .movies-list {
@@ -1375,6 +1389,63 @@ html[data-vision="mono"] .btn-outline {
 html[data-vision="mono"] .seat-btn.seat-selected,
 html[data-vision="mono"] .legend-selected {
   background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
+}
+
+/* ══════════════════════════════════════════
+   RESET DE <button> NATIVO — accesibilidad por teclado (APF3)
+   Estos elementos eran <div>/<span>/<p> con onClick (inalcanzables por
+   teclado, sin rol semántico) y pasaron a ser <button> real. El navegador
+   les agrega fondo/borde/padding/tipografía propios de botón; se neutraliza
+   aquí para conservar el diseño visual existente sin tocar las reglas de
+   arriba, que ya definían su apariencia como si fueran div/span/p.
+   ══════════════════════════════════════════ */
+.movie-poster,
+.poster-container,
+.cinema-card-visual,
+.filter-title,
+.active-filters-pills .pill,
+.accordion-header-cinema,
+.custom-dd-item {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  display: block;
+}
+/* El punto del carrusel SÍ necesita su propio background (indica estado
+   activo/inactivo) — se excluye del reset de background de arriba. */
+.carousel-indicators .dot {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.custom-dd-item {
+  cursor: pointer;
+}
+/* li[role="presentation"] envuelve cada opción del CustomDropdown */
+.custom-dd-menu li[role="presentation"] {
+  list-style: none;
+}
+
+/* Foco visible (WCAG 2.4.7) en todos los elementos recién convertidos a
+   button, más los que ya eran interactivos pero sin estilo de foco propio. */
+.movie-poster:focus-visible,
+.poster-container:focus-visible,
+.cinema-card-visual:focus-visible,
+.filter-title:focus-visible,
+.active-filters-pills .pill:focus-visible,
+.accordion-header-cinema:focus-visible,
+.custom-dd-item:focus-visible,
+.carousel-indicators .dot:focus-visible,
+.carousel-control:focus-visible,
+.btn-auth:focus-visible,
+.btn-solid:focus-visible,
+.btn-outline:focus-visible {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
 }
 
 /* ══════════════════════════════════════════

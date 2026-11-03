@@ -119,13 +119,20 @@ export default function WebCinemaDetails() {
           <div className="cinema-peliculas-view">
             <div className="movies-grid">
               {enabledMovies.map(movie => (
-                <div key={movie.id} className="movie-poster" onClick={() => navigate(`/web/pelicula/${movie.id}`)} style={{position: 'relative', cursor: 'pointer'}}>
-                  <img src={movie.poster} alt={movie.title} />
+                <button
+                  type="button"
+                  key={movie.id}
+                  className="movie-poster"
+                  onClick={() => navigate(`/web/pelicula/${movie.id}`)}
+                  style={{ position: 'relative' }}
+                  aria-label={`Ver detalle de ${movie.title}`}
+                >
+                  <img src={movie.poster} alt="" />
                   {movie.featured && <div className="diagonal-tag">Estreno</div>}
                   <div className="movie-hover-overlay">
-                    <span>Ver detalle ⟩</span>
+                    <span aria-hidden="true">Ver detalle ⟩</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

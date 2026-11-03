@@ -44,16 +44,20 @@ export default function WebHome() {
       {/* Hero Banner */}
       <section className="web-hero">
         <div className="hero-carousel">
-          <button className="carousel-control prev" onClick={() => setCurrentSlide(prev => (prev > 0 ? prev - 1 : 4))}>〈</button>
+          <button className="carousel-control prev" aria-label="Diapositiva anterior" onClick={() => setCurrentSlide(prev => (prev > 0 ? prev - 1 : 4))}>〈</button>
           <img src={cineramaBanner} alt="Cinerama Banner" className="hero-img" />
-          <button className="carousel-control next" onClick={() => setCurrentSlide(prev => (prev < 4 ? prev + 1 : 0))}>〉</button>
-          <div className="carousel-indicators">
+          <button className="carousel-control next" aria-label="Siguiente diapositiva" onClick={() => setCurrentSlide(prev => (prev < 4 ? prev + 1 : 0))}>〉</button>
+          <div className="carousel-indicators" role="tablist" aria-label="Diapositivas del banner">
             {[0, 1, 2, 3, 4].map((idx) => (
-              <span 
-                key={idx} 
+              <button
+                type="button"
+                key={idx}
+                role="tab"
+                aria-label={`Ir a la diapositiva ${idx + 1}`}
+                aria-selected={currentSlide === idx}
                 className={`dot ${currentSlide === idx ? 'active' : ''}`}
                 onClick={() => setCurrentSlide(idx)}
-              ></span>
+              ></button>
             ))}
           </div>
         </div>
@@ -135,12 +139,19 @@ export default function WebHome() {
 
         <div className="movies-grid">
           {enabledMovies.slice(0, 5).map(movie => (
-            <div key={movie.id} className="movie-poster" onClick={() => navigate(`/web/pelicula/${movie.id}`)} style={{position: 'relative'}}>
-              <img src={movie.poster} alt={movie.title} />
+            <button
+              type="button"
+              key={movie.id}
+              className="movie-poster"
+              onClick={() => navigate(`/web/pelicula/${movie.id}`)}
+              style={{ position: 'relative' }}
+              aria-label={`Ver detalle de ${movie.title}`}
+            >
+              <img src={movie.poster} alt="" />
               <div className="movie-hover-overlay">
-                <span>Ver detalle ⟩</span>
+                <span aria-hidden="true">Ver detalle ⟩</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>

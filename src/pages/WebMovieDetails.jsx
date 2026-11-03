@@ -139,13 +139,19 @@ export default function WebMovieDetails() {
               const isExpanded = expandedCinema === cine.name;
               return (
                 <div key={cine.name} className="accordion-item-cinema">
-                  <div className="accordion-header-cinema" onClick={() => toggleCinema(cine.name)}>
+                  <button
+                    type="button"
+                    className="accordion-header-cinema"
+                    aria-expanded={isExpanded}
+                    aria-controls={`cinema-panel-${cine.name}`}
+                    onClick={() => toggleCinema(cine.name)}
+                  >
                     <h3>{cine.name}</h3>
-                    <span className="arrow">{isExpanded ? '−' : '+'}</span>
-                  </div>
+                    <span className="arrow" aria-hidden="true">{isExpanded ? '−' : '+'}</span>
+                  </button>
 
                   {isExpanded && (
-                    <div className="accordion-body-cinema">
+                    <div className="accordion-body-cinema" id={`cinema-panel-${cine.name}`}>
                       <div className="room-type-tag">
                         2D REGULAR DOBLADA
                       </div>
