@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import FieldError from '../components/FieldError';
@@ -34,6 +34,36 @@ export default function WebBooking() {
   const toggleSeatSelect = (seatName) => {
     if (occupied.has(seatName)) return;
     setSelectedSeats(p => p.includes(seatName) ? p.filter(x => x !== seatName) : [...p, seatName]);
+  };
+
+  // --- Navegación de butacas como grilla accesible (patrón ARIA grid) ---
+  // Con 80 butacas, recorrerlas una por una con Tab es inviable (y si te
+  // pasas, hay que rehacer todo el camino). Solo UNA butaca está en el
+  // orden de tabulación a la vez (roving tabindex): Tab entra/sale de la
+  // grilla en un solo paso; dentro, las flechas mueven el foco.
+  const [focusedSeat, setFocusedSeat] = useState('A1');
+  const seatRefs = useRef({});
+
+  const handleSeatGridKeyDown = (e) => {
+    // Lee la posición del elemento con foco REAL en el DOM (e.target), no del
+    // estado de React: si las teclas llegan más rápido que un re-render,
+    // el estado podría ir un paso atrás y la navegación saltaría mal.
+    let r = parseInt(e.target.dataset.row, 10);
+    let c = parseInt(e.target.dataset.col, 10);
+    if (Number.isNaN(r) || Number.isNaN(c)) return;
+
+    if (e.key === 'ArrowRight') c = Math.min(c + 1, COLS - 1);
+    else if (e.key === 'ArrowLeft') c = Math.max(c - 1, 0);
+    else if (e.key === 'ArrowDown') r = Math.min(r + 1, ROWS - 1);
+    else if (e.key === 'ArrowUp') r = Math.max(r - 1, 0);
+    else if (e.key === 'Home') c = 0;
+    else if (e.key === 'End') c = COLS - 1;
+    else return; // Enter/Espacio los maneja el <button> nativo; Tab sale de la grilla
+
+    e.preventDefault();
+    const newSeat = `${String.fromCharCode(65 + r)}${c + 1}`;
+    setFocusedSeat(newSeat);
+    seatRefs.current[newSeat]?.focus();
   };
 
   const total = selectedSeats.length * SEAT_PRICE;
@@ -143,7 +173,12 @@ export default function WebBooking() {
             </div>
 
             <div className="seats-map-scroll">
-              <div className="seats-map">
+              <div
+                className="seats-map"
+                role="grid"
+                aria-label="Mapa de butacas"
+                onKeyDown={handleSeatGridKeyDown}
+              >
                 {Array.from({ length: ROWS }).map((_, r) =>
                   Array.from({ length: COLS }).map((_, c) => {
                     const rowLetter = String.fromCharCode(65 + r);
@@ -156,12 +191,20 @@ export default function WebBooking() {
                     return (
                       <button
                         key={seatName}
+                        ref={(el) => { seatRefs.current[seatName] = el; }}
                         type="button"
+                        role="gridcell"
                         className={`seat-btn seat-${seatState}`}
-                        disabled={isOccupied}
+                        tabIndex={seatName === focusedSeat ? 0 : -1}
+                        data-row={r}
+                        data-col={c}
+                        aria-disabled={isOccupied || undefined}
                         aria-pressed={isSelected}
+                        aria-rowindex={r + 1}
+                        aria-colindex={c + 1}
                         aria-label={`Butaca ${seatName}, ${seatStateLabel}`}
                         onClick={() => toggleSeatSelect(seatName)}
+                        onFocus={() => setFocusedSeat(seatName)}
                       >
                         {seatName}
                         {seatState === 'selected' && <span className="seat-icon" aria-hidden="true">✓</span>}

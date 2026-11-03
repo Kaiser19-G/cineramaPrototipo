@@ -604,7 +604,7 @@
   position: relative;
   transition: all var(--transition);
 }
-.seat-btn:hover:not(:disabled) { border-color: var(--action-red); color: var(--text-primary); }
+.seat-btn:hover:not(.seat-occupied) { border-color: var(--action-red); color: var(--text-primary); }
 .seat-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
 
 .seat-btn.seat-selected {
