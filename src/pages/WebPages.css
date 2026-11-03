@@ -529,6 +529,29 @@
   min-width: 0;
 }
 
+/* Fila superior: indicador de pasos + acción de cancelar compra (H-06) */
+.booking-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+.btn-cancel-purchase {
+  background: none;
+  border: 1px solid var(--border-interactive);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.82rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-cancel-purchase:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.btn-cancel-purchase:focus-visible { outline: 2px solid var(--action-red); outline-offset: 2px; }
+
 /* Indicador de pasos */
 .booking-steps {
   display: flex;
@@ -536,8 +559,7 @@
   justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
-  width: 100%;
-  margin-bottom: 2rem;
+  flex: 1;
 }
 .booking-step-wrap { display: flex; align-items: center; gap: 10px; }
 .booking-step {
@@ -824,7 +846,49 @@
 .payment-row .form-field { flex: 1; min-width: 140px; }
 
 .form-field { display: flex; flex-direction: column; gap: 6px; }
-.form-label-web { font-size: 0.85rem; color: var(--text-secondary); }
+.form-label-web { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+
+/* H-10: ayuda contextual del CVV */
+.cvv-help-btn {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border-interactive);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.cvv-help-btn:hover, .cvv-help-btn[aria-expanded="true"] { color: var(--text-main); border-color: var(--text-secondary); }
+.cvv-help-btn:focus-visible { outline: 2px solid var(--action-red); outline-offset: 2px; }
+.cvv-help-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.payment-processing-status:empty { display: none; }
+.payment-processing-status {
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+.payment-support-link {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin: 1rem 0 0;
+}
+.payment-support-link a { color: var(--text-secondary); text-decoration: underline; }
 .input-web {
   width: 100%;
   padding: 0.8rem 1rem;

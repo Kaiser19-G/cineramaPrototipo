@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import './WebHome.css';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
@@ -6,12 +6,20 @@ import CustomDropdown from '../components/CustomDropdown';
 import { getNextDays } from '../data/dateHelpers';
 import { handlePosterError } from '../utils/posterFallback';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
+import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import cineramaBanner from '../assets/CineramaBanner.png';
+
+const HOME_DIMENSIONS = {
+  movie: (e) => e.movie.title,
+  city: (e) => e.branch.city,
+  cinema: (e) => e.branch.name,
+  date: (e) => e.dayLabel,
+};
 
 export default function WebHome() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cartelera');
-  const { branches, enabledMovies } = useCinema();
+  const { branches, enabledMovies, activeScreenings } = useCinema();
   const carteleraMovies = enabledMovies.slice(0, 5);
   const posterGrid = useGridKeyboardNav(carteleraMovies.length, 5);
 
@@ -21,8 +29,22 @@ export default function WebHome() {
   const [selectedCinema, setSelectedCinema] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const cities = [...new Set(branches.map(b => b.city))];
-  const dateOptions = getNextDays(3).map((d) => d.label);
+  const days = useMemo(() => getNextDays(3), []);
+  const entries = useMemo(
+    () => buildScreeningEntries({ movies: enabledMovies, branches, screenings: activeScreenings, days }),
+    [enabledMovies, branches, activeScreenings, days]
+  );
+
+  // Buscador en cascada: cada opción que se ofrece, combinada con lo que ya
+  // se eligió en los otros campos, tiene al menos una función real — así no
+  // se puede armar una búsqueda que termine en "no hay funciones".
+  const searchFilters = { movie: selectedMovie, city: selectedCity, cinema: selectedCinema, date: selectedDate };
+  const cascading = computeCascadingOptions(entries, searchFilters, HOME_DIMENSIONS);
+
+  const movieTitles = enabledMovies.map(m => m.title).filter(t => cascading.movie.includes(t));
+  const cities = [...new Set(branches.map(b => b.city))].filter(c => cascading.city.includes(c));
+  const cinemaNames = branches.map(b => b.name).filter(c => cascading.cinema.includes(c));
+  const dateOptions = days.map((d) => d.label).filter(l => cascading.date.includes(l));
 
   const handleSearch = () => {
     let movieId;
@@ -74,7 +96,7 @@ export default function WebHome() {
           <CustomDropdown
             label="Por Película"
             placeholder="¿Qué quieres ver?"
-            options={enabledMovies.map(m => m.title)}
+            options={movieTitles}
             value={selectedMovie}
             onChange={setSelectedMovie}
           />
@@ -94,7 +116,7 @@ export default function WebHome() {
           <CustomDropdown
             label="Por Cine"
             placeholder="¿En qué cine?"
-            options={branches.map(b => b.name)}
+            options={cinemaNames}
             value={selectedCinema}
             onChange={setSelectedCinema}
           />

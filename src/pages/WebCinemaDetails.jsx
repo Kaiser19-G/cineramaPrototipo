@@ -5,9 +5,8 @@ import CustomDropdown from '../components/CustomDropdown';
 import { getNextDays } from '../data/dateHelpers';
 import { handlePosterError } from '../utils/posterFallback';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
+import { buildScreeningEntries } from '../data/screeningEntries';
 import './WebPages.css';
-
-const BOOKABLE_STATUSES = new Set(['active', 'scheduled']);
 
 export default function WebCinemaDetails() {
   const { id } = useParams();
@@ -18,15 +17,25 @@ export default function WebCinemaDetails() {
 
   const [activeTab, setActiveTab] = useState('Horarios');
   const days = getNextDays(3);
-  const [selectedDate, setSelectedDate] = useState(days[0].label);
 
   // R1 (mismo origen que H-01/H-02/H-03/H-07): antes esta pantalla mostraba
   // las 3 primeras películas del catálogo con horarios inventados e iguales
   // para todas. Ahora usa las funciones reales de ESTE cine.
-  const selectedDateValue = days.find(d => d.label === selectedDate)?.value;
-  const screeningsHere = activeScreenings.filter(
-    (s) => s.branchId === cinema.id && BOOKABLE_STATUSES.has(s.status) && (!selectedDateValue || s.date === selectedDateValue)
+  const cinemaEntries = buildScreeningEntries({
+    movies: enabledMovies, branches: [cinema], screenings: activeScreenings, days,
+  });
+
+  // El selector de fecha solo ofrece días en los que esta sede SÍ tiene
+  // alguna función — nunca un día que lleve a "no hay funciones".
+  const availableDateLabels = days.map(d => d.label).filter(
+    (label) => cinemaEntries.some((e) => e.dayLabel === label)
   );
+  const [selectedDate, setSelectedDate] = useState(availableDateLabels[0] || days[0].label);
+
+  const selectedDateValue = days.find(d => d.label === selectedDate)?.value;
+  const screeningsHere = cinemaEntries.filter(
+    (e) => !selectedDateValue || e.screening.date === selectedDateValue
+  ).map((e) => e.screening);
 
   const moviesWithShowtimes = enabledMovies
     .map((movie) => ({
@@ -65,9 +74,9 @@ export default function WebCinemaDetails() {
               <CustomDropdown
                 label="Fecha"
                 placeholder="Elige un día"
-                options={days.map((d) => d.label)}
+                options={availableDateLabels}
                 value={selectedDate}
-                onChange={(label) => setSelectedDate(label || days[0].label)}
+                onChange={(label) => setSelectedDate(label || availableDateLabels[0])}
               />
             </div>
 

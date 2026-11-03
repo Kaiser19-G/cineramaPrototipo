@@ -5,11 +5,14 @@ import CustomDropdown from '../components/CustomDropdown';
 import StepIndicator from '../components/StepIndicator';
 import { getNextDays } from '../data/dateHelpers';
 import { handlePosterError } from '../utils/posterFallback';
+import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import './WebPages.css';
 
-// Funciones con estos estados sí se pueden comprar; "draft" aún no se
-// publica, "finished"/"cancelled"/"sold_out" no admiten nuevas butacas.
-const BOOKABLE_STATUSES = new Set(['active', 'scheduled']);
+const DETAIL_DIMENSIONS = {
+  city: (e) => e.branch.city,
+  cinema: (e) => e.branch.name,
+  date: (e) => e.dayLabel,
+};
 
 export default function WebMovieDetails() {
   const { id } = useParams();
@@ -25,10 +28,6 @@ export default function WebMovieDetails() {
   const [filterCinema, setFilterCinema] = useState(location.state?.cinema || null);
   const [filterDate, setFilterDate] = useState(location.state?.date || null);
 
-  const cities = [...new Set(branches.map(b => b.city))];
-  const cinemaNames = branches.map(b => b.name);
-  const dateLabels = days.map(d => d.label);
-
   const handleScrollToShowtimes = () => {
     showtimesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -37,20 +36,31 @@ export default function WebMovieDetails() {
   // otra cadena, fijas en el código, y los filtros de ciudad/cine/fecha no
   // afectaban en nada a la lista. Ahora se construye desde las sedes reales
   // de Cinerama (CinemaContext) y las funciones reales de esta película.
-  const selectedDateValue = filterDate ? days.find(d => d.label === filterDate)?.value : null;
+  const movieEntries = buildScreeningEntries({
+    movies: [movie], branches, screenings: activeScreenings, days,
+  });
 
-  const movieScreenings = activeScreenings.filter(
-    (s) => s.movieId === movie.id && BOOKABLE_STATUSES.has(s.status)
-  );
+  // Las opciones de ciudad/cine/fecha se limitan a las que esta película
+  // SÍ tiene programadas (en cascada con lo que ya se eligió en las otras):
+  // nunca se puede elegir una combinación sin funciones.
+  const detailFilters = { city: filterCity, cinema: filterCinema, date: filterDate };
+  const cascading = computeCascadingOptions(movieEntries, detailFilters, DETAIL_DIMENSIONS);
+
+  const cities = [...new Set(branches.map(b => b.city))].filter(c => cascading.city.includes(c));
+  const cinemaNames = branches.map(b => b.name).filter(c => cascading.cinema.includes(c));
+  const dateLabels = days.map(d => d.label).filter(l => cascading.date.includes(l));
+
+  const selectedDateValue = filterDate ? days.find(d => d.label === filterDate)?.value : null;
 
   const cinemasWithShowtimes = branches
     .map((branch) => {
       const matchesLocationFilter = (!filterCity || branch.city === filterCity)
         && (!filterCinema || branch.name === filterCinema);
       const showtimes = matchesLocationFilter
-        ? movieScreenings
-            .filter((s) => s.branchId === branch.id)
-            .filter((s) => !selectedDateValue || s.date === selectedDateValue)
+        ? movieEntries
+            .filter((e) => e.branch.id === branch.id)
+            .filter((e) => !selectedDateValue || e.screening.date === selectedDateValue)
+            .map((e) => e.screening)
             .sort((a, b) => a.startTime.localeCompare(b.startTime))
         : [];
       return { branch, showtimes };

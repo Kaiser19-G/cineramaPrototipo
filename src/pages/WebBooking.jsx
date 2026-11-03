@@ -12,6 +12,9 @@ export default function WebBooking() {
   const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showCvvHelp, setShowCvvHelp] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { enabledMovies, branches } = useCinema();
@@ -121,10 +124,24 @@ export default function WebBooking() {
 
   const handleCvvChange = (e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4));
 
+  // H-09: el pago no se confirma al instante — se muestra un estado de
+  // "procesando" (con aria-live para quien usa lector de pantalla) antes
+  // de pasar a la confirmación, para que la espera real no se perciba como
+  // que el click no funcionó.
   const handlePayment = () => {
-    if (!isPaymentValid) return;
-    setShowSuccessModal(true);
+    if (!isPaymentValid || isProcessingPayment) return;
+    setIsProcessingPayment(true);
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      setShowSuccessModal(true);
+    }, 1200);
   };
+
+  // H-06: cancelar la compra descarta butacas y datos de pago ya
+  // ingresados, así que se confirma antes de hacerlo en vez de perderlos
+  // con un solo click accidental.
+  const handleCancelPurchase = () => setShowCancelConfirm(true);
+  const confirmCancelPurchase = () => navigate('/WebHome');
 
   // Pasos globales del flujo: 1 Película · 2 Función · 3 Butacas · 4 Pago · 5 Confirmación
   const currentStep = showSuccessModal ? 5 : step === 1 ? 3 : 4;
@@ -134,15 +151,15 @@ export default function WebBooking() {
 
       {showSuccessModal && (
         <div className="booking-success-overlay">
-          <div className="booking-success-modal">
+          <div className="booking-success-modal" role="alertdialog" aria-labelledby="success-title" aria-describedby="success-desc">
             <div className="success-icon-circle">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <h2>¡Compra Exitosa!</h2>
-            <p>Tus boletos han sido enviados a tu correo electrónico. Disfruta de la función.</p>
+            <h2 id="success-title">¡Compra Exitosa!</h2>
+            <p id="success-desc">Tus boletos han sido enviados a tu correo electrónico. Disfruta de la función.</p>
             <button className="btn-solid" onClick={() => navigate('/WebHome')} style={{ width: '100%' }}>
               Volver al Inicio
             </button>
@@ -150,8 +167,32 @@ export default function WebBooking() {
         </div>
       )}
 
+      {showCancelConfirm && (
+        <div className="booking-success-overlay">
+          <div className="booking-success-modal" role="alertdialog" aria-labelledby="cancel-title" aria-describedby="cancel-desc">
+            <h2 id="cancel-title">¿Cancelar tu compra?</h2>
+            <p id="cancel-desc">
+              Perderás la selección de butacas{step === 2 ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.
+            </p>
+            <div className="booking-actions booking-actions-split" style={{ marginTop: '8px' }}>
+              <button className="btn-outline" onClick={() => setShowCancelConfirm(false)} autoFocus>
+                Seguir comprando
+              </button>
+              <button className="btn-solid" onClick={confirmCancelPurchase}>
+                Sí, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="booking-main">
-        <StepIndicator current={currentStep} />
+        <div className="booking-header-row">
+          <StepIndicator current={currentStep} />
+          <button type="button" className="btn-cancel-purchase" onClick={handleCancelPurchase}>
+            Cancelar compra
+          </button>
+        </div>
 
         {step === 1 ? (
           <div className="seats-selection">
@@ -282,7 +323,17 @@ export default function WebBooking() {
                   {touched.expiry && errors.expiry && <FieldError id="error-pay-exp" message={errors.expiry} />}
                 </div>
                 <div className="form-field">
-                  <label htmlFor="pay-cvv" className="form-label-web">CVV</label>
+                  <label htmlFor="pay-cvv" className="form-label-web">
+                    CVV
+                    <button
+                      type="button"
+                      className="cvv-help-btn"
+                      aria-expanded={showCvvHelp}
+                      aria-controls="cvv-help-text"
+                      aria-label="Ayuda: ¿dónde encuentro mi CVV?"
+                      onClick={() => setShowCvvHelp(v => !v)}
+                    >?</button>
+                  </label>
                   <input
                     id="pay-cvv"
                     type="text"
@@ -295,19 +346,30 @@ export default function WebBooking() {
                     onChange={handleCvvChange}
                     onBlur={() => markTouched('cvv')}
                     aria-invalid={Boolean(touched.cvv && errors.cvv)}
-                    aria-describedby={errors.cvv ? 'error-pay-cvv' : undefined}
+                    aria-describedby={[errors.cvv ? 'error-pay-cvv' : null, showCvvHelp ? 'cvv-help-text' : null].filter(Boolean).join(' ') || undefined}
                   />
+                  {showCvvHelp && (
+                    <p id="cvv-help-text" className="cvv-help-text" role="note">
+                      Son los 3 números al reverso de tu tarjeta (4 en American Express, al frente).
+                    </p>
+                  )}
                   {touched.cvv && errors.cvv && <FieldError id="error-pay-cvv" message={errors.cvv} />}
                 </div>
               </div>
             </form>
 
             <div className="booking-actions booking-actions-split">
-              <button className="btn-outline" onClick={() => setStep(1)}>⟨ Volver</button>
-              <button className="btn-solid" disabled={!isPaymentValid} onClick={handlePayment}>
-                Pagar S/ {total.toFixed(2)} ⟩
+              <button className="btn-outline" onClick={() => setStep(1)} disabled={isProcessingPayment}>⟨ Volver</button>
+              <button className="btn-solid" disabled={!isPaymentValid || isProcessingPayment} onClick={handlePayment}>
+                {isProcessingPayment ? 'Procesando...' : `Pagar S/ ${total.toFixed(2)} ⟩`}
               </button>
             </div>
+            <p className="payment-processing-status" role="status">
+              {isProcessingPayment ? 'Procesando tu pago, por favor espera.' : ''}
+            </p>
+            <p className="payment-support-link">
+              ¿Problemas con tu pago? Escríbenos a <a href="mailto:soporte@cinerama.com.pe">soporte@cinerama.com.pe</a>
+            </p>
           </div>
         )}
       </div>

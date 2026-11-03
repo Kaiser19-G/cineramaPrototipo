@@ -4,7 +4,10 @@ import { useCinema } from '../context/CinemaContext';
 import { getNextDays } from '../data/dateHelpers';
 import { handlePosterError } from '../utils/posterFallback';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
+import { buildScreeningEntries, computeCascadingOptions, matchesAllFilters } from '../data/screeningEntries';
 import './WebPages.css';
+
+const FORMAT_ORDER = ['2D', '3D'];
 
 export default function WebMovies() {
   const navigate = useNavigate();
@@ -32,43 +35,48 @@ export default function WebMovies() {
     setFilters(prev => ({ ...prev, [key]: null }));
   };
 
-  // Dynamic filter options
-  const filterOptions = useMemo(() => {
-    const cities = [...new Set(branches.map(b => b.city))];
-    const cinemas = branches.map(b => b.name);
-    const genres = [...new Set(enabledMovies.map(m => m.genre))];
-    const languages = [...new Set(enabledMovies.map(m => m.language === 'ES' ? 'Doblada' : 'Subtitulada'))];
-    const formats = [...new Set(enabledMovies.map(m => m.format).flat())];
-    
-    // Days logic (simplified mock)
-    const days = getNextDays(3).map((d) => d.label);
+  const days = useMemo(() => getNextDays(3), []);
 
-    return { cities, cinemas, genres, languages, formats, days };
-  }, [branches, enabledMovies]);
+  // Una entrada por cada función real (bookable) de cada película: es la
+  // única fuente de verdad para decidir qué opciones de filtro ofrecer.
+  const entries = useMemo(
+    () => buildScreeningEntries({ movies: enabledMovies, branches, screenings: activeScreenings, days }),
+    [enabledMovies, branches, activeScreenings, days]
+  );
 
-  // Filter the movies
+  const dimensions = useMemo(() => ({
+    city: (e) => e.branch.city,
+    cinema: (e) => e.branch.name,
+    day: (e) => e.dayLabel,
+    genre: (e) => e.movie.genre,
+    language: (e) => e.languageLabel,
+    format: (e) => e.screening.format,
+  }), []);
+
+  // Opciones en cascada: cada valor que se muestra, combinado con los demás
+  // filtros ya activos, tiene al menos una función real detrás — así nunca
+  // se puede elegir una combinación que lleve a "no hay funciones".
+  const cascading = useMemo(() => computeCascadingOptions(entries, filters, dimensions), [entries, filters, dimensions]);
+
+  const filterOptions = useMemo(() => ({
+    cities: [...new Set(branches.map(b => b.city))].filter(c => cascading.city.includes(c)),
+    cinemas: branches.map(b => b.name).filter(c => cascading.cinema.includes(c)),
+    days: days.map(d => d.label).filter(l => cascading.day.includes(l)),
+    genres: [...new Set(enabledMovies.map(m => m.genre))].filter(g => cascading.genre.includes(g)),
+    languages: ['Doblada', 'Subtitulada'].filter(l => cascading.language.includes(l)),
+    formats: FORMAT_ORDER.filter(f => cascading.format.includes(f))
+      .concat(cascading.format.filter(f => !FORMAT_ORDER.includes(f))),
+  }), [branches, enabledMovies, days, cascading]);
+
+  // Sin filtros activos se ve el catálogo completo; al activar cualquier
+  // filtro, se exige que exista una función real que calce con TODOS a la vez.
   const filteredMovies = useMemo(() => {
-    return enabledMovies.filter(movie => {
-      if (filters.genre && movie.genre !== filters.genre) return false;
-      if (filters.language) {
-        const langStr = movie.language === 'ES' ? 'Doblada' : 'Subtitulada';
-        if (langStr !== filters.language) return false;
-      }
-      if (filters.format && !movie.format.includes(filters.format)) return false;
-      
-      if (filters.city || filters.cinema) {
-        const relevantBranches = branches.filter(b => 
-          (!filters.city || b.city === filters.city) &&
-          (!filters.cinema || b.name === filters.cinema)
-        );
-        const branchIds = relevantBranches.map(b => b.id);
-        const hasScreening = activeScreenings.some(s => s.movieId === movie.id && branchIds.includes(s.branchId));
-        if (!hasScreening) return false; // Hide movie if it doesn't play in selected city/cinema
-      }
-      
-      return true;
-    });
-  }, [enabledMovies, branches, activeScreenings, filters]);
+    const anyFilterActive = Object.values(filters).some(v => v !== null);
+    if (!anyFilterActive) return enabledMovies;
+    const movieIds = new Set();
+    entries.forEach((e) => { if (matchesAllFilters(e, filters, dimensions)) movieIds.add(e.movie.id); });
+    return enabledMovies.filter(m => movieIds.has(m.id));
+  }, [enabledMovies, entries, filters, dimensions]);
 
   const posterGrid = useGridKeyboardNav(filteredMovies.length, 3);
 
