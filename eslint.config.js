@@ -18,4 +18,10 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Servidor (Node): globales de Node en vez de las del navegador.
+    files: ['server/**/*.js'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_' }] },
+  },
 ])
