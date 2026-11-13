@@ -1,5 +1,6 @@
 import express from 'express';
 import { openDb, DB_FILE } from './db.js';
+import { todayInLima } from '../src/data/limaDate.js';
 
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = '127.0.0.1';
@@ -77,8 +78,8 @@ app.get('/api/catalog', (_req, res) => res.json({
 app.use('/api', (_req, res) => res.status(404).json({ error: 'No encontrado' }));
 app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
 
-// Aviso si no hay funciones de hoy en adelante (fecha UTC, igual que el cliente).
-const today = new Date().toISOString().split('T')[0];
+// Aviso si no hay funciones de hoy en adelante (fecha de Lima, igual que el cliente).
+const today = todayInLima();
 const upcoming = db.prepare('SELECT COUNT(*) c FROM screenings WHERE starts_on >= ?').get(today).c;
 if (upcoming === 0) {
   console.warn('\n[AVISO] No hay funciones con fecha de hoy en adelante: el sitio no mostrara horarios.');

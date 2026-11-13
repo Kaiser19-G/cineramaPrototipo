@@ -1,4 +1,5 @@
 // ─── STORE EXPANDIDO — ADMIN CENTRAL ARCHITECTURE ───────────────────────────
+import { todayInLima, addDaysToDate } from './limaDate.js';
 
 export const movies = [
   { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'PG', status: 'active', format: ['2D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: '2026-04-30', endDate: '2026-06-30' },
@@ -59,9 +60,9 @@ export const movieCinema = [
   { id: 8, movieId: 6, branchId: 3, activa: true, fechaInicio: '2026-05-01', fechaFin: '2026-06-10', formatos: ['2D'],            precioBase: 14 },
 ];
 
-const today = new Date();
-const fmt   = (d) => d.toISOString().split('T')[0];
-const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const today = todayInLima();
+const fmt   = (d) => d;
+const addDays = addDaysToDate;
 
 export const screenings = [
   { id: 1,  movieId: 1, hallId: 1, branchId: 1, date: fmt(today),           startTime: '14:00', endTime: '16:35', language: 'ES', format: '3D',   price: 35, status: 'active',    bookedSeats: 210, totalSeats: 280 },

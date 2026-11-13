@@ -1,7 +1,7 @@
 // Carga inicial: traslada src/data/store.js a la base de datos.
 // Repetible (upsert por id, en una transaccion). `--reset` borra el archivo antes.
 // Las fechas de las funciones se calculan en store.js a partir del dia en que
-// se ejecuta (hoy, +-1, +2; convencion UTC igual que el cliente) y aqui se
+// se ejecuta (hoy, +-1, +2; dia de calendario en America/Lima, igual que el cliente) y aqui se
 // escriben como fechas fijas.
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
