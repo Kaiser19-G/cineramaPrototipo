@@ -1,9 +1,41 @@
+import { useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { useCinema } from '../../context/CinemaContext';
 import AccessibilityWidget from '../AccessibilityWidget';
 import './WebLayout.css';
 
+// Estado de carga / error del catálogo (API). Las páginas públicas asumen que
+// los datos ya existen, así que no se montan hasta tenerlos.
+function CatalogState({ loading, error, onRetry }) {
+  const boxRef = useRef(null);
+  // Tras pulsar "Reintentar" el botón desaparece: el foco pasa al aviso de carga.
+  const wasError = useRef(false);
+  useEffect(() => {
+    if (loading && wasError.current) boxRef.current?.focus();
+    wasError.current = !!error;
+  }, [loading, error]);
+
+  if (error) {
+    return (
+      <div className="catalog-state" role="alert">
+        <h2>No pudimos cargar la cartelera</h2>
+        <p>Revisa tu conexión o inténtalo de nuevo en unos segundos.</p>
+        <button type="button" className="catalog-state-retry" onClick={onRetry}>Reintentar</button>
+      </div>
+    );
+  }
+  return (
+    <div className="catalog-state" role="status" tabIndex={-1} ref={boxRef}>
+      <span className="catalog-state-spinner" aria-hidden="true" />
+      <p>Cargando cartelera…</p>
+    </div>
+  );
+}
+
 export default function WebLayout() {
   const navigate = useNavigate();
+  const { catalogLoading, catalogError, reloadCatalog } = useCinema();
+  const catalogReady = !catalogLoading && !catalogError;
 
   return (
     <div className="web-container">
@@ -20,7 +52,9 @@ export default function WebLayout() {
       </nav>
       
       <div className="web-content-area">
-        <Outlet />
+        {catalogReady
+          ? <Outlet />
+          : <CatalogState loading={catalogLoading} error={catalogError} onRetry={reloadCatalog} />}
       </div>
 
       {/* Footer Público */}

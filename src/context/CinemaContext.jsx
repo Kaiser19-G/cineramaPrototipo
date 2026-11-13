@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  branches, movies, movieCinema, screenings,
-  orders, halls, recentActivity, alerts, occupancyByHall,
+  orders, recentActivity, alerts, occupancyByHall,
 } from '../data/store';
 
 const CinemaContext = createContext();
@@ -18,12 +17,56 @@ const PERMS = {
   operator: ['view_local_screenings','validate_ticket'],
 };
 
+const EMPTY_CATALOG = { movies: [], branches: [], halls: [], screenings: [], movieCinema: [] };
+
+// Catálogo (películas, sedes, salas, funciones) leído de la API del servidor.
+// Mismo formato de datos que tenía src/data/store.js.
+function useCatalog() {
+  const [state, setState] = useState({ catalog: EMPTY_CATALOG, loading: true, error: null });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/catalog', { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const ok = ['movies', 'branches', 'halls', 'screenings', 'movieCinema'].every((k) => Array.isArray(data?.[k]));
+        if (!ok) throw new Error('Respuesta del servidor con formato inesperado');
+        setState({ catalog: data, loading: false, error: null });
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setState((prev) => ({ ...prev, loading: false, error: err }));
+      });
+    return () => controller.abort();
+  }, [attempt]);
+
+  const reload = useCallback(() => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    setAttempt((n) => n + 1);
+  }, []);
+
+  return { ...state, reload };
+}
+
 export function CinemaProvider({ children }) {
+  const { catalog, loading: catalogLoading, error: catalogError, reload: reloadCatalog } = useCatalog();
+  const { movies, branches, halls, movieCinema } = catalog;
+
   // 'all' = visión global Admin Central | número = cine específico
   const [currentCinemaId, setCurrentCinemaId] = useState('all');
   
   // Convertimos en estado reactivo para permitir registrar compras y actualizar la UI al instante
-  const [allScreenings, setAllScreenings] = useState(screenings);
+  // Las funciones vienen de la API; las ventas locales simuladas se suman encima
+  // (id de función → entradas vendidas en esta sesión).
+  const [localSold, setLocalSold] = useState({});
+  const allScreenings = useMemo(() => catalog.screenings.map((s) => {
+    const extra = localSold[s.id];
+    return extra ? { ...s, bookedSeats: Math.min(s.totalSeats, s.bookedSeats + extra) } : s;
+  }), [catalog.screenings, localSold]);
   const [allOrders, setAllOrders] = useState(orders);
 
   // Usuario simulado. role: 'admin' puede cambiar currentCinemaId.
@@ -39,7 +82,7 @@ export function CinemaProvider({ children }) {
   // El cine activo real (objeto branch o null = todos)
   const activeBranch = useMemo(() =>
     currentCinemaId === 'all' ? null : branches.find(b => b.id === currentCinemaId),
-  [currentCinemaId]);
+  [currentCinemaId, branches]);
 
   // Películas habilitadas en el cine activo (o todas para global)
   const enabledMovies = useMemo(() => {
@@ -48,19 +91,19 @@ export function CinemaProvider({ children }) {
       .filter(mc => mc.branchId === currentCinemaId && mc.activa)
       .map(mc => mc.movieId);
     return movies.filter(m => ids.includes(m.id));
-  }, [currentCinemaId]);
+  }, [currentCinemaId, movies, movieCinema]);
 
   // Relaciones película↔cine para el cine activo
   const activeMovieCinema = useMemo(() => {
     if (currentCinemaId === 'all') return movieCinema;
     return movieCinema.filter(mc => mc.branchId === currentCinemaId);
-  }, [currentCinemaId]);
+  }, [currentCinemaId, movieCinema]);
 
   // Salas del cine activo
   const activeHalls = useMemo(() => {
     if (currentCinemaId === 'all') return halls;
     return halls.filter(h => h.branchId === currentCinemaId);
-  }, [currentCinemaId]);
+  }, [currentCinemaId, halls]);
 
   // Funciones del cine activo
   const activeScreenings = useMemo(() => {
@@ -146,15 +189,7 @@ export function CinemaProvider({ children }) {
     setAllOrders(prev => [newOrder, ...prev]);
 
     // Incrementar asientos ocupados de la función
-    setAllScreenings(prev => prev.map(s => {
-      if (s.id === screeningId) {
-        return {
-          ...s,
-          bookedSeats: Math.min(s.totalSeats, s.bookedSeats + selectedSeats.length)
-        };
-      }
-      return s;
-    }));
+    setLocalSold(prev => ({ ...prev, [screeningId]: (prev[screeningId] || 0) + selectedSeats.length }));
 
     return newOrder;
   };
@@ -186,6 +221,10 @@ export function CinemaProvider({ children }) {
       activeActivity,
       activeAlerts,
       activeOccupancy,
+      // Estado de carga del catálogo (API)
+      catalogLoading,
+      catalogError,
+      reloadCatalog,
       // KPIs
       kpiRevenue,
       kpiTickets,
