@@ -1,173 +1,122 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import './WebPages.css';
-import { useNavigate } from 'react-router-dom';
-import FieldError from '../components/FieldError';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import AuthField from '../components/AuthField';
+import { useAuth } from '../context/AuthContext';
+import { EMAIL_RE } from '../shared/validators';
+import { safeNext } from '../shared/safeNext';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+// Inicio de sesion. (El registro vive en /web/registro: dos paginas simples en
+// lugar de pestanas, para no depender del patron ARIA de tabs.)
 export default function WebAuth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get('next'));
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [touched, setTouched] = useState({});
+  const [formError, setFormError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const noticeRef = useRef(null);
+  const formErrorRef = useRef(null);
+
+  const loggedOutNotice = location.state?.loggedOut === true;
+  const loginRequired = location.state?.reason === 'login_required';
+  const notice = loggedOutNotice ? 'Cerraste sesión correctamente.'
+    : loginRequired ? 'Inicia sesión con una cuenta del personal para entrar al panel de administración.' : '';
+
+  // Al llegar con un aviso (sesion cerrada / se requiere iniciar sesion) el foco va al aviso para que se lea.
+  useEffect(() => { if (notice) noticeRef.current?.focus(); }, [notice]);
+  useEffect(() => { if (formError) formErrorRef.current?.focus(); }, [formError]);
 
   const errors = useMemo(() => {
     const e = {};
-    if (!isLogin) {
-      if (!firstName.trim()) e.firstName = 'Ingresa tu nombre.';
-      if (!lastName.trim()) e.lastName = 'Ingresa tu apellido.';
-    }
-    if (!email.trim()) {
-      e.email = 'Ingresa tu correo.';
-    } else if (!EMAIL_RE.test(email.trim())) {
-      e.email = 'Ese correo no tiene un formato válido (ej: nombre@dominio.com).';
-    }
-    if (!password) {
-      e.password = 'Ingresa tu contraseña.';
-    } else if (!isLogin && password.length < 6) {
-      e.password = 'Usa al menos 6 caracteres.';
-    }
-    if (!isLogin) {
-      if (!confirmPassword) {
-        e.confirmPassword = 'Confirma tu contraseña.';
-      } else if (confirmPassword !== password) {
-        e.confirmPassword = 'Las contraseñas no coinciden.';
-      }
-    }
+    if (!email.trim()) e.email = 'Ingresa tu correo.';
+    else if (!EMAIL_RE.test(email.trim())) e.email = 'Ese correo no tiene un formato válido (ej: nombre@dominio.com).';
+    if (!password) e.password = 'Ingresa tu contraseña.';
     return e;
-  }, [isLogin, firstName, lastName, email, password, confirmPassword]);
+  }, [email, password]);
 
-  const isValid = Object.keys(errors).length === 0;
-  const markTouched = (field) => setTouched((t) => ({ ...t, [field]: true }));
+  const shown = (f) => ((touched[f] || submitted) ? errors[f] : undefined);
+  const markTouched = (f) => setTouched((t) => ({ ...t, [f]: true }));
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!isValid) return; // el botón ya está deshabilitado en este caso
-    if (isLogin) {
-      // Si el usuario es administrador, podemos redirigirlo al dashboard
-      // Si es un cliente normal, al home web
-      navigate('/dashboard');
-    } else {
-      navigate('/web');
+  if (user && !loggedOutNotice) {
+    const staff = user.tier === 'central' || user.tier === 'branch';
+    return <Navigate to={next ?? (staff ? '/dashboard' : '/WebHome')} replace />;
+  }
+
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
+    setSubmitted(true);
+    setFormError('');
+    if (errors.email) { emailRef.current?.focus(); return; }
+    if (errors.password) { passwordRef.current?.focus(); return; }
+    setBusy(true);
+    const res = await login(email.trim(), password);
+    setBusy(false);
+    if (res.ok) {
+      const staff = res.data.user.tier !== 'customer';
+      navigate(next ?? (staff ? '/dashboard' : '/WebHome'), { replace: true });
+      return;
     }
+    if (res.error === 'phone_not_verified') {
+      navigate('/web/registro', { state: { verification: res.data, fromLogin: true, next } });
+      return;
+    }
+    if (res.error === 'invalid_credentials') setFormError('Correo o contraseña incorrectos. Revisa los datos e inténtalo de nuevo.');
+    else if (res.error === 'locked') {
+      const min = Math.max(1, Math.ceil((res.data.retryAfter ?? 900) / 60));
+      setFormError(`Demasiados intentos fallidos. Por seguridad, espera ${min} ${min === 1 ? 'minuto' : 'minutos'} antes de volver a intentarlo.`);
+    } else if (res.error === 'account_disabled') setFormError('Tu cuenta está desactivada. Contacta a un administrador.');
+    else if (res.error === 'network') setFormError('No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+    else setFormError('No pudimos iniciar sesión. Inténtalo de nuevo en unos segundos.');
   };
 
   return (
     <div className="web-page-center">
       <div className="auth-card">
-        <div className="auth-tabs" role="tablist" aria-label="Acceso a tu cuenta">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={isLogin}
-            className={`auth-tab ${isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(true)}
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={!isLogin}
-            className={`auth-tab ${!isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(false)}
-          >
-            Registrarse
-          </button>
-        </div>
+        <h2 className="auth-title">Iniciar sesión</h2>
+
+        {notice && (
+          <p className="auth-notice" role="status" tabIndex={-1} ref={noticeRef}>{notice}</p>
+        )}
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          {!isLogin && (
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="auth-firstname">Nombre</label>
-                <input
-                  id="auth-firstname"
-                  type="text"
-                  placeholder="Tu nombre"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  onBlur={() => markTouched('firstName')}
-                  aria-invalid={Boolean(touched.firstName && errors.firstName)}
-                  aria-describedby={errors.firstName ? 'err-firstname' : undefined}
-                />
-                {touched.firstName && errors.firstName && <FieldError id="err-firstname" message={errors.firstName} />}
-              </div>
-              <div className="form-group">
-                <label htmlFor="auth-lastname">Apellido</label>
-                <input
-                  id="auth-lastname"
-                  type="text"
-                  placeholder="Tu apellido"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  onBlur={() => markTouched('lastName')}
-                  aria-invalid={Boolean(touched.lastName && errors.lastName)}
-                  aria-describedby={errors.lastName ? 'err-lastname' : undefined}
-                />
-                {touched.lastName && errors.lastName && <FieldError id="err-lastname" message={errors.lastName} />}
-              </div>
-            </div>
-          )}
+          <AuthField
+            id="auth-email" label="Correo" type="email" inputMode="email" autoComplete="email"
+            placeholder="correo@ejemplo.com" value={email} inputRef={emailRef}
+            onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
+            onBlur={() => markTouched('email')} error={shown('email')}
+          />
+          <AuthField
+            id="auth-password" label="Contraseña" type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password" placeholder="••••••••" value={password} inputRef={passwordRef}
+            onChange={(e) => { setPassword(e.target.value); setFormError(''); }}
+            onBlur={() => markTouched('password')} error={shown('password')}
+          />
+          <label className="check-row">
+            <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
+            <span>Mostrar contraseña</span>
+          </label>
 
-          <div className="form-group">
-            <label htmlFor="auth-email">Correo</label>
-            <input
-              id="auth-email"
-              type="email"
-              placeholder="correo@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => markTouched('email')}
-              aria-invalid={Boolean(touched.email && errors.email)}
-              aria-describedby={errors.email ? 'err-email' : undefined}
-            />
-            {touched.email && errors.email && <FieldError id="err-email" message={errors.email} />}
-          </div>
+          {formError && <div className="form-error" tabIndex={-1} ref={formErrorRef}>{formError}</div>}
 
-          <div className="form-group">
-            <label htmlFor="auth-password">Contraseña</label>
-            <input
-              id="auth-password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => markTouched('password')}
-              aria-invalid={Boolean(touched.password && errors.password)}
-              aria-describedby={errors.password ? 'err-password' : undefined}
-            />
-            {touched.password && errors.password && <FieldError id="err-password" message={errors.password} />}
-          </div>
-
-          {!isLogin && (
-            <div className="form-group">
-              <label htmlFor="auth-password-confirm">Confirmar contraseña</label>
-              <input
-                id="auth-password-confirm"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onBlur={() => markTouched('confirmPassword')}
-                aria-invalid={Boolean(touched.confirmPassword && errors.confirmPassword)}
-                aria-describedby={errors.confirmPassword ? 'err-password-confirm' : undefined}
-              />
-              {touched.confirmPassword && errors.confirmPassword && (
-                <FieldError id="err-password-confirm" message={errors.confirmPassword} />
-              )}
-            </div>
-          )}
-
-          <button type="submit" className="btn-auth" disabled={!isValid}>
-            {isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+          <button type="submit" className="btn-auth" disabled={busy}>
+            {busy ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>
         </form>
+
+        <p className="auth-switch">
+          ¿Aún no tienes cuenta? <Link to={next ? `/web/registro?next=${encodeURIComponent(next)}` : '/web/registro'}>Crea una cuenta</Link>
+        </p>
       </div>
     </div>
   );

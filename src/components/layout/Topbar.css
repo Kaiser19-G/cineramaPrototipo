@@ -66,6 +66,17 @@
   margin-left: 6px;
 }
 .topbar-user:hover { background: var(--surface-2); }
+.topbar-user { position: relative; padding: 0; cursor: default; }
+.topbar-user-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px; border: none; border-radius: var(--radius);
+  background: none; font: inherit; text-align: left; cursor: pointer;
+}
+.topbar-user-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+button.user-dropdown-item {
+  width: 100%; border: none; background: none; font: inherit; font-size: 13px; text-align: left;
+}
+button.user-dropdown-item:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: -2px; }
 .topbar-user-info { display: flex; flex-direction: column; }
 .topbar-username { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .topbar-role     { font-size: 10px; color: var(--text-muted); letter-spacing: 0.3px; }

@@ -1565,3 +1565,145 @@ html[data-vision="mono"] .legend-selected {
   .movies-grid-view { grid-template-columns: minmax(0, 1fr); }
   .active-filters-pills { flex-wrap: wrap; }
 }
+
+/* ══════════════════════════════════════════
+   CUENTAS (fase 2): inicio de sesión, registro, verificación, política
+   Solo variables del tema (claro/oscuro), sin colores fijos.
+   ══════════════════════════════════════════ */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.auth-title { margin: 0 0 1rem; color: var(--text-main); font-size: 1.6rem; }
+.auth-title:focus { outline: none; }
+.auth-lead { margin: 0 0 1.5rem; color: var(--text-secondary); line-height: 1.5; }
+
+.auth-notice {
+  margin: 0 0 1.5rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--electric-blue);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.auth-notice:focus { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+
+.form-error {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--error);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.form-error:focus { outline: 2px solid var(--error); outline-offset: 2px; }
+
+.field-hint { margin: 0; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.45; }
+.field-error a { color: inherit; text-decoration: underline; }
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.check-row input[type="checkbox"],
+.form-group .check-row input[type="checkbox"] {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  accent-color: var(--action-red);
+  cursor: pointer;
+}
+.check-row input[type="checkbox"]:focus-visible,
+.form-group .check-row input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+}
+.check-row a, .auth-switch a, .legal-page a { color: var(--text-main); text-decoration: underline; font-weight: 600; }
+.check-row a:focus-visible, .auth-switch a:focus-visible, .legal-page a:focus-visible,
+.link-btn:focus-visible, .field-error a:focus-visible {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.auth-switch { margin: 1.5rem 0 0; text-align: center; color: var(--text-secondary); font-size: 0.95rem; }
+
+.auth-secondary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; margin-top: 1.25rem; }
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  color: var(--text-main);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-btn[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+
+/* Cuadro de la simulación del SMS: inconfundible, con texto (no solo color). */
+.sim-box {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--border-interactive);
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.sim-box p { margin: 0 0 0.5rem; }
+.sim-box p:last-child { margin-bottom: 0; }
+.sim-box-tag { color: var(--text-main); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.sim-box-code strong { display: inline-block; margin-left: 0.25rem; color: var(--text-main); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.6rem; letter-spacing: 0.2em; }
+
+.legal-page {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.legal-page .legal-title { margin: 0 0 1rem; color: var(--text-main); font-size: 2rem; }
+.legal-page h2 { margin: 2rem 0 0.5rem; color: var(--text-main); font-size: 1.2rem; }
+.legal-page ul { padding-left: 1.25rem; }
+.legal-page li { margin-bottom: 0.4rem; }
+.legal-draft {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cinema-gold);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+.legal-page strong { color: var(--text-main); }
+
+.session-gate { padding: 3rem 1.5rem; text-align: center; color: var(--text-secondary); }
+
+/* Bordes de los campos de cuentas con contraste de componente (>=3:1, WCAG 1.4.11). */
+.auth-form .form-group input:not([type="checkbox"]) { border-color: var(--border-interactive); }
+.auth-form .form-group input:not([type="checkbox"]):focus { border-color: var(--action-red); }
+.auth-form .form-group input:not([type="checkbox"])[aria-invalid="true"] { border-color: var(--error); }
+
+/* index.css define .form-row como grid de 2 columnas (admin): en móvil el registro apila los campos. */
+@media (max-width: 768px) {
+  .auth-form .form-row { grid-template-columns: minmax(0, 1fr); }
+}
+/* El ícono del error no se encoge cuando el mensaje ocupa varias líneas. */
+.auth-form .field-error svg { flex: none; }

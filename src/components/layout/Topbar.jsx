@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Search, Bell, ChevronDown, X, AlertTriangle, CheckCircle, Info, AlertCircle, Globe, MapPin, Lock, LogOut, Settings, User } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
+import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS } from '../../shared/permissions';
 import './Topbar.css';
 
 const levelIcon  = { error: AlertCircle, warning: AlertTriangle, success: CheckCircle, info: Info };
@@ -16,6 +18,25 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
     isAdminCentral, currentUser, branches,
     activeAlerts, activeActivity,
   } = useCinema();
+  const { logout } = useAuth();
+  const userMenuRef = useRef(null);
+  const userBtnRef = useRef(null);
+
+  // El menú de usuario se cierra con Escape (devolviendo el foco al botón) o al hacer clic fuera.
+  useEffect(() => {
+    if (!userMenuOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') { setUserMenuOpen(false); userBtnRef.current?.focus(); } };
+    const onDown = (e) => { if (!userMenuRef.current?.contains(e.target)) setUserMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
+  }, [userMenuOpen]);
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false);
+    await logout();
+    navigate('/web/login', { replace: true, state: { loggedOut: true } });
+  };
 
   const unread = activeAlerts.filter(a => a.level === 'error').length;
 
@@ -112,37 +133,39 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
           )}
         </div>
 
-        <div className="topbar-user" onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ cursor: 'pointer', position: 'relative' }}>
-          <div className="avatar avatar-sm">{currentUser.avatar}</div>
-          <div className="topbar-user-info">
-            <span className="topbar-username">{currentUser.name}</span>
-            <span className="topbar-role">
-              {currentUser.role === 'admin' ? 'Administrador Central' : 'Administrador Local'}
+        <div className="topbar-user" ref={userMenuRef}>
+          <button
+            type="button" className="topbar-user-btn" ref={userBtnRef}
+            aria-haspopup="menu" aria-expanded={userMenuOpen}
+            onClick={() => setUserMenuOpen(o => !o)}
+          >
+            <span className="avatar avatar-sm" aria-hidden="true">{currentUser.avatar}</span>
+            <span className="topbar-user-info">
+              <span className="topbar-username">{currentUser.name}</span>
+              <span className="topbar-role">{ROLE_LABELS[currentUser.role] || currentUser.role}</span>
             </span>
-          </div>
-          <ChevronDown size={14} color="var(--text-muted)" style={{ transition: 'transform 0.2s', transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-          
+            <ChevronDown size={14} aria-hidden="true" color="var(--text-muted)" style={{ transition: 'transform 0.2s', transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+          </button>
+
           {userMenuOpen && (
-            <div className="user-dropdown-menu">
-              <div className="user-dropdown-item" onClick={() => navigate('/settings')}>
-                <User size={16} />
-                <span>Mi Perfil</span>
-              </div>
-              <div className="user-dropdown-item" onClick={() => navigate('/settings')}>
-                <Settings size={16} />
-                <span>Configuración</span>
-              </div>
-              <div className="dropdown-divider"></div>
-              <div 
-                className="user-dropdown-item logout-item" 
-                onClick={() => {
-                  // Lógica de cerrar sesión (limpiar auth state si existiera)
-                  navigate('/web/login');
-                }}
-              >
-                <LogOut size={16} />
+            <div className="user-dropdown-menu" role="menu">
+              {isAdminCentral && (
+                <>
+                  <button type="button" role="menuitem" className="user-dropdown-item" onClick={() => { setUserMenuOpen(false); navigate('/settings'); }}>
+                    <User size={16} aria-hidden="true" />
+                    <span>Mi Perfil</span>
+                  </button>
+                  <button type="button" role="menuitem" className="user-dropdown-item" onClick={() => { setUserMenuOpen(false); navigate('/settings'); }}>
+                    <Settings size={16} aria-hidden="true" />
+                    <span>Configuración</span>
+                  </button>
+                  <div className="dropdown-divider"></div>
+                </>
+              )}
+              <button type="button" role="menuitem" className="user-dropdown-item logout-item" onClick={handleLogout}>
+                <LogOut size={16} aria-hidden="true" />
                 <span>Cerrar Sesión</span>
-              </div>
+              </button>
             </div>
           )}
         </div>
