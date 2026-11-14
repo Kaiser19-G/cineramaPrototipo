@@ -68,7 +68,7 @@
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   background-color: var(--surface-2);
   color: var(--text-primary);
   font-size: 1rem;
@@ -82,7 +82,7 @@
 
 .btn-auth, .btn-solid {
   background-color: var(--accent-solid);
-  color: white;
+  color: var(--on-accent);
   border: none;
   border-radius: 8px;
   padding: 0.8rem 1.5rem;
@@ -303,7 +303,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: bold;
-  color: var(--action-red);
+  color: var(--accent-text);
 }
 
 /* === Web Movies (Layout con Sidebar) === */
@@ -354,8 +354,8 @@
   transition: color 0.2s;
   color: var(--text-main);
 }
-.filter-title:hover { color: var(--action-red); }
-.active-text { color: var(--action-red); }
+.filter-title:hover { color: var(--accent-text); }
+.active-text { color: var(--accent-text); }
 
 .filter-options {
   padding: 10px 0 10px 10px;
@@ -376,7 +376,7 @@
   cursor: pointer;
 }
 .filter-options button:hover { color: var(--text-main); }
-.filter-options .active-option { color: var(--action-red); font-weight: bold; }
+.filter-options .active-option { color: var(--accent-text); font-weight: bold; }
 .filter-options button:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
 
 /* Lista de Películas */
@@ -391,7 +391,7 @@
   margin-bottom: 2rem;
 }
 .movies-top-bar h3 { margin: 0; font-size: 1.2rem; font-weight: normal; color: var(--text-primary); }
-.movies-top-bar .count { color: var(--action-red); font-weight: bold; font-size: 1.4rem; }
+.movies-top-bar .count { color: var(--accent-text); font-weight: bold; font-size: 1.4rem; }
 
 .active-filters-pills {
   display: flex;
@@ -399,7 +399,7 @@
 }
 .active-filters-pills .pill {
   border: 1px solid var(--action-red);
-  color: var(--action-red);
+  color: var(--accent-text);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -440,7 +440,7 @@
   top: 15px;
   left: -35px;
   background-color: var(--accent-solid);
-  color: white;
+  color: var(--on-accent);
   padding: 5px 40px;
   transform: rotate(-45deg);
   font-weight: bold;
@@ -454,7 +454,7 @@
 
 .btn-comprar {
   background-color: var(--accent-solid);
-  color: white;
+  color: var(--on-accent);
   border: none;
   padding: 12px 24px;
   border-radius: 30px;
@@ -578,8 +578,8 @@
   flex-shrink: 0;
 }
 .booking-step.current { color: var(--text-main); }
-.booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: #fff; }
-.booking-step.done .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: #fff; }
+.booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: var(--on-accent); }
+.booking-step.done .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: var(--on-accent-success); }
 .step-arrow { color: var(--text-muted); }
 
 /* width:100% evita que .booking-main (align-items:center) encoja este
@@ -600,7 +600,7 @@
 }
 .screen-label {
   font-size: 0.75rem;
-  color: var(--action-red);
+  color: var(--accent-text);
   text-transform: uppercase;
   letter-spacing: 3px;
   font-weight: 700;
@@ -632,7 +632,7 @@
   min-width: 2rem;
   min-height: 2rem;
   border-radius: 8px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-interactive);
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.625rem;
@@ -651,7 +651,7 @@
 .seat-btn.seat-selected {
   background: var(--accent-solid);
   border-color: var(--action-red);
-  color: #fff;
+  color: var(--on-accent);
 }
 .seat-btn.seat-occupied {
   background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
@@ -674,7 +674,7 @@
   font-size: 0.5625rem;
   line-height: 1;
 }
-.seat-selected .seat-icon { background: #fff; color: var(--accent-solid); }
+.seat-selected .seat-icon { background: var(--on-accent); color: var(--accent-solid); }
 .seat-occupied .seat-icon { background: var(--surface-3); color: var(--text-muted); }
 
 .seats-legend {
@@ -696,7 +696,7 @@
   border: 2px solid var(--border);
 }
 .legend-available { background: transparent; }
-.legend-selected { background: var(--accent-solid); border-color: var(--action-red); color: #fff; font-weight: 800; }
+.legend-selected { background: var(--accent-solid); border-color: var(--action-red); color: var(--on-accent); font-weight: 800; }
 .legend-occupied {
   background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
   background-color: var(--surface);
@@ -802,7 +802,7 @@
 .info-strong { color: var(--text-main); font-weight: bold; }
 
 .summary-movie-title { margin: 0 0 8px 0; font-size: 1.5rem; color: var(--text-main); }
-.highlight-text { font-weight: bold; color: var(--action-red); margin: 0 0 8px 0; }
+.highlight-text { font-weight: bold; color: var(--accent-text); margin: 0 0 8px 0; }
 .summary-meta { color: var(--text-secondary); margin: 0 0 4px 0; }
 .summary-subtitle { color: var(--text-main); margin-bottom: 1rem; }
 .summary-label { color: var(--text-secondary); margin: 0 0 10px 0; }
@@ -891,7 +891,7 @@
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-interactive);
   background-color: var(--surface-2);
   color: var(--text-primary);
   font-size: 1rem;
@@ -994,8 +994,8 @@
    fijo: en tema claro un botón blanco sobre fondo claro sería invisible. */
 .btn-comprar-top {
   background-color: var(--surface);
-  color: var(--action-red);
-  border: 2px solid var(--action-red);
+  color: var(--accent-text);
+  border: 2px solid var(--accent-text);
   border-radius: 30px;
   padding: 12px 30px;
   font-size: 1.1rem;
@@ -1006,7 +1006,7 @@
 }
 .btn-comprar-top:hover {
   background-color: var(--accent-solid);
-  color: #fff;
+  color: var(--on-accent);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -1058,7 +1058,7 @@
 
 .synopsis-card h2 {
   font-size: 1.8rem;
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   margin: 0 0 1rem 0;
   font-weight: bold;
 }
@@ -1087,7 +1087,7 @@
 
 .lang-badge {
   border: 1.5px solid var(--action-red);
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   padding: 4px 12px;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -1220,7 +1220,7 @@
   color: var(--text-main);
 }
 .custom-dd-item.selected {
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   font-weight: 700;
 }
 .custom-dd-item.clear-item {
@@ -1302,13 +1302,14 @@
 }
 
 /* "Ticket" de horario: metáfora de boleto de papel, se queda blanco con
-   texto en rojo-marca a propósito en ambos temas (como el chip de VISA). */
+   texto en rojo-marca a propósito en ambos temas (como el chip de VISA).
+   El texto usa --accent-on-white (acento oscuro apto para fondo blanco). */
 .showtime-btn {
   display: flex;
   align-items: center;
   gap: 10px;
   background: #ffffff;
-  color: var(--accent-solid);
+  color: var(--accent-on-white);
   padding: 10px 24px;
   border: none;
   font-weight: bold;
@@ -1329,8 +1330,16 @@
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
+/* En tema claro el ticket blanco quedaba sin límite visible sobre la página
+   blanca (1.0:1): borde con token, y 1px menos de padding para que mida lo mismo. */
+html[data-theme="light"] .showtime-btn {
+  border: 1px solid var(--border-interactive);
+  padding: 9px 23px;
+}
+
 .showtime-btn:hover:not(.disabled) {
-  background-color: #f0f0f0;
+  /* #f0f0f0 daba 4.2:1 con el rojo de marca; #fafafa da 4.6:1. */
+  background-color: #fafafa;
   transform: translateY(-2px);
   filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
 }
@@ -1466,6 +1475,18 @@ html[data-vision="mono"] .seat-btn.seat-selected,
 html[data-vision="mono"] .legend-selected {
   background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
 }
+/* Mono oscuro: el relleno es gris claro (#767676) con texto blanco; rayas
+   blancas lo aclaraban y bajaban el contraste a 2.9:1. Rayas oscuras: el
+   pixel mas claro es el propio relleno (4.54:1). */
+html[data-theme="dark"][data-vision="mono"] .seat-btn.seat-selected,
+html[data-theme="dark"][data-vision="mono"] .legend-selected {
+  background-image: repeating-linear-gradient(-45deg, rgba(0,0,0,0.25) 0 3px, transparent 3px 7px);
+}
+
+/* Placeholder: el gris por defecto del navegador (#757575) no llega a 4.5:1
+   sobre los campos oscuros. */
+.web-container input::placeholder,
+.web-container textarea::placeholder { color: var(--text-muted); opacity: 1; }
 
 /* ══════════════════════════════════════════
    RESET DE <button> NATIVO — accesibilidad por teclado (APF3)
