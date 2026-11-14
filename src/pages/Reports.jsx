@@ -5,6 +5,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { revenueByDay, genreData, occupancyByHall, movies, orders } from '../data/store';
+import DemoNotice from '../components/DemoNotice';
+import { money } from '../utils/money';
 
 const tabs = ['Ingresos', 'Ocupación', 'Películas', 'Pagos', 'Rendimiento'];
 
@@ -28,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return (
     <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
       <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-      {payload.map((p, i) => <p key={i} style={{ color: p.color, fontWeight: 700 }}>{p.name}: {typeof p.value === 'number' && p.name?.includes('Ingresos') ? `$${p.value.toLocaleString()}` : p.value}</p>)}
+      {payload.map((p, i) => <p key={i} style={{ color: p.color, fontWeight: 700 }}>{p.name}: {typeof p.value === 'number' && p.name?.includes('Ingresos') ? money(p.value) : p.value}</p>)}
     </div>
   );
 };
@@ -45,10 +47,11 @@ export default function Reports() {
           <p className="page-subtitle">Inteligencia de negocios y métricas de rendimiento</p>
         </div>
         <div className="flex gap-8">
-          <button className="btn btn-secondary"><Download size={15} /> Exportar PDF</button>
-          <button className="btn btn-secondary"><Download size={15} /> Exportar CSV</button>
+          <button type="button" className="btn btn-secondary" disabled title="Disponible cuando haya datos reales"><Download size={15} aria-hidden="true" /> Exportar PDF (no disponible)</button>
+          <button type="button" className="btn btn-secondary" disabled title="Disponible cuando haya datos reales"><Download size={15} aria-hidden="true" /> Exportar CSV (no disponible)</button>
         </div>
       </div>
+      <DemoNotice>Todas las cifras y gráficos de esta pantalla son de ejemplo. Se calcularán con datos reales cuando existan las compras.</DemoNotice>
 
       <div className="tabs mb-6">
         {tabs.map(t => <button key={t} className={`tab ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>{t}</button>)}
@@ -58,9 +61,9 @@ export default function Reports() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="grid-4">
             {[
-              { label: 'Ingresos Mayo', value: '$145,000', color: 'var(--emerald)' },
-              { label: 'Total Anual', value: '$559,000', color: 'var(--cinema-gold)' },
-              { label: 'Promedio Diario', value: '$4,833', color: 'var(--electric-blue)' },
+              { label: 'Ingresos Mayo', value: 'S/ 145,000', color: 'var(--emerald)' },
+              { label: 'Total Anual', value: 'S/ 559,000', color: 'var(--cinema-gold)' },
+              { label: 'Promedio Diario', value: 'S/ 4,833', color: 'var(--electric-blue)' },
               { label: 'Crecimiento vs Abr', value: '+13%', color: 'var(--action-red)' },
             ].map((k, i) => (
               <div key={i} className="card" style={{ textAlign: 'center' }}>
@@ -76,7 +79,7 @@ export default function Reports() {
                 <LineChart data={revenueByDay}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Line type="monotone" dataKey="revenue" name="Ingresos" stroke="var(--action-red)" strokeWidth={2.5} dot={{ fill: 'var(--action-red)', r: 4 }} />
                 </LineChart>
@@ -88,7 +91,7 @@ export default function Reports() {
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="revenue" name="Ingresos" fill="var(--action-red)" radius={[4,4,0,0]} />
                 </BarChart>

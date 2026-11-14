@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Edit2, Trash2, Search, Shield, X } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
 import { users as initialUsers } from '../data/store';
+import DemoNotice from '../components/DemoNotice';
 
 const roleConfig = {
   admin:    { cls: 'badge-red',    label: 'Administrador' },
@@ -72,6 +73,8 @@ export default function UsersAccess() {
           <button className="btn btn-primary" onClick={openCreate}><Plus size={16} /> Agregar Usuario</button>
         )}
       </div>
+
+      <DemoNotice>Esta pantalla todavía muestra personal de ejemplo: los cambios no se guardan y no afectan las cuentas reales. Se conectará a las cuentas reales en una entrega posterior.</DemoNotice>
 
       <div className="tabs mb-6">
         {tabs.map(t => <button key={t} className={`tab ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>{t}</button>)}

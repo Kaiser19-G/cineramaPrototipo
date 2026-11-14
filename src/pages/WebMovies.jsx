@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import { getNextDays } from '../data/dateHelpers';
-import { handlePosterError } from '../utils/posterFallback';
+import Poster from '../components/Poster';
+import PosterTags from '../components/PosterTags';
+import { movieLabel } from '../utils/movieLabel';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import { buildScreeningEntries, computeCascadingOptions, matchesAllFilters } from '../data/screeningEntries';
 import './WebPages.css';
@@ -11,7 +13,7 @@ const FORMAT_ORDER = ['2D', '3D'];
 
 export default function WebMovies() {
   const navigate = useNavigate();
-  const { enabledMovies, branches, activeScreenings } = useCinema();
+  const { publicMovies: enabledMovies, branches, publicScreenings: activeScreenings } = useCinema();
 
   const [openAccordion, setOpenAccordion] = useState('Día');
   const [filters, setFilters] = useState({
@@ -35,7 +37,7 @@ export default function WebMovies() {
     setFilters(prev => ({ ...prev, [key]: null }));
   };
 
-  const days = useMemo(() => getNextDays(3), []);
+  const days = useMemo(() => getNextDays(7), []);
 
   // Una entrada por cada función real (bookable) de cada película: es la
   // única fuente de verdad para decidir qué opciones de filtro ofrecer.
@@ -220,7 +222,7 @@ export default function WebMovies() {
           </div>
         </div>
         
-        <div className="movies-grid-view" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
+        {filteredMovies.length > 0 && <div className="movies-grid-view" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
           {filteredMovies.map((movie, i) => (
             <div key={movie.id} className="movie-grid-card">
               <button
@@ -232,13 +234,11 @@ export default function WebMovies() {
                 className="poster-container"
                 onClick={() => navigate(`/web/pelicula/${movie.id}`)}
                 onFocus={() => posterGrid.setFocusedIndex(i)}
-                aria-label={`Ver detalle de ${movie.title}`}
+                aria-label={movieLabel(movie)}
               >
-                <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
+                <Poster movie={movie} />
 
-                {movie.featured && (
-                  <div className="diagonal-tag">Estreno</div>
-                )}
+                <PosterTags movie={movie} />
 
                 {/* Overlay de Hover unificado */}
                 <div className="movie-hover-overlay">
@@ -252,7 +252,8 @@ export default function WebMovies() {
               </div>
             </div>
           ))}
-        </div>
+        </div>}
+        {filteredMovies.length === 0 && <p className="movies-empty" role="status">No hay películas disponibles por ahora.</p>}
       </main>
     </div>
   );

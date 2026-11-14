@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Search, Download, AlertCircle, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
+import DemoNotice from '../components/DemoNotice';
+import { money } from '../utils/money';
 
 const statusConfig = {
   approved: { label: 'Aprobado',   cls: 'badge-green',  icon: CheckCircle },
@@ -27,8 +29,8 @@ export default function Payments() {
   );
 
   const kpis = [
-    { label: 'Ingresos Totales', value: `$${totalRevenue.toLocaleString()}`, color: 'var(--emerald)' },
-    { label: 'Reembolsado', value: `$${totalRefunded}`, color: 'var(--cinema-gold)' },
+    { label: 'Ingresos Totales', value: money(totalRevenue), color: 'var(--emerald)' },
+    { label: 'Reembolsado', value: money(totalRefunded), color: 'var(--cinema-gold)' },
     { label: 'Pagos Fallidos', value: totalFailed, color: 'var(--action-red)' },
     { label: 'Transacciones', value: activeOrders.length, color: 'var(--electric-blue)' },
   ];
@@ -40,8 +42,9 @@ export default function Payments() {
           <h1 className="page-title">Pagos</h1>
           <p className="page-subtitle">Rastrea todas las transacciones financieras y eventos de pago</p>
         </div>
-        <button className="btn btn-secondary"><Download size={15} /> Exportar</button>
+        <button type="button" className="btn btn-secondary" disabled title="Disponible cuando haya pagos reales"><Download size={15} aria-hidden="true" /> Exportar (no disponible)</button>
       </div>
+      <DemoNotice>Las transacciones son de ejemplo. Los pagos reales llegarán con el módulo de compras.</DemoNotice>
 
       <div className="grid-4 mb-6">
         {kpis.map((k, i) => (
@@ -89,7 +92,7 @@ export default function Payments() {
                         <td>{o.customer}</td>
                         <td style={{ fontSize: 13 }}>{o.branch}</td>
                         <td><span className={`badge ${methodBadge[o.method]}`}>{methodLabel[o.method]}</span></td>
-                        <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>${o.amount}</td>
+                        <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>{money(o.amount)}</td>
                         <td>
                           <span className={`badge ${cfg.cls}`} style={{ display: 'inline-flex', gap: 4 }}>
                             <Icon size={10} />{cfg.label}
@@ -105,7 +108,7 @@ export default function Payments() {
           {activeTab === 'Transacciones' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 20px', background: 'var(--surface-2)', borderRadius: '0 0 10px 10px', borderTop: '1px solid var(--border)', marginTop: -1 }}>
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Ingresos Totales (Período Seleccionado)</span>
-              <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--cinema-gold)' }}>${totalRevenue.toLocaleString()}</span>
+              <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--cinema-gold)' }}>{money(totalRevenue)}</span>
             </div>
           )}
         </>
@@ -120,7 +123,7 @@ export default function Payments() {
               <span style={{ color: o.status === 'approved' ? 'var(--emerald)' : o.status === 'rejected' ? 'var(--action-red)' : 'var(--cinema-gold)' }}>
                 {o.status.toUpperCase()}
               </span>{' '}
-              {o.id} — {o.movieTitle} — {o.customer} — ${o.amount} vía {methodLabel[o.method]}
+              {o.id} — {o.movieTitle} — {o.customer} — {money(o.amount)} vía {methodLabel[o.method]}
             </div>
           ))}
         </div>

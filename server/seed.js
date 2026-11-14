@@ -1,5 +1,7 @@
 // Carga inicial: traslada src/data/store.js a la base de datos.
-// Repetible (upsert por id, en una transaccion). `--reset` borra el archivo antes.
+// NO pisa datos existentes: cada tabla se carga solo si esta vacia (lo que editan las personas del panel
+// se conserva). `--reset` borra el archivo antes y recrea todo. `--refresh-screenings` actualiza solo las
+// fechas de las funciones de ejemplo (ids de store.js), para renovar la cartelera de demostracion.
 // Las fechas de las funciones se calculan en store.js a partir del dia en que
 // se ejecuta (hoy, +-1, +2; dia de calendario en America/Lima, igual que el cliente) y aqui se
 // escriben como fechas fijas.
@@ -7,10 +9,16 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openDb, prepareData, DB_FILE } from './db.js';
 import { seedDemoCredentials } from './seedAuth.js';
+import { ensureSampleHalls } from './sampleHalls.js';
 import { movies, branches, halls, movieCinema, screenings, orders, users } from '../src/data/store.js';
 
-const run = (db) => {
+const run = (db, { refreshScreenings = false } = {}) => {
+  // Tablas que ya tienen filas: no se tocan.
+  const skip = new Set(['branches','halls','movies','movie_branch','screenings','users','orders']
+    .filter((t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c > 0));
+  if (refreshScreenings) skip.delete('screenings');
   const up = (table, cols, rows) => {
+    if (skip.has(table)) return;
     const names = cols.join(',');
     const params = cols.map((c) => '@' + c).join(',');
     const sets = cols.filter((c) => c !== 'id').map((c) => `${c}=excluded.${c}`).join(',');
@@ -28,11 +36,11 @@ const run = (db) => {
         status: h.status, price_base: h.priceBase })));
 
     up('movies', ['id','title','genre','duration','rating','status','formats_json','director','language','poster',
-      'synopsis','featured','release_date','end_date','backdrop'],
+      'synopsis','featured','release_date','end_date','backdrop','presale'],
       movies.map((m) => ({ id: m.id, title: m.title, genre: m.genre, duration: m.duration, rating: m.rating,
         status: m.status, formats_json: JSON.stringify(m.format), director: m.director, language: m.language,
         poster: m.poster, synopsis: m.synopsis ?? '', featured: m.featured ? 1 : 0, release_date: m.releaseDate,
-        end_date: m.endDate, backdrop: m.backdrop ?? null })));
+        end_date: m.endDate, backdrop: m.backdrop ?? null, presale: m.presale ? 1 : 0 })));
 
     // CORRECCION DE DATOS: movieCinema de store.js apunta a las peliculas de una
     // version anterior. Se conservan sus 8 pares y se agregan los pares
@@ -61,7 +69,7 @@ const run = (db) => {
       end_date=excluded.end_date,formats_json=excluded.formats_json,base_price=excluded.base_price`);
     let nextId = Math.max(...movieCinema.map((m) => m.id)) + 1;
     const origId = new Map(movieCinema.map((mc) => [`${mc.movieId}-${mc.branchId}`, mc.id]));
-    for (const [k, p] of pairs) mcStmt.run({ ...p, id: origId.get(k) ?? nextId++ });
+    if (!skip.has('movie_branch')) for (const [k, p] of pairs) mcStmt.run({ ...p, id: origId.get(k) ?? nextId++ });
 
     up('screenings', ['id','movie_id','hall_id','branch_id','starts_on','start_time','end_time','language','format',
       'price','status','booked_seats','total_seats'],
@@ -81,14 +89,17 @@ const run = (db) => {
         customer_name: o.customer, email: o.email, amount: o.amount, method: o.method, status: o.status,
         created_at: o.date })));
 
+    // Sedes que declaran salas y no tienen ninguna (solo si las salas se cargaron en esta pasada).
+    if (!skip.has('halls')) ensureSampleHalls(db);
+
     const seatStmt = db.prepare(`INSERT INTO order_seats (order_id,screening_id,seat,active) VALUES (?,?,?,?)
       ON CONFLICT(order_id,seat) DO UPDATE SET screening_id=excluded.screening_id, active=excluded.active`);
-    orders.forEach((o) => o.seats.forEach((seat) =>
+    if (!skip.has('orders')) orders.forEach((o) => o.seats.forEach((seat) =>
       seatStmt.run(o.id, o.screeningId, seat, o.status === 'approved' ? 1 : 0)));
   })();
 };
 
-export function seed(db) { run(db); }
+export function seed(db, opts) { run(db, opts); }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   let db;
@@ -103,8 +114,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error(`\n[ERROR] No se pudo preparar los datos: ${e.message}\n`);
     process.exit(1);
   }
-  seed(db);
-  await seedDemoCredentials(db);
+  const nonEmpty = db.prepare('SELECT COUNT(*) c FROM movies').get().c > 0;
+  const refreshScreenings = process.argv.includes('--refresh-screenings');
+  if (nonEmpty && !refreshScreenings) {
+    console.log('La base ya tiene datos: no se modifica nada. Usa "npm run seed -- --reset" para recrearla con los datos de ejemplo,');
+    console.log('o "npm run seed -- --refresh-screenings" para renovar solo las fechas de las funciones de ejemplo.');
+  }
+  seed(db, { refreshScreenings });
+  if (!nonEmpty) await seedDemoCredentials(db);
   const n = (t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c;
   console.log('Seed listo:', Object.fromEntries(
     ['movies','branches','halls','movie_branch','screenings','users','orders','order_seats'].map((t) => [t, n(t)])));

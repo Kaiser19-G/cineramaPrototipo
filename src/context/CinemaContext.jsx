@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   orders, recentActivity, alerts, occupancyByHall,
 } from '../data/store';
@@ -8,16 +8,23 @@ import { PERMS } from '../shared/permissions';
 const CinemaContext = createContext();
 
 const EMPTY_CATALOG = { movies: [], branches: [], halls: [], screenings: [], movieCinema: [] };
+// Al volver a la pestaña el catálogo se revalida si pasó más de este tiempo desde la última carga.
+const REVALIDATE_MS = 30 * 1000;
 
-// Catálogo (películas, sedes, salas, funciones) leído de la API del servidor.
-// Mismo formato de datos que tenía src/data/store.js.
+// Catálogo público (películas visibles, sedes, salas, funciones publicables) leído de la API del servidor.
+// `reload()` muestra "cargando"; `reload({ silent: true })` refresca sin vaciar nada ni desmontar las
+// páginas (así no se pierde el estado de quien está navegando).
 function useCatalog() {
   const [state, setState] = useState({ catalog: EMPTY_CATALOG, loading: true, error: null });
   const [attempt, setAttempt] = useState(0);
+  const lastLoad = useRef(0);
+  const silentRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/catalog', { signal: controller.signal })
+    const silent = silentRef.current;
+    silentRef.current = false;
+    fetch('/api/catalog', { signal: controller.signal, cache: 'no-cache' })
       .then((res) => {
         if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
         return res.json();
@@ -25,31 +32,90 @@ function useCatalog() {
       .then((data) => {
         const ok = ['movies', 'branches', 'halls', 'screenings', 'movieCinema'].every((k) => Array.isArray(data?.[k]));
         if (!ok) throw new Error('Respuesta del servidor con formato inesperado');
+        lastLoad.current = Date.now();
         setState({ catalog: data, loading: false, error: null });
       })
       .catch((err) => {
         if (err.name === 'AbortError') return;
-        setState((prev) => ({ ...prev, loading: false, error: err }));
+        // Un refresco silencioso que falla conserva lo que ya se mostraba.
+        setState((prev) => (silent ? prev : { ...prev, loading: false, error: err }));
       });
     return () => controller.abort();
   }, [attempt]);
 
-  const reload = useCallback(() => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const reload = useCallback((opts) => {
+    if (opts?.silent) silentRef.current = true;
+    else setState((prev) => ({ ...prev, loading: true, error: null }));
     setAttempt((n) => n + 1);
   }, []);
+
+  // Al volver a la pestaña: revalida si hace tiempo que no se carga.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoad.current > REVALIDATE_MS) reload({ silent: true });
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [reload]);
 
   return { ...state, reload };
 }
 
+// Datos del panel (solo personal): todas las películas con su estado y asignaciones, y todas las funciones.
+function useAdminData(enabled) {
+  const [state, setState] = useState({ movies: null, screenings: null, error: null });
+  const [attempt, setAttempt] = useState(0);
+  const lastLoad = useRef(0);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const controller = new AbortController();
+    const get = (url) => fetch(url, { signal: controller.signal, credentials: 'same-origin' })
+      .then((res) => { if (!res.ok) throw new Error(String(res.status)); return res.json(); });
+    Promise.all([get('/api/admin/movies'), get('/api/admin/screenings')])
+      .then(([m, sc]) => {
+        lastLoad.current = Date.now();
+        setState({ movies: m.movies, screenings: sc.screenings, error: null });
+      })
+      .catch((err) => { if (err.name !== 'AbortError') setState((prev) => ({ ...prev, error: err })); });
+    return () => controller.abort();
+  }, [enabled, attempt]);
+
+  const reload = useCallback(() => setAttempt((n) => n + 1), []);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoad.current > REVALIDATE_MS) reload();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [enabled, reload]);
+
+  return enabled ? { ...state, reload } : { movies: null, screenings: null, error: null, reload };
+}
+
 export function CinemaProvider({ children }) {
   const { catalog, loading: catalogLoading, error: catalogError, reload: reloadCatalog } = useCatalog();
-  const { movies, branches, halls, movieCinema } = catalog;
+  const { branches, halls } = catalog;
 
   // Usuario real de la sesión (null si no hay sesión).
   const { user: currentUser } = useAuth();
   const userId = currentUser?.id ?? null;
   const isAdminCentral = currentUser?.role === 'admin';
+  const isStaff = currentUser?.tier === 'central' || currentUser?.tier === 'branch';
+
+  const admin = useAdminData(isStaff);
+  // Datos del panel (con todos los estados). Para quien no es personal no se usan.
+  const adminMovies = admin.movies;
+  const movies = adminMovies ?? catalog.movies;
+  const movieCinema = useMemo(() => (adminMovies
+    ? adminMovies.flatMap((m) => m.branches.map((b) => ({
+      id: m.id * 1000 + b.branchId, movieId: m.id, branchId: b.branchId, activa: b.active,
+      fechaInicio: b.startDate, fechaFin: b.endDate, formatos: b.formats, precioBase: b.basePrice,
+    })))
+    : catalog.movieCinema), [adminMovies, catalog.movieCinema]);
+  const sourceScreenings = admin.screenings ?? catalog.screenings;
 
   // Sede activa: 'all' = visión global (solo Admin Central) | número = cine específico.
   // El personal de sede queda fijo en su sede; la elección del admin central se
@@ -63,10 +129,10 @@ export function CinemaProvider({ children }) {
   // Las funciones vienen de la API; las ventas locales simuladas se suman encima
   // (id de función → entradas vendidas en esta sesión).
   const [localSold, setLocalSold] = useState({});
-  const allScreenings = useMemo(() => catalog.screenings.map((s) => {
+  const allScreenings = useMemo(() => sourceScreenings.map((s) => {
     const extra = localSold[s.id];
     return extra ? { ...s, bookedSeats: Math.min(s.totalSeats, s.bookedSeats + extra) } : s;
-  }), [catalog.screenings, localSold]);
+  }), [sourceScreenings, localSold]);
   const [allOrders, setAllOrders] = useState(orders);
 
   // Las ventas simuladas pertenecen a la sesión: se reinician al cambiar de usuario.
@@ -83,12 +149,14 @@ export function CinemaProvider({ children }) {
   [currentCinemaId, branches]);
 
   // Películas habilitadas en el cine activo (o todas para global)
+  // (Solo para el panel: el sitio público usa publicMovies, que no depende de la sede elegida aquí.)
   const enabledMovies = useMemo(() => {
-    if (currentCinemaId === 'all') return movies;
+    const live = movies.filter(m => m.status === 'active' || m.status === 'upcoming');
+    if (currentCinemaId === 'all') return live;
     const ids = movieCinema
       .filter(mc => mc.branchId === currentCinemaId && mc.activa)
       .map(mc => mc.movieId);
-    return movies.filter(m => ids.includes(m.id));
+    return live.filter(m => ids.includes(m.id));
   }, [currentCinemaId, movies, movieCinema]);
 
   // Relaciones película↔cine para el cine activo
@@ -219,10 +287,20 @@ export function CinemaProvider({ children }) {
       activeActivity,
       activeAlerts,
       activeOccupancy,
+      // Catálogo PÚBLICO: no depende de la sede elegida en el panel ni de la sede del personal.
+      publicMovies: catalog.movies,
+      publicScreenings: catalog.screenings,
+      publicMovieCinema: catalog.movieCinema,
+      halls,
+      // Datos del panel (todas las películas con su estado y asignaciones; solo personal)
+      adminMovies,
+      adminError: admin.error,
       // Estado de carga del catálogo (API)
       catalogLoading,
       catalogError,
       reloadCatalog,
+      // Tras un cambio en el panel: refresca el panel y el catálogo público sin mostrar "cargando".
+      refreshAll: () => { admin.reload(); reloadCatalog({ silent: true }); },
       // KPIs
       kpiRevenue,
       kpiTickets,

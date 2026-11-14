@@ -2,6 +2,9 @@
 // esquema de schema.js (CREATE TABLE IF NOT EXISTS). Cada migracion corre en una
 // transaccion y sube user_version; son idempotentes sobre columnas ya existentes.
 
+import { LEGACY_RATING_MAP } from '../src/shared/catalogOptions.js';
+import { ensureSampleHalls } from './sampleHalls.js';
+
 const addColumns = (db, table, cols) => {
   const have = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
   for (const [name, def] of cols) if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${def}`);
@@ -96,6 +99,48 @@ export const MIGRATIONS = [
         UNIQUE (claim_id, kind)
       );
     `);
+  },
+  // 3: panel de administracion real (fase 3). Solo columnas y tablas nuevas, mas dos correcciones de datos de ejemplo
+  // (calificaciones a la escala peruana y salas para sedes que declaran salas y no tienen ninguna).
+  (db) => {
+    addColumns(db, 'movies', [
+      ['version', 'INTEGER NOT NULL DEFAULT 1'],   // control optimista: sube en cada cambio
+      ['created_at', 'INTEGER'],
+      ['updated_at', 'INTEGER'],
+      ['updated_by', 'INTEGER'],
+    ]);
+    addColumns(db, 'screenings', [
+      ['version', 'INTEGER NOT NULL DEFAULT 1'],
+      ['created_by', 'INTEGER'],
+      ['created_at', 'INTEGER'],
+      ['updated_at', 'INTEGER'],
+      ['cancelled_at', 'INTEGER'],
+      ['cancelled_by', 'INTEGER'],
+      ['cancel_reason', 'TEXT'],
+    ]);
+    addColumns(db, 'users', [
+      ['must_change_password', 'INTEGER NOT NULL DEFAULT 0'],
+      ['created_by', 'INTEGER'],
+      ['updated_at', 'INTEGER'],
+    ]);
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_screenings_hall_date ON screenings(hall_id, starts_on);
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        at          INTEGER NOT NULL,
+        actor_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        action      TEXT NOT NULL,
+        entity      TEXT NOT NULL,
+        entity_id   INTEGER,
+        branch_id   INTEGER,
+        detail_json TEXT                      -- solo ids y nombres de campos; nunca datos personales
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_at ON audit_log(at);
+    `);
+    // Calificaciones: escala estadounidense -> peruana. Valores desconocidos no se tocan.
+    const upd = db.prepare('UPDATE movies SET rating = ? WHERE rating = ?');
+    for (const [from, to] of Object.entries(LEGACY_RATING_MAP)) upd.run(to, from);
+    ensureSampleHalls(db);
   },
 ];
 

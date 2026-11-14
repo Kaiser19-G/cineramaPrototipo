@@ -17,7 +17,7 @@ const today = todayInLima();
 const upcoming = db.prepare('SELECT COUNT(*) c FROM screenings WHERE starts_on >= ?').get(today).c;
 if (upcoming === 0) {
   console.warn('\n[AVISO] No hay funciones con fecha de hoy en adelante: el sitio no mostrara horarios.');
-  console.warn('        Ejecuta "npm run seed" para refrescar las fechas de las funciones de ejemplo.\n');
+  console.warn('        Programa funciones desde el panel o ejecuta "npm run seed -- --refresh-screenings" para renovar las de ejemplo.\n');
 }
 
 // Aviso si hay personal sin contrasena (BD anterior a la fase 2).

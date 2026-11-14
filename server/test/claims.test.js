@@ -107,15 +107,18 @@ describe('migracion 2', () => {
     old.close();
 
     const db = openDb(file);
-    assert.equal(db.pragma('user_version', { simple: true }), 2);
-    assert.deepEqual(dump(db), before, 'las filas existentes no cambian');
+    assert.equal(db.pragma('user_version', { simple: true }), 3);
+    // Las migraciones posteriores agregan columnas: se comparan las columnas que ya existian.
+    const project = (d) => Object.fromEntries(Object.entries(d).map(([t, rows]) => [t, rows.map((r) =>
+      Object.fromEntries(Object.keys(before[t]?.[0] ?? r).filter((k) => k in r).map((k) => [k, r[k]])))]));
+    assert.deepEqual(project(dump(db)), before, 'las filas existentes no cambian');
     for (const t of ['claims', 'claim_files']) assert.equal(db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c, 0);
     assert.equal(db.pragma('foreign_key_check').length, 0);
     assert.equal(db.pragma('integrity_check', { simple: true }), 'ok');
     db.close();
     const again = openDb(file);
-    assert.equal(again.pragma('user_version', { simple: true }), 2);
-    assert.deepEqual(dump(again), before);
+    assert.equal(again.pragma('user_version', { simple: true }), 3);
+    assert.deepEqual(project(dump(again)), before);
     again.close();
     fs.rmSync(dir, { recursive: true, force: true });
   });

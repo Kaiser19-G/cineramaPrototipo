@@ -1,15 +1,22 @@
 // ─── STORE EXPANDIDO — ADMIN CENTRAL ARCHITECTURE ───────────────────────────
 import { todayInLima, addDaysToDate } from './limaDate.js';
 
+// Fechas de ejemplo relativas al dia de siembra (dia de Lima): estrenos recientes y cierres a futuro.
+const today = todayInLima();
+const addDays = addDaysToDate;
+
 export const movies = [
-  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'PG', status: 'active', format: ['2D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: '2026-04-30', endDate: '2026-06-30' },
-  { id: 2, title: 'Exit 8', genre: 'Terror', duration: 95, rating: 'PG', status: 'active', format: ['2D'], director: 'Genki Kawamura', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/8_ban_deguchi-289035682-large.jpg', synopsis: 'Película basada en el videojuego de Kotake Create The Exit 8...', featured: false, releaseDate: '2026-04-30', endDate: '2026-06-30' },
-  { id: 3, title: 'El Diablo Viste a la Moda 2', genre: 'Drama', duration: 120, rating: 'PG', status: 'active', format: ['2D'], director: 'David Frankel', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/diablos.jpg', synopsis: 'Casi veinte años después de dar vida a los icónicos personajes...', featured: false, releaseDate: '2026-04-29', endDate: '2026-06-30' },
-  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'PG', status: 'active', format: ['2D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: '2026-04-24', endDate: '2026-06-30' },
-  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: '2026-04-21', endDate: '2026-06-30' },
-  { id: 6, title: 'La Posesion de la Momia', genre: 'Terror', duration: 135, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Lee Cronin', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/Sin%20t%C3%ADtulo1.jpg', synopsis: 'Tras el éxito de Evil Dead, el director Lee Cronin regresa...', featured: false, releaseDate: '2026-04-16', endDate: '2026-06-30' },
-  { id: 7, title: 'Boulevard', genre: 'Romance', duration: 115, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Sonia Méndez', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/boule.jpg', synopsis: 'Dos marginados de preparatoria forman un vínculo...', featured: false, releaseDate: '2026-04-16', endDate: '2026-06-30' },
-  { id: 8, title: 'Super Mario Galaxy La Pelicula', genre: 'Animación', duration: 103, rating: 'PG', status: 'active', format: ['3D','2D'], director: 'Aaron Horvath, Michael Jelenic', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/unnamed.jpg', synopsis: 'Super Mario Galaxy: La Película es una película animada...', featured: true, releaseDate: '2026-04-01', endDate: '2026-06-30' },
+  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'APT', status: 'active', format: ['2D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
+  { id: 2, title: 'Exit 8', genre: 'Terror', duration: 95, rating: 'APT', status: 'active', format: ['2D'], director: 'Genki Kawamura', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/8_ban_deguchi-289035682-large.jpg', synopsis: 'Película basada en el videojuego de Kotake Create The Exit 8...', featured: false, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
+  { id: 3, title: 'El Diablo Viste a la Moda 2', genre: 'Drama', duration: 120, rating: 'APT', status: 'active', format: ['2D'], director: 'David Frankel', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/diablos.jpg', synopsis: 'Casi veinte años después de dar vida a los icónicos personajes...', featured: false, releaseDate: addDays(today, -15), endDate: addDays(today, 60) },
+  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'APT', status: 'active', format: ['2D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: addDays(today, -20), endDate: addDays(today, 60) },
+  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: '+14', status: 'active', format: ['2D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: addDays(today, -23), endDate: addDays(today, 60) },
+  { id: 6, title: 'La Posesion de la Momia', genre: 'Terror', duration: 135, rating: '+14', status: 'active', format: ['2D'], director: 'Lee Cronin', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/Sin%20t%C3%ADtulo1.jpg', synopsis: 'Tras el éxito de Evil Dead, el director Lee Cronin regresa...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
+  { id: 7, title: 'Boulevard', genre: 'Romance', duration: 115, rating: '+14', status: 'active', format: ['2D'], director: 'Sonia Méndez', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/boule.jpg', synopsis: 'Dos marginados de preparatoria forman un vínculo...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
+  { id: 8, title: 'Super Mario Galaxy La Pelicula', genre: 'Animación', duration: 103, rating: 'APT', status: 'active', format: ['3D','2D'], director: 'Aaron Horvath, Michael Jelenic', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/unnamed.jpg', synopsis: 'Super Mario Galaxy: La Película es una película animada...', featured: true, releaseDate: addDays(today, -40), endDate: addDays(today, 60) },
+  // Ejemplos para el sitio: una pelicula en preventa (estreno a futuro) y una proxima (sin funciones).
+  { id: 9, title: 'Aventura en el Fin del Mundo', genre: 'Aventura', duration: 118, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Marina Salas', language: 'ES', poster: null, synopsis: 'Una expedición improvisada cruza el continente para llegar a tiempo al último amanecer. Pelicula de ejemplo en preventa.', featured: false, presale: true, releaseDate: addDays(today, 10), endDate: addDays(today, 70) },
+  { id: 10, title: 'La Ciudad Dormida', genre: 'Thriller', duration: 104, rating: '+14', status: 'upcoming', format: ['2D'], director: 'Tomás Rey', language: 'ES', poster: null, synopsis: 'Una noche sin luz deja a una ciudad entera en silencio. Película de ejemplo próxima a estrenarse.', featured: false, presale: false, releaseDate: addDays(today, 45), endDate: addDays(today, 100) },
 ];
 
 export const genres = ['Acción','Aventura','Comedia','Drama','Terror','Romance','Sci-Fi','Thriller','Animación','Documental'];
@@ -46,23 +53,21 @@ export const halls = [
 // El Admin Central gestiona estas asignaciones.
 export const movieCinema = [
   // Duna: Parte Tres → Cinerama Centro (3D,2D), Complejo Mall (3D,2D)
-  { id: 1, movieId: 1, branchId: 1, activa: true, fechaInicio: '2026-04-01', fechaFin: '2026-06-15', formatos: ['3D','2D'], precioBase: 35 },
-  { id: 2, movieId: 1, branchId: 2, activa: true, fechaInicio: '2026-04-05', fechaFin: '2026-06-15', formatos: ['3D','2D'],       precioBase: 28 },
+  { id: 1, movieId: 1, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'], precioBase: 35 },
+  { id: 2, movieId: 1, branchId: 2, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],       precioBase: 28 },
   // Batman: El Regreso → Cinerama Centro, Cine Suburbia
-  { id: 3, movieId: 2, branchId: 1, activa: true, fechaInicio: '2026-03-15', fechaFin: '2026-06-01', formatos: ['3D','2D'],       precioBase: 25 },
-  { id: 4, movieId: 2, branchId: 3, activa: true, fechaInicio: '2026-03-20', fechaFin: '2026-06-01', formatos: ['2D'],            precioBase: 16 },
+  { id: 3, movieId: 2, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],       precioBase: 25 },
+  { id: 4, movieId: 2, branchId: 3, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 16 },
   // Inception → Solo Cinerama Centro
-  { id: 5, movieId: 3, branchId: 1, activa: true, fechaInicio: '2026-04-10', fechaFin: '2026-05-30', formatos: ['2D','3D'],     precioBase: 30 },
+  { id: 5, movieId: 3, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D','3D'],     precioBase: 30 },
   // Avatar → Cinerama Centro (3D,2D)
-  { id: 6, movieId: 4, branchId: 1, activa: true, fechaInicio: '2026-07-04', fechaFin: '2026-10-01', formatos: ['3D','2D'],    precioBase: 45 },
+  { id: 6, movieId: 4, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],    precioBase: 45 },
   // Oppenheimer → Complejo Mall, Cine Suburbia
-  { id: 7, movieId: 6, branchId: 2, activa: true, fechaInicio: '2026-04-25', fechaFin: '2026-06-10', formatos: ['2D'],            precioBase: 18 },
-  { id: 8, movieId: 6, branchId: 3, activa: true, fechaInicio: '2026-05-01', fechaFin: '2026-06-10', formatos: ['2D'],            precioBase: 14 },
+  { id: 7, movieId: 6, branchId: 2, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 18 },
+  { id: 8, movieId: 6, branchId: 3, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 14 },
 ];
 
-const today = todayInLima();
 const fmt   = (d) => d;
-const addDays = addDaysToDate;
 
 export const screenings = [
   { id: 1,  movieId: 1, hallId: 1, branchId: 1, date: fmt(today),           startTime: '14:00', endTime: '16:35', language: 'ES', format: '3D',   price: 35, status: 'active',    bookedSeats: 210, totalSeats: 280 },

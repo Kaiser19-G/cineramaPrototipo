@@ -1,46 +1,29 @@
 import express from 'express';
 import { createAuth } from './auth/router.js';
 import { createClaims } from './claims/router.js';
+import { createMovies } from './admin/movies.js';
+import { createScreenings } from './admin/screenings.js';
+import { todayInLima } from '../src/data/limaDate.js';
+import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
 
 
-// Mismas formas que src/data/store.js (claves en camelCase, orden por id).
-const mapMovie = (r) => {
-  const m = {
-    id: r.id, title: r.title, genre: r.genre, duration: r.duration, rating: r.rating, status: r.status,
-    format: JSON.parse(r.formats_json), director: r.director, language: r.language, poster: r.poster,
-    synopsis: r.synopsis, featured: !!r.featured, releaseDate: r.release_date, endDate: r.end_date,
-  };
-  if (r.backdrop) m.backdrop = r.backdrop;
-  return m;
-};
-const mapBranch = (r) => ({
-  id: r.id, name: r.name, city: r.city, address: r.address, status: r.status, halls: r.halls_count,
-  manager: r.manager, formats: r.formats, img: r.img,
-});
-const mapHall = (r) => ({
-  id: r.id, branchId: r.branch_id, name: r.name, type: r.type, capacity: r.capacity, status: r.status,
-  priceBase: r.price_base,
-});
-const mapScreening = (r) => ({
-  id: r.id, movieId: r.movie_id, hallId: r.hall_id, branchId: r.branch_id, date: r.starts_on,
-  startTime: r.start_time, endTime: r.end_time, language: r.language, format: r.format, price: r.price,
-  status: r.status, bookedSeats: r.booked_seats, totalSeats: r.total_seats,
-});
-const mapMovieBranch = (r) => ({
-  id: r.id, movieId: r.movie_id, branchId: r.branch_id, activa: !!r.active, fechaInicio: r.start_date,
-  fechaFin: r.end_date, formatos: JSON.parse(r.formats_json), precioBase: r.base_price,
-});
+const VISIBLE_MOVIE = `(m.status = 'upcoming' OR (m.status = 'active' AND EXISTS (
+  SELECT 1 FROM movie_branch mb JOIN branches b ON b.id = mb.branch_id
+  WHERE mb.movie_id = m.id AND mb.active = 1 AND b.status = 'active')))`;
 
 const prepare = (db) => ({
-  movies: db.prepare(`SELECT * FROM movies WHERE status = 'active' ORDER BY id`),
+  // Publico: solo peliculas en cartelera habilitadas en alguna sede activa, y las proximas.
+  movies: db.prepare(`SELECT m.* FROM movies m WHERE ${VISIBLE_MOVIE} ORDER BY m.id`),
   moviesByBranch: db.prepare(`SELECT m.* FROM movies m JOIN movie_branch mb ON mb.movie_id = m.id
-    WHERE m.status = 'active' AND mb.branch_id = ? AND mb.active = 1 ORDER BY m.id`),
+    WHERE m.status IN ('active','upcoming') AND mb.branch_id = ? AND mb.active = 1 ORDER BY m.id`),
   branches: db.prepare('SELECT * FROM branches ORDER BY id'),
   halls: db.prepare('SELECT * FROM halls ORDER BY id'),
   hallsByBranch: db.prepare('SELECT * FROM halls WHERE branch_id = ? ORDER BY id'),
-  screenings: db.prepare('SELECT * FROM screenings ORDER BY id'),
-  screeningsByBranch: db.prepare('SELECT * FROM screenings WHERE branch_id = ? ORDER BY id'),
-  movieBranch: db.prepare('SELECT * FROM movie_branch ORDER BY id'),
+  // Publico: nada de borradores ni funciones canceladas.
+  screenings: db.prepare(`SELECT * FROM screenings WHERE status NOT IN ('draft','cancelled') ORDER BY id`),
+  screeningsByBranch: db.prepare(`SELECT * FROM screenings WHERE branch_id = ? AND status NOT IN ('draft','cancelled') ORDER BY id`),
+  movieBranch: db.prepare(`SELECT mb.* FROM movie_branch mb JOIN movies m ON m.id = mb.movie_id
+    WHERE mb.active = 1 AND ${VISIBLE_MOVIE} ORDER BY mb.id`),
 });
 
 // Fabrica de la app (sin escuchar en un puerto): index.js la arranca y las
@@ -49,6 +32,10 @@ export function createApp(db, opts = {}) {
   const q = prepare(db);
   const auth = createAuth(db, opts);
   const claims = createClaims(db, auth, opts);
+  const adminMovies = createMovies(db, auth, opts);
+  const adminScreenings = createScreenings(db);
+  const clock = opts.clock ?? Date.now;
+  const today = () => todayInLima(new Date(clock()));
   const app = express();
   app.disable('x-powered-by');
   // Detras del proxy de Vite (xfwd) la IP real llega en X-Forwarded-For.
@@ -73,18 +60,29 @@ export function createApp(db, opts = {}) {
   app.use('/api/auth', auth.router);
   app.use('/api/claims', claims.router);
   app.use('/api/admin/central/claims', claims.adminRouter);
+  const staffOnly = [auth.loadSession, auth.requireAuth, auth.requireTier('central', 'branch')];
+  app.use('/api/admin/movies', ...staffOnly, adminMovies.router);
+  app.use('/api/admin/screenings', ...staffOnly, adminScreenings.router);
   app.use('/api/admin', auth.adminRouter);
-  app.get('/api/movies', listHandler(q.movies, q.moviesByBranch, mapMovie));
+  // Lecturas publicas: se revalidan siempre (ETag) para que un cambio del panel llegue sin esperar.
+  app.use(['/api/movies', '/api/branches', '/api/halls', '/api/screenings', '/api/catalog'], (_req, res, next) => {
+    res.set('Cache-Control', 'no-cache');
+    next();
+  });
+  app.get('/api/movies', listHandler(q.movies, q.moviesByBranch, (r) => mapMovie(r, today())));
   app.get('/api/branches', (_req, res) => res.json(q.branches.all().map(mapBranch)));
   app.get('/api/halls', listHandler(q.halls, q.hallsByBranch, mapHall));
   app.get('/api/screenings', listHandler(q.screenings, q.screeningsByBranch, mapScreening));
-  app.get('/api/catalog', (_req, res) => res.json({
-    movies: q.movies.all().map(mapMovie),
+  app.get('/api/catalog', (_req, res) => {
+    const t = today();
+    res.json({
+    movies: q.movies.all().map((r) => mapMovie(r, t)),
     branches: q.branches.all().map(mapBranch),
     halls: q.halls.all().map(mapHall),
     screenings: q.screenings.all().map(mapScreening),
     movieCinema: q.movieBranch.all().map(mapMovieBranch),
-  }));
+    });
+  });
   app.use('/api', (_req, res) => res.status(404).json({ error: 'No encontrado' }));
   // Errores: sin volcar el objeto (los mensajes de JSON invalido incluyen un trozo del cuerpo,
   // que puede contener datos personales). Solo se registra el tipo.

@@ -10,6 +10,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { revenueByDay, genreData } from '../data/store';
 import { useCinema } from '../context/CinemaContext';
+import DemoNotice from '../components/DemoNotice';
+import { money } from '../utils/money';
 import './Dashboard.css';
 
 const levelColor = {
@@ -27,7 +29,7 @@ const ChartTooltip = ({ active, payload, label }) => {
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
       <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
         {typeof payload[0].value === 'number' && payload[0].name !== 'Ocupación'
-          ? `$${payload[0].value.toLocaleString()}`
+          ? money(payload[0].value)
           : `${payload[0].value}%`}
       </p>
     </div>
@@ -44,12 +46,12 @@ export default function Dashboard() {
   } = useCinema();
 
   const kpis = [
-    { label: 'Ingresos del Día',   value: `$${kpiRevenue.toLocaleString()}`, icon: DollarSign,   color: 'var(--cinema-gold)',   bg: 'var(--cinema-gold-dim)',   change: '+18%', pos: true  },
-    { label: 'Tickets Vendidos',   value: kpiTickets,                         icon: Ticket,       color: 'var(--action-red)',    bg: 'var(--action-red-dim)',    change: '+12%', pos: true  },
-    { label: 'Funciones Activas',  value: kpiScreenings,                      icon: Clapperboard, color: 'var(--electric-blue)', bg: 'var(--electric-blue-dim)', change: null,   pos: true  },
-    { label: 'Películas en Cartelera', value: enabledMovies.filter(m=>m.status==='active').length, icon: Film2, color: 'var(--violet)', bg: 'var(--violet-dim)', change: null, pos: true },
-    { label: 'Ocupación Promedio', value: `${kpiOccupancy}%`,                 icon: Users,        color: 'var(--emerald)',        bg: 'var(--emerald-dim)',       change: '+5%',  pos: true  },
-    { label: 'Pagos Fallidos',     value: kpiFailed,                          icon: AlertCircle,  color: 'var(--intense-orange)',bg: 'var(--intense-orange-dim)',change: null,   pos: false },
+    { label: 'Ingresos del día (ejemplo)', value: money(kpiRevenue), icon: DollarSign,   color: 'var(--cinema-gold)',   bg: 'var(--cinema-gold-dim)',   change: null, pos: true  },
+    { label: 'Entradas vendidas (ejemplo)', value: kpiTickets,        icon: Ticket,       color: 'var(--action-red)',    bg: 'var(--action-red-dim)',    change: null, pos: true  },
+    { label: 'Funciones activas', value: kpiScreenings,           icon: Clapperboard, color: 'var(--electric-blue)', bg: 'var(--electric-blue-dim)', change: null, pos: true  },
+    { label: 'Películas en cartelera', value: enabledMovies.filter(m=>m.status==='active').length, icon: Film2, color: 'var(--violet)', bg: 'var(--violet-dim)', change: null, pos: true },
+    { label: 'Ocupación promedio (ejemplo)', value: `${kpiOccupancy}%`, icon: Users,        color: 'var(--emerald)',        bg: 'var(--emerald-dim)',       change: null,  pos: true  },
+    { label: 'Pagos fallidos (ejemplo)', value: kpiFailed,                          icon: AlertCircle,  color: 'var(--intense-orange)',bg: 'var(--intense-orange-dim)',change: null,   pos: false },
   ];
 
   // Revenue series key for chart
@@ -60,6 +62,10 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      <DemoNotice>
+        Ingresos, entradas, ocupación, pagos fallidos, gráficos, alertas y actividad son de ejemplo y no cambian con lo que hagas.
+        Solo las películas y las funciones programadas vienen de datos reales.
+      </DemoNotice>
 
       {/* ── Contexto activo ─────────────────────────────────────────────── */}
       <div className="context-banner">
@@ -123,7 +129,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{b.name}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>{b.city}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{b.halls} salas · Ger: {b.manager.split(' ')[0]}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{b.halls} salas</div>
                 <div className="branch-card-arrow"><ArrowRight size={14} /></div>
               </div>
             ))}
@@ -145,7 +151,7 @@ export default function Dashboard() {
             <LineChart data={revenueByDay}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
               <Tooltip content={<ChartTooltip />} />
               <Line type="monotone" dataKey={revenueKey} name="Ingresos"
                 stroke="var(--action-red)" strokeWidth={2.5}
@@ -183,7 +189,7 @@ export default function Dashboard() {
         {/* Actividad */}
         <div className="card activity-card">
           <div className="flex-between mb-4">
-            <div className="section-title" style={{ marginBottom: 0 }}>Actividad Reciente</div>
+            <div className="section-title" style={{ marginBottom: 0 }}>Actividad reciente (ejemplo)</div>
             <button className="btn btn-ghost btn-sm">Ver todo</button>
           </div>
           <div className="activity-list">
@@ -208,7 +214,7 @@ export default function Dashboard() {
         <div className="card alerts-card">
           <div className="flex-between mb-4">
             <div className="section-title" style={{ marginBottom: 0 }}>
-              Alertas
+              Alertas (ejemplo)
               <span className="badge badge-red" style={{ marginLeft: 8 }}>{activeAlerts.length}</span>
             </div>
           </div>

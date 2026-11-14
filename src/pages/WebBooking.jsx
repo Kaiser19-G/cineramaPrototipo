@@ -17,12 +17,12 @@ export default function WebBooking() {
   const [showCvvHelp, setShowCvvHelp] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { enabledMovies, branches } = useCinema();
+  const { publicMovies, branches } = useCinema();
 
   // Datos reales de la selección del usuario (película, cine, fecha, horario).
   // Si se llega directo a /web/compra sin pasar por el flujo, se usa un fallback real (no inventado).
   const booking = location.state || {};
-  const movie = booking.movie || enabledMovies[0] || null;
+  const movie = booking.movie || publicMovies[0] || null;
   const cinemaName = booking.cinema || branches[0]?.name || 'Cine';
   const showDate = booking.date || 'Hoy';
   const showTime = booking.time || '--:--';
