@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // Datos privados del servidor: nunca deben entregarse ni vigilarse, aunque alguien los deje bajo el proyecto.
 // (Viven fuera del proyecto, ver server/dataDir.js; esto es una defensa adicional.)
-const PRIVATE_GLOBS = ['**/server/data/**', '**/*.db', '**/*.db-wal', '**/*.db-shm', '**/*.db.migrating*', '**/*.key', '**/.cinerama-data/**']
+const PRIVATE_GLOBS = ['**/server/data/**', '**/*.db', '**/*.db-wal', '**/*.db-shm', '**/*.db.migrating*', '**/*.key', '**/.cinerama-data/**', '**/claims/**']
 const PRIVATE_RE = /(^|[\\/])server[\\/]data([\\/]|$)|\.(db|db-wal|db-shm|key)(\.migrating[^\\/]*)?$|\.cinerama-data/i
 
 // Vite compara rutas sin decodificar en algunos casos: se rechaza por URL decodificada (varias pasadas).

@@ -19,4 +19,6 @@ export const AUTH = {
   VERIFY_COOKIE: 'cinerama_verify',
   POLICY_VERSION,
 };
+// Contrasena de DEMOSTRACION del personal (server/seedAuth.js la asigna; docs en el README).
+export const DEMO_PASSWORD = 'Cinerama#2026';
 export { HOUR, MIN };

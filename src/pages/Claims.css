@@ -1,0 +1,78 @@
+/* Reclamos de DNI (admin central). El panel de administración es de tema oscuro; solo variables existentes. */
+.claims-notice {
+  margin: 0 0 16px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--electric-blue);
+  border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); font-size: 14px; line-height: 1.55;
+}
+.claims-notice h2 { margin: 0 0 8px; font-size: 16px; color: var(--text-main); }
+.claims-notice p { margin: 0 0 8px; }
+.claims-notice p:last-child { margin-bottom: 0; }
+.claims-notice a { color: var(--text-main); font-weight: 600; text-decoration: underline; }
+.claims-notice-warn { border-left-color: var(--cinema-gold); }
+.claims-code {
+  margin: 8px 0; padding: 10px 12px; border: 1px solid var(--border-interactive); border-radius: var(--radius-sm);
+  background: var(--surface-3); color: var(--text-main); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; overflow-x: auto;
+}
+.claims-dup { color: var(--text-secondary); font-size: 12px; }
+.claims-back { margin: 0 0 6px; font-size: 13px; }
+.claims-back a { color: var(--text-secondary); text-decoration: underline; }
+.claims-section { margin-bottom: 16px; }
+.claims-dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 8px; font-size: 14px; }
+.claims-dl dt { color: var(--text-secondary); }
+.claims-dl dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.claims-mono { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.08em; }
+.claims-hint { margin: 6px 0 0; color: var(--text-secondary); font-size: 12.5px; line-height: 1.45; }
+.claims-files { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.claims-thumb {
+  width: 100%; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 8px;
+  border: 1px solid var(--border-interactive); border-radius: var(--radius); background: var(--surface-2);
+  color: var(--text-primary); font: inherit; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.claims-thumb:hover { background: var(--surface-3); }
+.claims-thumb img { width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius-sm); background: var(--surface-3); }
+.claims-thumb:focus-visible, .claims-viewer-scroll:focus-visible, .claims-code:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.claims-warnings { margin: 12px 0 0; padding-left: 18px; color: var(--text-primary); font-size: 14px; line-height: 1.5; }
+.claims-warnings li { margin-bottom: 4px; }
+.claims-decision-bar { display: flex; gap: 10px; margin: 8px 0 24px; }
+.claims-strong { padding: 8px 12px; border-left: 4px solid var(--error); background: var(--surface-3); border-radius: var(--radius-sm); }
+
+/* Dialogos nativos (<dialog>): foco atrapado y Esc por el navegador */
+.claims-dialog {
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 24px;
+  border: 1px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface); color: var(--text-primary);
+  box-shadow: var(--shadow-lg); font-size: 14px; line-height: 1.55;
+}
+.claims-dialog::backdrop { background: rgba(0, 0, 0, 0.75); }
+.claims-dialog h2 { margin: 0 0 12px; font-size: 18px; color: var(--text-main); }
+.claims-dialog p { margin: 0 0 12px; }
+.claims-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.claims-viewer { width: min(1000px, calc(100vw - 32px)); }
+.claims-dialog-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.claims-dialog-head h2 { margin: 0; }
+.claims-dialog-head .claims-dialog-actions { margin: 0; }
+.claims-viewer-scroll { max-height: calc(100vh - 150px); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-3); }
+.claims-viewer-scroll img { display: block; max-width: none; }
+.claims-fieldset { border: 0; padding: 0; margin: 0 0 12px; }
+.claims-fieldset legend { padding: 0; margin-bottom: 6px; font-weight: 700; color: var(--text-main); }
+.claims-check { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; cursor: pointer; }
+.claims-check input { flex: none; width: 18px; height: 18px; margin-top: 2px; accent-color: var(--action-red); }
+.claims-check input:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.claims-field { display: flex; flex-direction: column; gap: 6px; }
+.claims-field label { font-weight: 600; color: var(--text-primary); }
+.claims-field textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border-interactive); border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--text-primary); font: inherit; resize: vertical;
+}
+.claims-field textarea:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.claims-error { margin: 12px 0 0; color: var(--error-text); font-weight: 600; }
+
+@media (max-width: 480px) {
+  .claims-dl { grid-template-columns: 1fr; }
+  .claims-dl dt { margin-top: 6px; }
+  .claims-decision-bar { flex-direction: column; }
+}
+
+/* Los estilos globales de .tab y .table th usan --text-muted (2.9:1 a 3.2:1 sobre las superficies oscuras);
+   en esta pantalla se sube a --text-secondary para llegar a 4.5:1. */
+.claims-page .tab { color: var(--text-secondary); }
+.claims-page .tab.active { color: var(--text-primary); }
+.claims-page .table th { color: var(--text-secondary); }

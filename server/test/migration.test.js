@@ -30,7 +30,7 @@ test('migra una base existente (esquema de la fase 1): conserva usuarios y catal
   old.close();
 
   const db = openDb(file);
-  assert.equal(db.pragma('user_version', { simple: true }), 1);
+  assert.equal(db.pragma('user_version', { simple: true }), 2);
   assert.deepEqual(Object.fromEntries(TABLES.map((t) => [t, count(db, t)])), before);
   assert.equal(before.users, 8);
   assert.deepEqual(db.prepare('SELECT id,name,email,role,branch_id,status,last_login,avatar FROM users ORDER BY id').all(), usersBefore);
@@ -46,7 +46,7 @@ test('migra una base existente (esquema de la fase 1): conserva usuarios y catal
 
   // Idempotente: reabrir no vuelve a migrar ni falla.
   const again = openDb(file);
-  assert.equal(again.pragma('user_version', { simple: true }), 1);
+  assert.equal(again.pragma('user_version', { simple: true }), 2);
   assert.equal(count(again, 'users'), 8);
   again.close();
   fs.rmSync(dir, { recursive: true, force: true });
@@ -55,7 +55,7 @@ test('migra una base existente (esquema de la fase 1): conserva usuarios y catal
 test('base nueva: llega al mismo esquema', () => {
   const dir = tmp();
   const db = openDb(path.join(dir, 'new.db'));
-  assert.equal(db.pragma('user_version', { simple: true }), 1);
+  assert.equal(db.pragma('user_version', { simple: true }), 2);
   const cols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
   for (const c of NEW_COLS) assert.ok(cols.includes(c), c);
   for (const t of ['sessions', 'verification_codes', 'auth_throttle']) assert.equal(count(db, t), 0);

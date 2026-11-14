@@ -61,3 +61,7 @@ export function loadPepper(dbFile) {
 }
 
 export const dniHash = (pepper, dni) => crypto.createHmac('sha256', pepper).update('dni:' + dni).digest('hex');
+
+// Huellas para reclamos de DNI (HMAC con el pepper; no reversibles).
+export const claimCodeHash = (pepper, code) => crypto.createHmac('sha256', pepper).update('claim:' + code).digest('hex');
+export const contactHash = (pepper, email) => crypto.createHmac('sha256', pepper).update('contact:' + String(email).trim().toLowerCase()).digest('hex');

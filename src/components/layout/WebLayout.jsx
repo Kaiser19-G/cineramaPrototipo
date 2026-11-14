@@ -34,7 +34,7 @@ function CatalogState({ loading, error, onRetry }) {
 }
 
 // Paginas que no usan el catalogo: no deben quedar bloqueadas si la cartelera falla.
-const NO_CATALOG_PATHS = ['/web/login', '/web/registro', '/web/privacidad'];
+const NO_CATALOG_PATHS = ['/web/login', '/web/registro', '/web/privacidad', '/web/reclamo-dni', '/web/reclamo-dni/estado'];
 
 export default function WebLayout() {
   const navigate = useNavigate();

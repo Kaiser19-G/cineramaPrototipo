@@ -1,0 +1,75 @@
+/* Reclamo de DNI (público): formulario, código y estado. Solo variables del tema (claro/oscuro). */
+.claim-card { max-width: 640px; }
+.claim-fieldset { border: 0; padding: 0; margin: 0 0 1.75rem; min-width: 0; display: flex; flex-direction: column; gap: 1rem; }
+.claim-legend { padding: 0; margin-bottom: 0.25rem; font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+
+.claim-letter {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cinema-gold);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.claim-btn-secondary {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--border-interactive);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-main);
+  font: inherit; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer;
+}
+.claim-btn-secondary:hover { background: var(--surface-3); }
+.claim-btn-secondary:focus-visible, .claim-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.claim-btn { font-size: 1rem; }
+.claim-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; }
+.claim-working { margin: 0; }
+
+.claim-code-box {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 2px dashed var(--border-interactive);
+  border-radius: 8px;
+  background: var(--surface-3);
+  text-align: center;
+}
+.claim-code-label { margin: 0 0 0.4rem; color: var(--text-primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.claim-code {
+  margin: 0;
+  color: var(--text-main);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 1.9rem; font-weight: 700; letter-spacing: 0.12em;
+  overflow-wrap: anywhere; user-select: all;
+}
+
+/* Estado del reclamo */
+.claim-result {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--electric-blue);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+.claim-result:focus { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.claim-result h3 { margin: 0 0 0.5rem; color: var(--text-main); font-size: 1.15rem; }
+.claim-result p { margin: 0 0 0.6rem; }
+.claim-result p:last-child { margin-bottom: 0; }
+.claim-result a { color: var(--text-main); font-weight: 600; text-decoration: underline; }
+.claim-result a:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; border-radius: 2px; }
+
+@media (max-width: 480px) {
+  .claim-code { font-size: 1.45rem; letter-spacing: 0.06em; }
+  .file-preview { flex-direction: column; align-items: flex-start; }
+}
+
+.btn-auth[aria-disabled="true"] { opacity: 0.6; cursor: progress; transform: none; box-shadow: none; }

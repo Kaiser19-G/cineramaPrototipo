@@ -75,7 +75,8 @@ export default function WebAuth() {
     else if (res.error === 'locked') {
       const min = Math.max(1, Math.ceil((res.data.retryAfter ?? 900) / 60));
       setFormError(`Demasiados intentos fallidos. Por seguridad, espera ${min} ${min === 1 ? 'minuto' : 'minutos'} antes de volver a intentarlo.`);
-    } else if (res.error === 'account_disabled') setFormError('Tu cuenta está desactivada. Contacta a un administrador.');
+    } else if (res.error === 'account_suspended') setFormError('Tu cuenta fue suspendida porque se aprobó un reclamo de DNI sobre el documento con el que se creó. Si crees que es un error, contacta a un administrador.');
+    else if (res.error === 'account_disabled') setFormError('Tu cuenta está desactivada. Contacta a un administrador.');
     else if (res.error === 'network') setFormError('No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
     else setFormError('No pudimos iniciar sesión. Inténtalo de nuevo en unos segundos.');
   };

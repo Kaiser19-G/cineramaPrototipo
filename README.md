@@ -56,6 +56,32 @@ Los 8 usuarios del personal comparten una sola contraseña de ejemplo: **`Cinera
 
 Solo el administrador central entra a `/users`, `/cinema` y `/settings`. Las rutas `/api/admin/*` exigen sesión de personal.
 
+## Reclamos de DNI usado por otra persona (fase 2b)
+
+Si al registrarse alguien ve "Ya existe una cuenta con este documento", el enlace **"¿Este DNI es tuyo? Presenta un reclamo"**
+lleva a `/web/reclamo-dni` (público, sin sesión): nombre, DNI, correo, celular, foto del DNI por delante y por detrás, una
+**carta firmada** (a mano o impresa con firma; la página trae el texto modelo copiable) y una selfie opcional. Solo imágenes
+JPG, PNG o WebP de hasta 5 MB (el navegador las recodifica a JPEG, lo que quita la ubicación EXIF; el **servidor no** quita
+metadatos). Al enviar se entrega un **código** (`XXXX-XXXX-XXXX`) para consultar el estado en `/web/reclamo-dni/estado`; no hay
+correo ni SMS para avisar.
+
+- **Revisión:** el administrador central ve **Reclamos de DNI** en el menú (`/claims`): lista, detalle con las fotos y
+  aprobar o rechazar con un motivo. Al aprobar, la cuenta que usaba el DNI queda **suspendida** (sesiones cerradas) y el DNI se
+  libera, **reservado 7 días** para el correo del reclamo. Aprobar o rechazar **borra** las fotos, la carta y los datos personales.
+- **Dónde están los archivos:** `~/.cinerama-data/claims/` (junto a la base; directorio `0700`, archivos `0600`, nombres aleatorios),
+  fuera del proyecto y nunca servidos de forma estática; solo el admin central con sesión los recibe por la API.
+- **Caducidad:** un borrador sin enviar se borra a la hora; un reclamo sin resolver, a los 30 días. Límites: 3 reclamos nuevos
+  por IP cada 24 h, 3 abiertos por DNI, 200 abiertos en total. Si el borrado de un archivo falla, queda marcado y se reintenta cada hora.
+- **Pantalla bloqueada con la contraseña de demostración:** mientras el administrador central conserve `Cinerama#2026`, la
+  pantalla Reclamos (y su API) responde bloqueada. Cambia la contraseña con:
+
+  ```bash
+  npm run set-password -- admin@cinerama.com
+  ```
+
+  El comando pide la contraseña nueva (dos veces) **sin mostrarla**; no se pasa por argumento ni queda en el historial. Cierra las
+  sesiones abiertas de ese usuario. No hay variable de entorno para saltarse el bloqueo.
+
 ### Variables de entorno
 
 `PORT` (API), `API_PORT` (destino del proxy de Vite), `CINERAMA_DATA_DIR` (directorio de datos), `CINERAMA_DB` (ruta explícita de la base; la clave se guarda a su lado), `SIMULATE_SMS=0` (oculta el

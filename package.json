@@ -9,6 +9,7 @@
     "dev:api": "node server/index.js",
     "seed": "node server/seed.js",
     "seed:auth": "node server/seedAuth.js",
+    "set-password": "node server/setPassword.js",
     "test:api": "node --test \"server/test/*.test.js\"",
     "build": "vite build",
     "lint": "eslint .",

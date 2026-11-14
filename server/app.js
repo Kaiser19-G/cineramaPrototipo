@@ -1,5 +1,6 @@
 import express from 'express';
 import { createAuth } from './auth/router.js';
+import { createClaims } from './claims/router.js';
 
 
 // Mismas formas que src/data/store.js (claves en camelCase, orden por id).
@@ -47,6 +48,7 @@ const prepare = (db) => ({
 export function createApp(db, opts = {}) {
   const q = prepare(db);
   const auth = createAuth(db, opts);
+  const claims = createClaims(db, auth, opts);
   const app = express();
   app.disable('x-powered-by');
   // Detras del proxy de Vite (xfwd) la IP real llega en X-Forwarded-For.
@@ -69,6 +71,8 @@ export function createApp(db, opts = {}) {
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
   app.use('/api/auth', auth.router);
+  app.use('/api/claims', claims.router);
+  app.use('/api/admin/central/claims', claims.adminRouter);
   app.use('/api/admin', auth.adminRouter);
   app.get('/api/movies', listHandler(q.movies, q.moviesByBranch, mapMovie));
   app.get('/api/branches', (_req, res) => res.json(q.branches.all().map(mapBranch)));
@@ -87,8 +91,9 @@ export function createApp(db, opts = {}) {
   app.use((err, _req, res, _next) => {
     if (err.type === 'entity.parse.failed' || err.status === 400) return res.status(400).json({ error: 'invalid_json' });
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'too_large' });
+    if (err.type === 'request.aborted' || err.type === 'request.size.invalid') return res.status(400).json({ error: 'bad_request' });
     console.error('[error]', err.code || err.type || err.name || 'desconocido');
     res.status(500).json({ error: 'Error interno' });
   });
-  return { app, auth };
+  return { app, auth, claims };
 }
