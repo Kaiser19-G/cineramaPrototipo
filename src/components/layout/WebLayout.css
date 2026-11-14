@@ -1,5 +1,8 @@
 /* Contenedor principal de la página web pública */
 .web-container {
+  /* Bloque contenedor de los elementos absolutos (.sr-only, inputs ocultos): sin esto su contenedor es el
+     documento y, al estar el contenido dentro de este contenedor con scroll, alargaban el documento. */
+  position: relative;
   min-height: 100vh;
   height: 100vh;
   overflow-y: auto;

@@ -1,7 +1,7 @@
 import express from 'express';
 import { AUTH, HOUR } from './config.js';
 import {
-  hashPassword, verifyPassword, dummyVerify, sha256, randomToken, randomCode, safeEqualHex, dniHash, loadPepper,
+  hashPassword, verifyPassword, dummyVerify, sha256, randomToken, randomCode, safeEqualHex, dniHash, loadPepper, contactHash,
 } from './crypto.js';
 import { createThrottle } from './throttle.js';
 import {
@@ -19,6 +19,8 @@ const limaStamp = (ms) => {
   }).formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
   return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
 };
+
+const CLAIM_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const initials = (name) => name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
@@ -125,6 +127,9 @@ export function createAuth(db, opts = {}) {
       if (host !== req.headers.host) return res.status(403).json({ error: 'bad_origin' });
     }
     if (req.headers['sec-fetch-site'] === 'cross-site') return res.status(403).json({ error: 'bad_origin' });
+    // Unica excepcion: subir UNA imagen cruda de un reclamo de DNI (PUT /api/claims/files/:kind). Un formulario
+    // de otro sitio no puede enviar este tipo de contenido, y Origin y Sec-Fetch-Site se comprobaron arriba.
+    if (req.method === 'PUT' && /^\/claims\/files\/[a-z_]+$/.test(req.path) && req.is(CLAIM_IMAGE_TYPES)) return next();
     if (!req.is('application/json')) return res.status(415).json({ error: 'json_required' });
     next();
   };
@@ -187,6 +192,12 @@ export function createAuth(db, opts = {}) {
     return e;
   };
 
+  const reservation = db.prepare(`SELECT contact_hash FROM claims WHERE dni_hash = ? AND status = 'approved' AND reserved_until > ? AND contact_hash IS NOT NULL`);
+  const isReservedForOther = (dniH, email) => {
+    const rows = reservation.all(dniH, clock());
+    return rows.length > 0 && !rows.some((r) => r.contact_hash === contactHash(pepper, email));
+  };
+
   // ── rutas ──
   const router = express.Router();
   router.use(loadSession);
@@ -213,6 +224,8 @@ export function createAuth(db, opts = {}) {
     const dniH = dniHash(pepper, dni);
 
     const dup = duplicates(dniH, email, phone);
+    // DNI liberado por un reclamo aprobado: reservado 7 dias para el correo del reclamo.
+    if (!dup.dni && isReservedForOther(dniH, email)) dup.dni = 'dni_reserved';
     if (Object.keys(dup).length) return res.status(409).json({ error: 'conflict', errors: dup });
 
     const password_hash = await hashPassword(body.password);
@@ -230,6 +243,7 @@ export function createAuth(db, opts = {}) {
     } catch (err) {
       if (String(err.code).startsWith('SQLITE_CONSTRAINT')) {
         const again = duplicates(dniH, email, phone);
+        if (!again.dni && isReservedForOther(dniH, email)) again.dni = 'dni_reserved';
         return res.status(409).json({ error: 'conflict', errors: Object.keys(again).length ? again : { email: 'email_taken' } });
       }
       throw err;
@@ -301,6 +315,8 @@ export function createAuth(db, opts = {}) {
       startVerifyCookie(res, user.id);
       return res.status(403).json({ error: 'phone_not_verified', ...verificationBody(user, issued) });
     }
+    // Solo se llega aqui con la contrasena correcta: se puede decir el motivo sin filtrar nada.
+    if (user.status === 'suspended') return res.status(403).json({ error: 'account_suspended' });
     if (user.status !== 'active') return res.status(403).json({ error: 'account_disabled' });
 
     throttle.reset(kEmail);
@@ -326,5 +342,5 @@ export function createAuth(db, opts = {}) {
   adminRouter.get('/ping', (req, res) => res.json({ ok: true, role: req.user.role, tier: req.user.tier, branchId: req.user.branchId }));
   adminRouter.get('/central/ping', requireTier('central'), (_req, res) => res.json({ ok: true, scope: 'central' }));
 
-  return { router, adminRouter, csrf, loadSession, requireAuth, requireTier, isStaffTier, hashPassword, pepper };
+  return { router, adminRouter, csrf, loadSession, requireAuth, requireTier, isStaffTier, hashPassword, pepper, clock };
 }

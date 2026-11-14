@@ -1,11 +1,11 @@
 // Cliente de la API de cuentas. Siempre JSON y cookie de sesion (httpOnly) del mismo origen.
-async function request(method, url, body) {
+export async function request(method, url, body, headers) {
   let res;
   try {
     res = await fetch(url, {
       method,
       credentials: 'same-origin',
-      headers: method === 'GET' ? undefined : { 'Content-Type': 'application/json' },
+      headers: method === 'GET' ? undefined : { 'Content-Type': 'application/json', ...headers },
       body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
     });
   } catch {

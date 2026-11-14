@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Film, Building2, CalendarDays, Ticket,
-  CreditCard, Users, BarChart3, Settings, Lock,
+  CreditCard, Users, BarChart3, Settings, Lock, ShieldCheck,
 } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
 import './Sidebar.css';
@@ -15,6 +15,7 @@ const navAdmin = [
   { to: '/tickets',     icon: Ticket,           label: 'Taquilla' },
   { to: '/payments',    icon: CreditCard,       label: 'Pagos' },
   { to: '/users',       icon: Users,            label: 'Usuarios y Accesos' },
+  { to: '/claims',      icon: ShieldCheck,      label: 'Reclamos de DNI' },
   { to: '/reports',     icon: BarChart3,        label: 'Reportes Globales' },
   { to: '/settings',    icon: Settings,         label: 'Configuración' },
 ];

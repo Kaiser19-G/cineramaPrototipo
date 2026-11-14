@@ -56,6 +56,47 @@ export const MIGRATIONS = [
       );
     `);
   },
+  // 2: reclamos de DNI usado por otra persona (fase 2b). Solo tablas e indices nuevos: no toca filas existentes.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS claims (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        code_hash       TEXT NOT NULL UNIQUE,      -- HMAC del codigo de reclamo; el codigo no se guarda
+        status          TEXT NOT NULL CHECK (status IN ('draft','pending','approved','rejected','superseded','expired')),
+        name            TEXT,                      -- name, email, phone y dni_plain se anulan al resolver
+        email           TEXT,
+        phone           TEXT,
+        dni_plain       TEXT,
+        dni_hash        TEXT NOT NULL,             -- HMAC del DNI declarado (mismo que users.dni_hash)
+        dni_hint        TEXT NOT NULL,
+        contact_hash    TEXT,                      -- HMAC del correo; reserva del DNI, se anula al vencer
+        consent_at      INTEGER NOT NULL,
+        consent_version TEXT NOT NULL,
+        created_at      INTEGER NOT NULL,
+        submitted_at    INTEGER,
+        resolved_at     INTEGER,
+        resolved_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        reason_code     TEXT,
+        reason_note     TEXT,
+        target_user_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        reserved_until  INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS idx_claims_dni ON claims(dni_hash, status);
+      CREATE INDEX IF NOT EXISTS idx_claims_status ON claims(status, submitted_at);
+
+      CREATE TABLE IF NOT EXISTS claim_files (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        claim_id     INTEGER NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
+        kind         TEXT NOT NULL CHECK (kind IN ('dni_front','dni_back','letter','selfie')),
+        stored_name  TEXT NOT NULL UNIQUE,         -- nombre aleatorio generado por el servidor
+        mime         TEXT NOT NULL,
+        size         INTEGER NOT NULL,
+        created_at   INTEGER NOT NULL,
+        delete_state TEXT NOT NULL DEFAULT 'stored' CHECK (delete_state IN ('stored','delete_pending')),
+        UNIQUE (claim_id, kind)
+      );
+    `);
+  },
 ];
 
 export function migrate(db) {

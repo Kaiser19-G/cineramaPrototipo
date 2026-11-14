@@ -3,8 +3,9 @@
 import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
 import { hashPassword } from './auth/crypto.js';
+import { DEMO_PASSWORD } from './auth/config.js';
 
-export const DEMO_PASSWORD = 'Cinerama#2026';
+export { DEMO_PASSWORD };
 
 export async function seedDemoCredentials(db) {
   const staff = db.prepare(`SELECT id FROM users WHERE role != 'customer'`).all();

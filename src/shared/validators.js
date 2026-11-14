@@ -42,3 +42,10 @@ export function validateRegistration(input = {}) {
   if (input.consent !== true) e.consent = 'consent_required';
   return e;
 }
+
+// Reclamo de DNI: mismos campos de identidad que el registro, sin contrasena. `consent` es la aceptacion de la politica.
+export function validateClaim(input = {}) {
+  const e = validateRegistration({ ...input, password: 'x'.repeat(PASSWORD_MIN) });
+  delete e.password;
+  return e;
+}

@@ -12,6 +12,7 @@ import Scheduling from './pages/Scheduling';
 import TicketOperations from './pages/TicketOperations';
 import Payments from './pages/Payments';
 import UsersAccess from './pages/UsersAccess';
+import Claims, { ClaimDetail } from './pages/Claims';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import WebHome from './pages/WebHome';
@@ -19,6 +20,8 @@ import WebLayout from './components/layout/WebLayout';
 import WebAuth from './pages/WebAuth';
 import WebRegister from './pages/WebRegister';
 import WebPrivacy from './pages/WebPrivacy';
+import WebClaim from './pages/WebClaim';
+import WebClaimStatus from './pages/WebClaimStatus';
 import WebNotFound from './pages/WebNotFound';
 import WebCinemas from './pages/WebCinemas';
 import WebMovies from './pages/WebMovies';
@@ -65,6 +68,8 @@ export default function App() {
               <Route path="/web/login" element={<WebAuth />} />
               <Route path="/web/registro" element={<WebRegister />} />
               <Route path="/web/privacidad" element={<WebPrivacy />} />
+              <Route path="/web/reclamo-dni" element={<WebClaim />} />
+              <Route path="/web/reclamo-dni/estado" element={<WebClaimStatus />} />
               <Route path="/web/compra" element={<WebBooking />} />
               <Route path="*" element={<WebNotFound />} />
             </Route>
@@ -81,6 +86,8 @@ export default function App() {
               <Route path="/cinema/*"     element={<RequireCentral><CinemaManagement /></RequireCentral>} />
               <Route path="/users/*"      element={<RequireCentral><UsersAccess /></RequireCentral>} />
               <Route path="/settings/*"   element={<RequireCentral><Settings /></RequireCentral>} />
+              <Route path="/claims"       element={<RequireCentral><Claims /></RequireCentral>} />
+              <Route path="/claims/:id"   element={<RequireCentral><ClaimDetail /></RequireCentral>} />
             </Route>
           </Routes>
         </BrowserRouter>

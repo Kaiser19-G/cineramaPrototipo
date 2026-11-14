@@ -47,7 +47,7 @@ describe('registro y verificacion', () => {
     assert.ok(!JSON.stringify(row).includes(PII.dni));
     assert.match(row.password_hash, /^scrypt\$32768\$8\$1\$/);
     assert.equal(row.role, 'customer');
-    assert.equal(row.consent_version, 'borrador-2026-11');
+    assert.equal(row.consent_version, 'borrador-2026-11b');
   });
 
   test('verificacion correcta crea sesion; /me devuelve el usuario', async () => {

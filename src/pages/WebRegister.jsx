@@ -9,10 +9,8 @@ import {
 } from '../shared/validators';
 import { safeNext } from '../shared/safeNext';
 
-// FASE 2b: aqui ira la ruta del formulario de reclamo cuando alguien descubre que
-// su DNI ya fue usado por otra persona (p. ej. '/web/reclamo-dni'). Mientras sea
-// null NO se muestra ningun enlace (para no dejar un enlace roto).
-const DNI_CLAIM_URL = null;
+// Formulario de reclamo (fase 2b) para quien descubre que su DNI ya fue usado por otra persona.
+const DNI_CLAIM_URL = '/web/reclamo-dni';
 
 const FIELD_ORDER = ['firstName', 'lastName', 'dni', 'email', 'phone', 'password', 'confirmPassword', 'consent'];
 const FIELD_ID = {
@@ -233,10 +231,12 @@ export default function WebRegister() {
   }
 
   const claimLink = DNI_CLAIM_URL
-    ? <> <Link to={DNI_CLAIM_URL}>¿Crees que alguien más usó tu DNI?</Link></>
+    ? <> <Link to={DNI_CLAIM_URL}>¿Este DNI es tuyo? Presenta un reclamo</Link></>
     : null;
   const serverMsg = {
-    dni: <>Ya existe una cuenta con este documento.{claimLink}</>,
+    dni: serverErrors.dni === 'dni_reserved'
+      ? <>Este DNI está reservado por unos días para quien presentó un reclamo aprobado: solo puede registrarlo con el correo de ese reclamo. <Link to="/web/reclamo-dni/estado">Consulta tu reclamo</Link>.</>
+      : <>Ya existe una cuenta con este documento.{claimLink}</>,
     email: <>Ya existe una cuenta con este correo. Si es tuya, <Link to="/web/login">inicia sesión</Link>.</>,
     phone: 'Ya existe una cuenta con este celular.',
   };
@@ -321,7 +321,7 @@ export default function WebRegister() {
           <AuthField
             id={FIELD_ID.dni} label="DNI" inputMode="numeric" pattern="[0-9]*" maxLength={8} autoComplete="off"
             placeholder="8 dígitos" value={f.dni}
-            hint="Pedimos tu DNI para que cada persona tenga una sola cuenta y así evitar que se acaparen entradas en las preventas. Lo guardamos solo como una huella irreversible (y los últimos 3 dígitos): no podemos ver ni mostrar tu número completo."
+            hint="Pedimos tu DNI para que cada persona tenga una sola cuenta y así evitar que se acaparen entradas en las preventas. Lo guardamos solo como una huella irreversible (y los últimos 3 dígitos): no podemos ver ni mostrar tu número completo. La única excepción es si presentas un reclamo por tu DNI: ahí lo guardamos en claro, solo hasta resolverlo."
             onChange={set('dni')} onBlur={() => markTouched('dni')} error={shown('dni')}
           />
 
