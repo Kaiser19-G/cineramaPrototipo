@@ -61,6 +61,22 @@ Los 8 usuarios del personal comparten una sola contraseña de ejemplo: **`Cinera
 
 Solo el administrador central entra a `/users`, `/cinema` y `/settings`. Las rutas `/api/admin/*` exigen sesión de personal.
 
+## Usuarios y contraseña temporal (fase 3c)
+- **Usuarios y accesos** (`/users`, solo administrador central): pestañas Personal, Clientes, Roles y permisos (generada de `PERMS`) y
+  Registros de actividad (de `audit_log`). De los clientes solo se ven el DNI (últimos 3 dígitos), el correo y el celular parcialmente
+  ocultos; nunca contraseñas, huellas ni DNI completos. Las cuentas de clientes no se editan desde el panel. No hay borrado de cuentas.
+- **Bloqueo por contraseña de demostración:** igual que Reclamos, la API y la pantalla de usuarios responden bloqueadas
+  (`demo_password`) mientras algún administrador central activo conserve `Cinerama#2026`; cámbiala con `npm run set-password`.
+- **Crear personal / restablecer contraseña:** el servidor genera una contraseña temporal aleatoria (`XXXXX-XXXXX-XXXXX`) y la
+  devuelve **una sola vez** en la respuesta (no se guarda en claro, no va a consola ni a `audit_log`; copia el botón "Copiar").
+  La cuenta queda con `must_change_password`: al iniciar sesión solo ve la pantalla "Cambia tu contraseña para continuar" y el servidor
+  responde `403 password_change_required` a cualquier ruta de `/api/admin/*` hasta que la cambie con `POST /api/auth/change-password`
+  (contraseña actual + nueva de 8 a 128 caracteres; cierra las demás sesiones de la cuenta; 5 intentos fallidos por cuenta cada 15 min).
+  Cualquier persona del personal puede cambiarla cuando quiera desde su menú de usuario ("Cambiar contraseña").
+- **Guardas:** nadie cambia su propio rol ni su estado; no se deja al sistema sin administrador central activo; las cuentas suspendidas
+  por un reclamo no se reactivan desde aquí; al desactivar, cambiar de rol o restablecer la contraseña se cierran las sesiones de esa cuenta.
+  Emitir contraseñas temporales está limitado (10 cada 15 min por administrador).
+
 ## Reclamos de DNI usado por otra persona (fase 2b)
 
 Si al registrarse alguien ve "Ya existe una cuenta con este documento", el enlace **"¿Este DNI es tuyo? Presenta un reclamo"**

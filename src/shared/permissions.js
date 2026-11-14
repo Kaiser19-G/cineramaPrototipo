@@ -32,3 +32,16 @@ export function tierOf(role) {
 }
 
 export const isStaffTier = (tier) => tier === 'central' || tier === 'branch';
+
+// Textos de cada permiso (la pantalla Roles y permisos se genera de PERMS + estos textos; no hay otra tabla).
+export const PERM_LABELS = {
+  create_movie: 'Crear películas', edit_movie: 'Editar películas', delete_movie: 'Eliminar películas',
+  assign_cinema: 'Habilitar películas en sedes', create_cinema: 'Crear sedes', edit_cinema: 'Editar sedes',
+  create_hall: 'Crear salas', edit_hall: 'Editar salas y ponerlas en mantenimiento', block_hall: 'Poner salas de su sede en mantenimiento',
+  schedule_any: 'Programar en cualquier sala de su alcance', create_screening: 'Crear y editar funciones', cancel_screening: 'Cancelar funciones',
+  view_global_reports: 'Ver reportes de toda la red', view_local_reports: 'Ver reportes de su sede',
+  view_all_sales: 'Ver las ventas de toda la red', view_local_sales: 'Ver las ventas de su sede',
+  manage_users: 'Gestionar usuarios', manage_settings: 'Cambiar la configuración del sistema',
+  view_local_screenings: 'Ver las funciones de su sede', process_sale: 'Procesar ventas en taquilla', validate_ticket: 'Validar boletos',
+  view_orders: 'Ver pedidos', process_refund: 'Procesar reembolsos',
+};

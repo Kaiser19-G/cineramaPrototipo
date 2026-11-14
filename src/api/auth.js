@@ -25,4 +25,5 @@ export const authApi = {
   register: (payload) => request('POST', '/api/auth/register', payload),
   verifyPhone: (code) => request('POST', '/api/auth/verify-phone', { code }),
   resendCode: () => request('POST', '/api/auth/resend-code'),
+  changePassword: (currentPassword, newPassword) => request('POST', '/api/auth/change-password', { currentPassword, newPassword }),
 };

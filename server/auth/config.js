@@ -12,6 +12,8 @@ export const AUTH = {
   RESEND_MAX_PER_HOUR: 3,         // reenvios (ademas del codigo inicial)
   LOGIN: { max: 5, windowMs: 15 * MIN, lockMs: 15 * MIN },
   LOGIN_IP: { max: 30, windowMs: 15 * MIN, lockMs: 15 * MIN },
+  CHANGE_PASSWORD: { max: 5, windowMs: 15 * MIN, lockMs: 15 * MIN },       // intentos fallidos de contrasena actual, por cuenta
+  TEMP_PASSWORD_ISSUE: { max: 10, windowMs: 15 * MIN, lockMs: 15 * MIN },  // contrasenas temporales emitidas (crear/restablecer), por administrador
   REGISTER_IP: { max: 10, windowMs: 15 * MIN, lockMs: 15 * MIN },
   SESSION_IDLE: 12 * HOUR,
   SESSION_ABSOLUTE: 7 * 24 * HOUR,

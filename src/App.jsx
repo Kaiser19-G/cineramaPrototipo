@@ -15,6 +15,8 @@ import UsersAccess from './pages/UsersAccess';
 import Claims, { ClaimDetail } from './pages/Claims';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import ChangePassword from './pages/ChangePassword';
+import { useAuth } from './context/AuthContext';
 import WebHome from './pages/WebHome';
 import WebLayout from './components/layout/WebLayout';
 import WebAuth from './pages/WebAuth';
@@ -31,6 +33,9 @@ import WebCinemaDetails from './pages/WebCinemaDetails';
 
 // Marco del panel de administración (solo se monta con sesión de personal).
 function AdminLayout() {
+  const { user } = useAuth();
+  // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
+  const forced = !!user?.mustChangePassword;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
   return (
@@ -44,7 +49,7 @@ function AdminLayout() {
           onNotifClose={() => setNotifOpen(false)}
         />
         <div className="page-content">
-          <Outlet />
+          {forced ? <ChangePassword forced /> : <Outlet />}
         </div>
       </div>
     </div>
@@ -77,6 +82,7 @@ export default function App() {
             {/* Rutas de Administración: solo personal con sesión */}
             <Route element={<RequireStaff><AdminLayout /></RequireStaff>}>
               <Route path="/dashboard"    element={<Dashboard />} />
+              <Route path="/account/password" element={<ChangePassword />} />
               <Route path="/movies/*"     element={<MovieManagement />} />
               <Route path="/scheduling/*" element={<Scheduling />} />
               <Route path="/tickets/*"    element={<TicketOperations />} />
