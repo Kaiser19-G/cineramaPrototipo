@@ -43,9 +43,33 @@
      variables existen solo para ese caso de uso (relleno) y se fijan a un
      gris oscuro neutro únicamente en esa combinación; en todo lo demás
      siguen el color de marca/éxito normalmente. */
+  /* Hover de relleno (tema oscuro, modo por defecto): --action-red-light
+     (#FF1F2E) da 3.83:1 con texto blanco (<4.5). Este tono, algo mas cercano
+     al rojo de marca, da 4.56:1; el hover se sigue notando por la elevacion
+     y el resplandor. --action-red-light no cambia (lo usa el admin). */
   --accent-solid:         var(--action-red);
-  --accent-solid-light:   var(--action-red-light);
+  --accent-solid-light:   #EB0E1A;
   --accent-solid-success: var(--emerald);
+
+  /* TEXTO/ICONO sobre los rellenos de arriba (--accent-solid, -light y
+     -success). Siempre se usa junto con ellos, nunca un blanco fijo: en
+     oscuro los acentos de protan-deutan y tritan son claros (blanco = 2.7:1 y
+     3.4:1) y el verde de exito (#2EC771) tampoco admite blanco (2.2:1).
+     Medido con WCAG: minimo 4.5:1 en reposo, hover y foco, en los 8
+     tema x modo. Por defecto (oscuro) el texto sigue blanco sobre el rojo. */
+  --on-accent:         #FFFFFF;
+  --on-accent-success: var(--deep-night);
+
+  /* ACENTO COMO COLOR DE TEXTO/ICONO sobre las superficies oscuras y sobre
+     --page-bg (#6a1a1b en oscuro). --action-red (#E50914) da 2.5-3.8:1 como
+     texto ahi; este tono da >=4.5:1 sobre --page-bg y las superficies.
+     Los bordes y rellenos siguen con --action-red. -light: textos que usaban
+     --action-red-light (logo, titulos grandes): no cambian salvo en claro
+     protan-deutan/tritan, donde no llegaban a 4.5:1 sobre el crema. */
+  --accent-text:       #FF7A7A;
+  --accent-text-light: var(--action-red-light);
+  /* Acento como texto sobre BLANCO fijo (tickets de horario). */
+  --accent-on-white:   var(--accent-solid);
 
   /* Para el "contorno" del hover de pósters/cines (.movie-hover-overlay,
      .cinema-hover-overlay): ese elemento siempre va encima de una foto
@@ -118,6 +142,13 @@
   --label-accent:       #d8b78f;
 }
 
+/* Tema oscuro, solo sitio publico: --text-muted (#666666) da 2.1-2.9:1 sobre
+   --page-bg y las superficies; #A6A6A6 da 4.86:1 sobre --page-bg. Scoped a
+   .web-container: --text-muted lo comparte el admin. */
+html[data-theme="dark"] .web-container {
+  --text-muted: #A6A6A6;
+}
+
 /* ══════════════════════════════════════════
    TEMA CLARO — SOLO SITIO PÚBLICO
    Scoped a .web-container (no a :root) a propósito: --surface, --text-*,
@@ -153,7 +184,7 @@ html[data-theme="light"] .web-container {
   --text-main:      #111111;
   --text-primary:   #1A1A1A;
   --text-secondary: #595959;
-  --text-muted:     #707070;
+  --text-muted:     #666666; /* #707070 daba 4.1-4.2:1 sobre --surface-3 y el crema */
   --text-dim:       #9A9A9A;
 
   --action-red:        #B00710;
@@ -175,8 +206,13 @@ html[data-theme="light"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --on-accent:         #FFFFFF;
+  --on-accent-success: #FFFFFF;
+  --accent-text:       var(--action-red);
+  --accent-text-light: var(--action-red-light);
+  --accent-on-white:   var(--accent-solid);
 
-  --label-accent: #8A6A1F;
+  --label-accent: #7A5C16; /* #8A6A1F daba 3.97:1 con el hover --surface-hover (#E4E4E4) */
 
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
@@ -219,6 +255,11 @@ html[data-theme="dark"][data-vision="protan-deutan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --on-accent:         var(--deep-night);
+  --on-accent-success: var(--deep-night);
+  --accent-text:       #6FBBE8;
+  --accent-text-light: var(--action-red-light);
+  --accent-on-white:   #0072B2;
   /* Mismo valor en ambos temas a propósito: ver nota de --overlay-accent en :root. */
   --overlay-accent: #4FA6D9;
 }
@@ -233,8 +274,15 @@ html[data-theme="light"][data-vision="protan-deutan"] .web-container {
   --error-dim:  rgba(138,90,0,0.10);
   --error-text: var(--error);
   --accent-solid:         var(--action-red);
-  --accent-solid-light:   var(--action-red-light);
+  /* --action-red-light (#1C84C4) da 4.08:1 con blanco; este da 4.59:1. */
+  --accent-solid-light:   #0F7BBB;
   --accent-solid-success: var(--emerald);
+  --on-accent:         #FFFFFF;
+  --on-accent-success: #FFFFFF;
+  /* #0072B2 da 4.33:1 sobre el crema del pie (--footer-bg); #006AA6 da 4.9:1. */
+  --accent-text:       #006AA6;
+  --accent-text-light: #006AA6;
+  --accent-on-white:   var(--accent-solid);
   --overlay-accent: #4FA6D9;
 }
 
@@ -252,6 +300,11 @@ html[data-theme="dark"][data-vision="tritan"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --on-accent:         var(--deep-night);
+  --on-accent-success: var(--deep-night);
+  --accent-text:       #F17FB0;
+  --accent-text-light: var(--action-red-light);
+  --accent-on-white:   #C2185B;
   --overlay-accent: #E8569A;
 }
 html[data-theme="light"][data-vision="tritan"] .web-container {
@@ -265,8 +318,14 @@ html[data-theme="light"][data-vision="tritan"] .web-container {
   --error-dim:  rgba(198,40,40,0.10);
   --error-text: var(--error);
   --accent-solid:         var(--action-red);
-  --accent-solid-light:   var(--action-red-light);
+  /* --action-red-light (#D6478B) da 4.09:1 con blanco; este da 4.55:1. */
+  --accent-solid-light:   #D13A7E;
   --accent-solid-success: var(--emerald);
+  --on-accent:         #FFFFFF;
+  --on-accent-success: #FFFFFF;
+  --accent-text:       var(--action-red);
+  --accent-text-light: var(--action-red);
+  --accent-on-white:   var(--accent-solid);
   --overlay-accent: #E8569A;
 }
 
@@ -287,6 +346,9 @@ html[data-vision="mono"] .web-container {
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
+  --accent-text:       var(--action-red);
+  --accent-text-light: var(--action-red);
+  --accent-on-white:   var(--accent-solid);
   --label-accent: var(--text-secondary);
 
   /* "Mono" es escala de grises de verdad: el fondo de página, el navbar/
@@ -307,9 +369,15 @@ html[data-vision="mono"] .web-container {
    blanco, y los botones de relleno sólido llevan texto blanco escrito
    encima — sin esto el texto desaparecería sobre su propio fondo. */
 html[data-theme="dark"][data-vision="mono"] .web-container {
-  --accent-solid:         #2B2B2B;
-  --accent-solid-light:   #3D3D3D;
-  --accent-solid-success: #2B2B2B;
+  /* Grises con 3:1 contra las superficies (#161616-#252525, limite del
+     control, WCAG 1.4.11) y >=4.5:1 con texto blanco: #767676 = 4.54 con
+     blanco y 3.8 contra #1C1C1C. Antes #2B2B2B (1.2:1 contra la tarjeta). */
+  --accent-solid:         #767676;
+  --accent-solid-light:   #6B6B6B;
+  --accent-solid-success: #767676;
+  --accent-on-white:      #595959; /* #767676 sobre blanco/#fafafa no llega a 4.5:1 */
+  --on-accent:         #FFFFFF;
+  --on-accent-success: #FFFFFF;
 }
 
 /* ══════════════════════════════════════════
