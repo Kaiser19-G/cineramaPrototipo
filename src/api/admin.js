@@ -12,6 +12,12 @@ export const adminApi = {
     setBranch: (id, branchId, body) => request('PUT', `/api/admin/movies/${id}/branches/${branchId}`, body),
   },
   screenings: {
-    list: () => request('GET', '/api/admin/screenings'),
+    list: (query = '') => request('GET', `/api/admin/screenings${query ? `?${query}` : ''}`),
+    create: (body) => request('POST', '/api/admin/screenings', body),
+    update: (id, body) => request('PATCH', `/api/admin/screenings/${id}`, body),
+    cancel: (id, body) => request('POST', `/api/admin/screenings/${id}/cancel`, body),
+  },
+  halls: {
+    setStatus: (id, status) => request('PATCH', `/api/admin/halls/${id}`, { status }),
   },
 };

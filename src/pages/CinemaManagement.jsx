@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
 import { money } from '../utils/money';
+import HallStatusControl from '../components/HallStatusControl';
 
 const estadoColor = { active: 'badge-green', maintenance: 'badge-orange', inactive: 'badge-muted' };
 const estadoLabel = { active: 'Activa', maintenance: 'En mantenimiento', inactive: 'Inactiva' };
@@ -12,6 +13,7 @@ const TABS = [['sedes', 'Sedes'], ['salas', 'Salas']];
 export default function CinemaManagement() {
   const { branches, halls, adminMovies, catalogLoading } = useCinema();
   const [tab, setTab] = useState('sedes');
+  const [flash, setFlash] = useState('');
   const headingRef = useRef(null);
   useEffect(() => { document.title = 'Gestión de cines · Cinerama'; headingRef.current?.focus(); }, []);
 
@@ -42,8 +44,8 @@ export default function CinemaManagement() {
       <div className="demo-notice" role="note">
         <Info size={16} aria-hidden="true" />
         <p>
-          <strong>Solo lectura.</strong> Estas sedes y salas son las reales del sistema, pero aquí todavía no se pueden crear, editar ni
-          poner en mantenimiento. El mapa de asientos llegará más adelante.
+          <strong>Sedes y salas reales.</strong> Aquí todavía no se pueden crear ni editar; sí se puede poner una sala en mantenimiento
+          (o quitarlo). El mapa de asientos llegará más adelante.
         </p>
       </div>
 
@@ -54,6 +56,7 @@ export default function CinemaManagement() {
       </div>
 
       {catalogLoading && <p role="status">Cargando…</p>}
+      <p className="mv-flash" role="status" hidden={!flash}>{flash}</p>
 
       {tab === 'sedes' && (
         <div className="table-wrapper card" style={{ padding: 0 }}>
@@ -86,7 +89,7 @@ export default function CinemaManagement() {
           <table className="table">
             <caption className="sr-only">Salas</caption>
             <thead>
-              <tr><th scope="col">Sala</th><th scope="col">Sede</th><th scope="col">Tipo</th><th scope="col">Capacidad</th><th scope="col">Precio base</th><th scope="col">Estado</th></tr>
+              <tr><th scope="col">Sala</th><th scope="col">Sede</th><th scope="col">Tipo</th><th scope="col">Capacidad</th><th scope="col">Precio base</th><th scope="col">Estado</th><th scope="col">Mantenimiento</th></tr>
             </thead>
             <tbody>
               {halls.map((h) => (
@@ -97,6 +100,7 @@ export default function CinemaManagement() {
                   <td>{h.capacity} asientos</td>
                   <td>{money(h.priceBase)}</td>
                   <td><span className={`badge ${estadoColor[h.status] ?? 'badge-muted'}`}>{estadoLabel[h.status] ?? h.status}</span></td>
+                  <td><HallStatusControl hall={h} onDone={setFlash} /></td>
                 </tr>
               ))}
             </tbody>

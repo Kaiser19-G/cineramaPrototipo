@@ -190,6 +190,28 @@
   box-shadow: var(--shadow-md);
 }
 
+/* Póster del inicio y de la página de sede. Antes estas tres reglas llegaban por accidente desde el CSS del panel de
+   administración (MovieManagement.css); ahora son explícitas y el aspecto público no cambia. */
+.movie-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+}
+.movie-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.movie-poster::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(to top, rgba(15, 15, 15, 0.9) 0%, transparent 100%);
+  pointer-events: none;
+}
+
 /* Respaldo cuando una imagen externa (póster o foto de cine) falla al
    cargar (H-08) — funciona en cualquier contenedor que envuelva un <img>
    marcado con onError={handlePosterError} de src/utils/posterFallback.js. */
@@ -1153,6 +1175,10 @@
 }
 .custom-dd-btn.open {
   background: var(--surface-3);
+  /* Contorno del desplegable abierto: el relleno solo difería 1.09:1 del fondo (mínimo 3:1, WCAG 1.4.11).
+     El borde de 1px se compensa en el padding para que no se mueva nada. */
+  border: 1px solid var(--border-interactive);
+  padding: calc(1rem - 1px) calc(1.5rem - 1px);
 }
 
 .custom-dd-inner {
@@ -1771,3 +1797,19 @@ html[data-theme="dark"][data-vision="mono"] .legend-selected {
   line-height: 1.4;
 }
 .movie-notice strong { color: var(--text-main); }
+
+
+/* Función agotada: visible, no comprable, con texto (no solo color). */
+.showtime-btn.soldout {
+  background-color: var(--surface-3);
+  color: var(--text-primary);
+  border: 1px dashed var(--border-interactive);
+  padding: 9px 23px;
+  cursor: not-allowed;
+  filter: none;
+}
+.showtime-btn.soldout .time-lbl { text-decoration: line-through; }
+.showtime-btn.soldout:hover { transform: none; background-color: var(--surface-3); filter: none; }
+.soldout-lbl { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.showtime-btn.soldout:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+

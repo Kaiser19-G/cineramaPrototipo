@@ -1,6 +1,7 @@
 // Formas JSON de la API (claves en camelCase). Las publicas no incluyen datos internos
 // (borradores, marca de preventa sin calcular, nombre del gerente, versiones).
 import { isPresaleEffective, isPremiere } from '../src/shared/presale.js';
+import { effectiveStatus } from '../src/shared/scheduling.js';
 
 export const mapMovie = (r, today) => {
   const base = {
@@ -36,13 +37,15 @@ export const mapHall = (r) => ({
   id: r.id, branchId: r.branch_id, name: r.name, type: r.type, capacity: r.capacity, status: r.status,
   priceBase: r.price_base,
 });
-export const mapScreening = (r) => ({
+// `status` es el estado EFECTIVO (cancelada se mantiene; terminada si ya acabo; agotada si no quedan butacas).
+export const mapScreening = (r, nowAbs) => ({
   id: r.id, movieId: r.movie_id, hallId: r.hall_id, branchId: r.branch_id, date: r.starts_on,
   startTime: r.start_time, endTime: r.end_time, language: r.language, format: r.format, price: r.price,
-  status: r.status, bookedSeats: r.booked_seats, totalSeats: r.total_seats,
+  status: effectiveStatus(r, nowAbs), bookedSeats: r.booked_seats, totalSeats: r.total_seats,
 });
-export const mapAdminScreening = (r) => ({
-  ...mapScreening(r), version: r.version, cancelledAt: r.cancelled_at ?? null, cancelReason: r.cancel_reason ?? null,
+export const mapAdminScreening = (r, nowAbs) => ({
+  ...mapScreening(r, nowAbs), storedStatus: r.status, hasSales: !!r.has_sales, version: r.version,
+  cancelledAt: r.cancelled_at ?? null, cancelReason: r.cancel_reason ?? null,
 });
 export const mapMovieBranch = (r) => ({
   id: r.id, movieId: r.movie_id, branchId: r.branch_id, activa: !!r.active, fechaInicio: r.start_date,
