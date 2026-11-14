@@ -1,17 +1,21 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolveDataPaths, prepareDataFiles, sidecars } from './dataDir.js';
 import { SCHEMA } from './schema.js';
 import { migrate } from './migrations.js';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-export const DATA_DIR = path.join(here, 'data');
-export const DB_FILE = process.env.CINERAMA_DB || path.join(DATA_DIR, 'cinerama.db');
+export const { dataDir: DATA_DIR, dbFile: DB_FILE, explicitDb: EXPLICIT_DB } = resolveDataPaths();
 
-export function openDb(file = DB_FILE) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
+// Salvaguarda + directorio 0o700 + migracion desde server/data (solo para la ruta por defecto).
+export function prepareData(file = DB_FILE, opts = {}) {
+  prepareDataFiles(file, { migrate: file === DB_FILE && !EXPLICIT_DB, ...opts });
+}
+
+export function openDb(file = DB_FILE, opts = {}) {
+  prepareData(file, opts);
   const db = new Database(file);
+  fs.chmodSync(file, 0o600); // antes de activar WAL: -wal y -shm heredan este modo
+  sidecars(file).forEach((f) => { if (fs.existsSync(f)) fs.chmodSync(f, 0o600); });
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);

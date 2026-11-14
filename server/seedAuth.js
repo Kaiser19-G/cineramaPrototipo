@@ -15,7 +15,11 @@ export async function seedDemoCredentials(db) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const db = openDb();
+  let db;
+  try { db = openDb(); } catch (e) {
+    console.error(`\n[ERROR] No se pudo preparar los datos: ${e.message}\n`);
+    process.exit(1);
+  }
   const n = await seedDemoCredentials(db);
   console.log(`Contrasena de demostracion asignada a ${n} usuarios del personal (ver README).`);
   db.close();

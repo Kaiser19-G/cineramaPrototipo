@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { keyFileFor } from '../dataDir.js';
 import { promisify } from 'node:util';
 
 const scrypt = promisify(crypto.scrypt);
@@ -45,15 +46,15 @@ export function safeEqualHex(a, b) {
 export const randomCode = () => String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
 
 // Pepper del HMAC del DNI: CINERAMA_PEPPER, o un archivo junto a la base de datos
-// (server/data/, ignorado por git), generado al primer uso.
+// (directorio de datos, fuera del proyecto; ver dataDir.js), generado al primer uso.
 export function loadPepper(dbFile) {
   if (process.env.CINERAMA_PEPPER) return process.env.CINERAMA_PEPPER;
-  const file = path.join(path.dirname(dbFile), 'auth-secret.key');
+  const file = keyFileFor(dbFile);
   try {
     return fs.readFileSync(file, 'utf8').trim();
   } catch {
     const secret = crypto.randomBytes(32).toString('hex');
-    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
     fs.writeFileSync(file, secret + '\n', { mode: 0o600 });
     return secret;
   }

@@ -5,7 +5,7 @@
 // escriben como fechas fijas.
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { openDb, DB_FILE } from './db.js';
+import { openDb, prepareData, DB_FILE } from './db.js';
 import { seedDemoCredentials } from './seedAuth.js';
 import { movies, branches, halls, movieCinema, screenings, orders, users } from '../src/data/store.js';
 
@@ -91,11 +91,18 @@ const run = (db) => {
 export function seed(db) { run(db); }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  if (process.argv.includes('--reset')) {
-    for (const f of [DB_FILE, DB_FILE + '-wal', DB_FILE + '-shm']) fs.rmSync(f, { force: true });
-    console.log('Base de datos borrada:', DB_FILE);
+  let db;
+  try {
+    prepareData(); // migra la base antigua de server/data antes de un posible --reset
+    if (process.argv.includes('--reset')) {
+      for (const f of [DB_FILE, DB_FILE + '-wal', DB_FILE + '-shm']) fs.rmSync(f, { force: true });
+      console.log('Base de datos borrada:', DB_FILE);
+    }
+    db = openDb();
+  } catch (e) {
+    console.error(`\n[ERROR] No se pudo preparar los datos: ${e.message}\n`);
+    process.exit(1);
   }
-  const db = openDb();
   seed(db);
   await seedDemoCredentials(db);
   const n = (t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c;

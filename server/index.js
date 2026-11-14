@@ -5,7 +5,11 @@ import { todayInLima } from '../src/data/limaDate.js';
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = '127.0.0.1';
 
-const db = openDb();
+let db;
+try { db = openDb(); } catch (e) {
+  console.error(`\n[ERROR] No se pudo preparar los datos del servidor: ${e.message}\n`);
+  process.exit(1);
+}
 const { app } = createApp(db, { dbFile: DB_FILE });
 
 // Aviso si no hay funciones de hoy en adelante (fecha de Lima, igual que el cliente).
