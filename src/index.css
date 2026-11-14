@@ -30,6 +30,11 @@
      que --action-red (cero cambio visual). */
   --error:      #E50914;
   --error-dim:  rgba(229,9,20,0.12);
+  /* Solo para TEXTO de error: #E50914 da 3.78:1 sobre --surface oscuro (<4.5).
+     --error se queda para bordes/contornos (>=3:1, WCAG 1.4.11). Los bloques
+     de tema claro y de visión redefinen este token como var(--error), que ya
+     cumple >=4.5:1 en ellos. */
+  --error-text: #FF6B6B;
 
   /* Para botones de relleno sólido + texto blanco encima (p.ej. .btn-solid).
      En modo "mono" + tema oscuro, --action-red/--emerald pasan a ser blancos
@@ -158,6 +163,7 @@ html[data-theme="light"] .web-container {
 
   --error:      #B00710;
   --error-dim:  rgba(176,7,16,0.10);
+  --error-text: var(--error);
 
   --emerald:      #1C7A43;
   --emerald-dim:  rgba(28,122,67,0.10);
@@ -209,6 +215,7 @@ html[data-theme="dark"][data-vision="protan-deutan"] .web-container {
   --emerald-dim:  rgba(79,166,217,0.15);
   --error:      #E69F00;
   --error-dim:  rgba(230,159,0,0.15);
+  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
@@ -224,6 +231,7 @@ html[data-theme="light"][data-vision="protan-deutan"] .web-container {
   --emerald-dim:  rgba(0,114,178,0.10);
   --error:      #8A5A00;
   --error-dim:  rgba(138,90,0,0.10);
+  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
@@ -240,6 +248,7 @@ html[data-theme="dark"][data-vision="tritan"] .web-container {
   --emerald-dim:  rgba(79,191,176,0.15);
   --error:      #FF6659;
   --error-dim:  rgba(255,102,89,0.15);
+  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
@@ -254,6 +263,7 @@ html[data-theme="light"][data-vision="tritan"] .web-container {
   --emerald-dim:  rgba(0,105,92,0.10);
   --error:      #C62828;
   --error-dim:  rgba(198,40,40,0.10);
+  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
@@ -273,6 +283,7 @@ html[data-vision="mono"] .web-container {
   --emerald-dim:  var(--surface-3);
   --error:      var(--text-main);
   --error-dim:  var(--surface-3);
+  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);

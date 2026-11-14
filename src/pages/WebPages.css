@@ -908,7 +908,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--error);
+  color: var(--error-text);
   font-size: 0.82rem;
   font-weight: 600;
 }
