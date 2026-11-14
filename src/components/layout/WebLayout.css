@@ -26,7 +26,7 @@
 
 .web-brand h1 {
   margin: 0;
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.5rem;
   letter-spacing: 2px;
@@ -119,7 +119,7 @@
 .footer-logo {
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.2rem;
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   margin: 0 0 1rem 0;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -147,12 +147,12 @@
 }
 
 .footer-powered span {
-  color: var(--action-red);
+  color: var(--accent-text);
   font-weight: bold;
 }
 
 .footer-col h3 {
-  color: var(--action-red-light);
+  color: var(--accent-text-light);
   font-size: 1.1rem;
   margin: 0 0 1.5rem 0;
   font-weight: bold;
@@ -196,7 +196,7 @@
 
 .social-icons svg:hover {
   transform: scale(1.1);
-  color: var(--action-red);
+  color: var(--accent-text);
 }
 
 .footer-bottom {
@@ -224,7 +224,7 @@
 
 /* Chip de marca de tarjeta: siempre blanco con texto oscuro a propósito,
    como el logo real de VISA — no debe cambiar con el tema. */
-.pay-card {
+.payment-methods .pay-card {
   background: #ffffff;
   color: #111111;
   font-size: 0.7rem !important;
@@ -256,7 +256,7 @@
   border: 1px solid var(--accent-solid);
   border-radius: var(--radius-sm);
   background: var(--accent-solid);
-  color: #fff;
+  color: var(--on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
