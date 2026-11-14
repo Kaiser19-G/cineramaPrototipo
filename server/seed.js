@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openDb, DB_FILE } from './db.js';
+import { seedDemoCredentials } from './seedAuth.js';
 import { movies, branches, halls, movieCinema, screenings, orders, users } from '../src/data/store.js';
 
 const run = (db) => {
@@ -96,6 +97,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   const db = openDb();
   seed(db);
+  await seedDemoCredentials(db);
   const n = (t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c;
   console.log('Seed listo:', Object.fromEntries(
     ['movies','branches','halls','movie_branch','screenings','users','orders','order_seats'].map((t) => [t, n(t)])));

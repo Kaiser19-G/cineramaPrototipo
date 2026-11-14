@@ -8,6 +8,8 @@
     "dev:web": "vite",
     "dev:api": "node server/index.js",
     "seed": "node server/seed.js",
+    "seed:auth": "node server/seedAuth.js",
+    "test:api": "node --test \"server/test/*.test.js\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

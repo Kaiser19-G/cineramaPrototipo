@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useCinema } from '../../context/CinemaContext';
 import AccessibilityWidget from '../AccessibilityWidget';
 import './WebLayout.css';
@@ -32,10 +33,21 @@ function CatalogState({ loading, error, onRetry }) {
   );
 }
 
+// Paginas que no usan el catalogo: no deben quedar bloqueadas si la cartelera falla.
+const NO_CATALOG_PATHS = ['/web/login', '/web/registro', '/web/privacidad'];
+
 export default function WebLayout() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { catalogLoading, catalogError, reloadCatalog } = useCinema();
-  const catalogReady = !catalogLoading && !catalogError;
+  const { user, loading: authLoading, logout } = useAuth();
+  const catalogReady = NO_CATALOG_PATHS.includes(pathname) || (!catalogLoading && !catalogError);
+  const isStaff = user && user.tier !== 'customer';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/web/login', { replace: true, state: { loggedOut: true } });
+  };
 
   return (
     <div className="web-container">
@@ -47,7 +59,19 @@ export default function WebLayout() {
         <div className="web-nav-links">
           <button className="nav-link" onClick={() => navigate('/web/peliculas')}>Peliculas</button>
           <button className="nav-link" onClick={() => navigate('/web/cines')}>Cines</button>
-          <button className="nav-link highlight" onClick={() => navigate('/web/login')}>Iniciar Sesión</button>
+          {!authLoading && !user && (
+            <>
+              <button className="nav-link highlight" onClick={() => navigate('/web/login')}>Iniciar Sesión</button>
+              <button className="nav-link" onClick={() => navigate('/web/registro')}>Registrarse</button>
+            </>
+          )}
+          {!authLoading && user && (
+            <>
+              <span className="nav-user">Hola, {user.name.split(' ')[0]}</span>
+              {isStaff && <button className="nav-link" onClick={() => navigate('/dashboard')}>Panel de administración</button>}
+              <button className="nav-link highlight" onClick={handleLogout}>Cerrar sesión</button>
+            </>
+          )}
         </div>
       </nav>
       

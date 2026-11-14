@@ -2,20 +2,10 @@ import { createContext, useContext, useState, useMemo, useEffect, useCallback } 
 import {
   orders, recentActivity, alerts, occupancyByHall,
 } from '../data/store';
+import { useAuth } from './AuthContext';
+import { PERMS } from '../shared/permissions';
 
 const CinemaContext = createContext();
-
-// Permisos por rol
-const PERMS = {
-  admin:    ['create_movie','edit_movie','delete_movie','assign_cinema','create_cinema','edit_cinema',
-             'create_hall','edit_hall','schedule_any','view_global_reports','manage_users','manage_settings',
-             'view_all_sales','create_screening','cancel_screening'],
-  manager:  ['schedule_any','create_screening','cancel_screening','edit_hall','view_local_reports',
-             'view_local_sales','block_hall'],
-  cashier:  ['view_local_screenings','process_sale','validate_ticket'],
-  support:  ['view_orders','process_refund'],
-  operator: ['view_local_screenings','validate_ticket'],
-};
 
 const EMPTY_CATALOG = { movies: [], branches: [], halls: [], screenings: [], movieCinema: [] };
 
@@ -56,9 +46,19 @@ export function CinemaProvider({ children }) {
   const { catalog, loading: catalogLoading, error: catalogError, reload: reloadCatalog } = useCatalog();
   const { movies, branches, halls, movieCinema } = catalog;
 
-  // 'all' = visión global Admin Central | número = cine específico
-  const [currentCinemaId, setCurrentCinemaId] = useState('all');
-  
+  // Usuario real de la sesión (null si no hay sesión).
+  const { user: currentUser } = useAuth();
+  const userId = currentUser?.id ?? null;
+  const isAdminCentral = currentUser?.role === 'admin';
+
+  // Sede activa: 'all' = visión global (solo Admin Central) | número = cine específico.
+  // El personal de sede queda fijo en su sede; la elección del admin central se
+  // descarta al cambiar de usuario (se guarda junto con el id de quien la hizo).
+  const [cinemaChoice, setCinemaChoice] = useState({ userId: null, id: 'all' });
+  const currentCinemaId = currentUser?.tier === 'branch'
+    ? currentUser.branchId
+    : (cinemaChoice.userId === userId ? cinemaChoice.id : 'all');
+
   // Convertimos en estado reactivo para permitir registrar compras y actualizar la UI al instante
   // Las funciones vienen de la API; las ventas locales simuladas se suman encima
   // (id de función → entradas vendidas en esta sesión).
@@ -69,15 +69,13 @@ export function CinemaProvider({ children }) {
   }), [catalog.screenings, localSold]);
   const [allOrders, setAllOrders] = useState(orders);
 
-  // Usuario simulado. role: 'admin' puede cambiar currentCinemaId.
-  // Un 'manager' tiene branchId fijo y no puede cambiarlo.
-  const [currentUser] = useState({
-    id: 1, name: 'Admin Central', role: 'admin',
-    branchId: null, // null = acceso global
-    avatar: 'AC',
-  });
-
-  const isAdminCentral = currentUser.role === 'admin';
+  // Las ventas simuladas pertenecen a la sesión: se reinician al cambiar de usuario.
+  const [stateOwner, setStateOwner] = useState(userId);
+  if (stateOwner !== userId) {
+    setStateOwner(userId);
+    setLocalSold({});
+    setAllOrders(orders);
+  }
 
   // El cine activo real (objeto branch o null = todos)
   const activeBranch = useMemo(() =>
@@ -136,7 +134,7 @@ export function CinemaProvider({ children }) {
   }, [currentCinemaId]);
 
   // Verificar permiso
-  const can = (action) => (PERMS[currentUser.role] || []).includes(action);
+  const can = (action) => (PERMS[currentUser?.role] || []).includes(action);
 
   // Validar si una película está habilitada en un cine
   const isMovieInCinema = (movieId, branchId) =>
@@ -155,7 +153,7 @@ export function CinemaProvider({ children }) {
 
   const setCinema = (id) => {
     // Solo Admin Central puede cambiar
-    if (isAdminCentral) setCurrentCinemaId(id);
+    if (isAdminCentral) setCinemaChoice({ userId, id });
   };
 
   // Función para registrar compras presenciales/locales
