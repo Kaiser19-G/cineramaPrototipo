@@ -23,5 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Base de datos local del servidor
+# Datos privados del servidor: viven fuera del proyecto (~/.cinerama-data); esto es solo red de seguridad
 server/data/
+*.db
+*.db-wal
+*.db-shm
+*.key
+.env
+.env.*
