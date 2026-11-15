@@ -6,11 +6,11 @@ const today = todayInLima();
 const addDays = addDaysToDate;
 
 export const movies = [
-  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'APT', status: 'active', format: ['2D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
+  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
   { id: 2, title: 'Exit 8', genre: 'Terror', duration: 95, rating: 'APT', status: 'active', format: ['2D'], director: 'Genki Kawamura', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/8_ban_deguchi-289035682-large.jpg', synopsis: 'Película basada en el videojuego de Kotake Create The Exit 8...', featured: false, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
   { id: 3, title: 'El Diablo Viste a la Moda 2', genre: 'Drama', duration: 120, rating: 'APT', status: 'active', format: ['2D'], director: 'David Frankel', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/diablos.jpg', synopsis: 'Casi veinte años después de dar vida a los icónicos personajes...', featured: false, releaseDate: addDays(today, -15), endDate: addDays(today, 60) },
-  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'APT', status: 'active', format: ['2D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: addDays(today, -20), endDate: addDays(today, 60) },
-  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: '+14', status: 'active', format: ['2D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: addDays(today, -23), endDate: addDays(today, 60) },
+  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: addDays(today, -20), endDate: addDays(today, 60) },
+  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: '+14', status: 'active', format: ['2D','3D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: addDays(today, -23), endDate: addDays(today, 60) },
   { id: 6, title: 'La Posesion de la Momia', genre: 'Terror', duration: 135, rating: '+14', status: 'active', format: ['2D'], director: 'Lee Cronin', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/Sin%20t%C3%ADtulo1.jpg', synopsis: 'Tras el éxito de Evil Dead, el director Lee Cronin regresa...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
   { id: 7, title: 'Boulevard', genre: 'Romance', duration: 115, rating: '+14', status: 'active', format: ['2D'], director: 'Sonia Méndez', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/boule.jpg', synopsis: 'Dos marginados de preparatoria forman un vínculo...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
   { id: 8, title: 'Super Mario Galaxy La Pelicula', genre: 'Animación', duration: 103, rating: 'APT', status: 'active', format: ['3D','2D'], director: 'Aaron Horvath, Michael Jelenic', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/unnamed.jpg', synopsis: 'Super Mario Galaxy: La Película es una película animada...', featured: true, releaseDate: addDays(today, -40), endDate: addDays(today, 60) },
@@ -69,17 +69,26 @@ export const movieCinema = [
 
 const fmt   = (d) => d;
 
+// Funciones de ejemplo coherentes con las reglas de programacion: sin solapes en la misma sala (con 15 min de
+// limpieza), hora de fin = inicio + duracion de la pelicula, formato compatible con la pelicula, la sede y la sala.
+const endAt = (start, movieId) => {
+  const [h, m] = start.split(':').map(Number);
+  const t = h * 60 + m + movies.find((x) => x.id === movieId).duration;
+  return `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+};
+const scr = (id, movieId, hallId, branchId, date, startTime, language, format, price, status, bookedSeats, totalSeats) =>
+  ({ id, movieId, hallId, branchId, date, startTime, endTime: endAt(startTime, movieId), language, format, price, status, bookedSeats, totalSeats });
 export const screenings = [
-  { id: 1,  movieId: 1, hallId: 1, branchId: 1, date: fmt(today),           startTime: '14:00', endTime: '16:35', language: 'ES', format: '3D',   price: 35, status: 'active',    bookedSeats: 210, totalSeats: 280 },
-  { id: 2,  movieId: 2, hallId: 2, branchId: 1, date: fmt(today),           startTime: '15:30', endTime: '17:52', language: 'ES', format: '3D',   price: 25, status: 'scheduled', bookedSeats: 80,  totalSeats: 180 },
-  { id: 3,  movieId: 3, hallId: 3, branchId: 1, date: fmt(today),           startTime: '18:00', endTime: '20:28', language: 'EN', format: '2D',   price: 18, status: 'active',    bookedSeats: 140, totalSeats: 150 },
-  { id: 4,  movieId: 4, hallId: 5, branchId: 1, date: fmt(addDays(today,1)),startTime: '20:30', endTime: '23:32', language: 'ES', format: '3D',   price: 45, status: 'scheduled', bookedSeats: 30,  totalSeats: 120 },
-  { id: 5,  movieId: 5, hallId: 1, branchId: 1, date: fmt(addDays(today,1)),startTime: '16:00', endTime: '18:49', language: 'EN', format: '3D',   price: 35, status: 'scheduled', bookedSeats: 0,   totalSeats: 280 },
-  { id: 6,  movieId: 6, hallId: 6, branchId: 2, date: fmt(today),           startTime: '19:00', endTime: '22:15', language: 'ES', format: '2D',   price: 18, status: 'active',    bookedSeats: 90,  totalSeats: 200 },
-  { id: 7,  movieId: 7, hallId: 7, branchId: 2, date: fmt(addDays(today,2)),startTime: '21:00', endTime: '23:18', language: 'EN', format: '3D',   price: 25, status: 'draft',     bookedSeats: 0,   totalSeats: 160 },
-  { id: 8,  movieId: 1, hallId: 3, branchId: 1, date: fmt(today),           startTime: '17:30', endTime: '20:05', language: 'ES', format: '2D',   price: 18, status: 'sold_out',  bookedSeats: 150, totalSeats: 150 },
-  { id: 9,  movieId: 2, hallId: 6, branchId: 2, date: fmt(addDays(today,-1)),startTime:'18:00', endTime: '20:22', language: 'ES', format: '2D',   price: 18, status: 'finished',  bookedSeats: 180, totalSeats: 200 },
-  { id: 10, movieId: 6, hallId: 8, branchId: 3, date: fmt(addDays(today,1)),startTime: '20:00', endTime: '22:28', language: 'ES', format: '2D',   price: 14, status: 'scheduled', bookedSeats: 20,  totalSeats: 130 },
+  scr(1,  1, 1, 1, fmt(today),            '14:00', 'ES', '3D', 35, 'active',    210, 280),
+  scr(2,  2, 2, 1, fmt(today),            '15:30', 'ES', '2D', 25, 'scheduled', 80,  180),
+  scr(3,  3, 3, 1, fmt(today),            '18:00', 'EN', '2D', 18, 'active',    140, 150),
+  scr(4,  4, 5, 1, fmt(addDays(today,1)), '20:30', 'ES', '3D', 45, 'scheduled', 30,  120),
+  scr(5,  5, 1, 1, fmt(addDays(today,1)), '16:00', 'EN', '3D', 35, 'scheduled', 0,   280),
+  scr(6,  6, 6, 2, fmt(today),            '19:00', 'ES', '2D', 18, 'active',    90,  200),
+  scr(7,  7, 7, 2, fmt(addDays(today,2)), '21:00', 'EN', '2D', 25, 'draft',     0,   160),
+  scr(8,  1, 3, 1, fmt(today),            '14:30', 'ES', '2D', 18, 'sold_out',  150, 150),
+  scr(9,  2, 6, 2, fmt(addDays(today,-1)),'18:00', 'ES', '2D', 18, 'finished',  180, 200),
+  scr(10, 6, 8, 3, fmt(addDays(today,1)), '20:00', 'ES', '2D', 14, 'scheduled', 20,  130),
 ];
 
 export const orders = [

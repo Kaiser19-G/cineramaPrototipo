@@ -125,21 +125,15 @@ export function CinemaProvider({ children }) {
     ? currentUser.branchId
     : (cinemaChoice.userId === userId ? cinemaChoice.id : 'all');
 
-  // Convertimos en estado reactivo para permitir registrar compras y actualizar la UI al instante
-  // Las funciones vienen de la API; las ventas locales simuladas se suman encima
-  // (id de función → entradas vendidas en esta sesión).
-  const [localSold, setLocalSold] = useState({});
-  const allScreenings = useMemo(() => sourceScreenings.map((s) => {
-    const extra = localSold[s.id];
-    return extra ? { ...s, bookedSeats: Math.min(s.totalSeats, s.bookedSeats + extra) } : s;
-  }), [sourceScreenings, localSold]);
+  // Las funciones vienen siempre de la API. La venta simulada de Taquilla NO las modifica: solo agrega pedidos de
+  // ejemplo en memoria (así las butacas vendidas que muestran el panel y el sitio son las reales).
+  const allScreenings = sourceScreenings;
   const [allOrders, setAllOrders] = useState(orders);
 
   // Las ventas simuladas pertenecen a la sesión: se reinician al cambiar de usuario.
   const [stateOwner, setStateOwner] = useState(userId);
   if (stateOwner !== userId) {
     setStateOwner(userId);
-    setLocalSold({});
     setAllOrders(orders);
   }
 
@@ -254,9 +248,6 @@ export function CinemaProvider({ children }) {
 
     setAllOrders(prev => [newOrder, ...prev]);
 
-    // Incrementar asientos ocupados de la función
-    setLocalSold(prev => ({ ...prev, [screeningId]: (prev[screeningId] || 0) + selectedSeats.length }));
-
     return newOrder;
   };
 
@@ -294,6 +285,7 @@ export function CinemaProvider({ children }) {
       halls,
       // Datos del panel (todas las películas con su estado y asignaciones; solo personal)
       adminMovies,
+      adminScreenings: admin.screenings,
       adminError: admin.error,
       // Estado de carga del catálogo (API)
       catalogLoading,

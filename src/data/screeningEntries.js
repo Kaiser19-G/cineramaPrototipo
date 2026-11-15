@@ -1,6 +1,6 @@
-// Funciones con estos estados sí se pueden comprar; el resto (draft,
-// finished, cancelled, sold_out) no debe ofrecerse como opción de filtro.
-const BOOKABLE_STATUSES = new Set(['active', 'scheduled']);
+// Funciones que el sitio muestra: las comprables (active, scheduled) y las agotadas (sold_out, visibles pero no
+// comprables). Borradores, canceladas y terminadas no se ofrecen (el servidor ya no las envía).
+const BOOKABLE_STATUSES = new Set(['active', 'scheduled', 'sold_out']);
 
 // Una "entrada" junta una función real con su película y su sede, más las
 // etiquetas ya resueltas (día legible, idioma legible) — es la única fuente

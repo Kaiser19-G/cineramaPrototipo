@@ -122,8 +122,10 @@ function CinemaDetailsView({ cinema }) {
                         {showtimes.map((s) => (
                           <button
                             key={s.id}
-                            className="showtime-btn"
-                            onClick={() => navigate('/web/compra', {
+                            className={`showtime-btn${s.status === 'sold_out' ? ' soldout' : ''}`}
+                            aria-label={`${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}${s.status === 'sold_out' ? ', agotada' : ''}`}
+                            aria-disabled={s.status === 'sold_out' ? 'true' : undefined}
+                            onClick={() => s.status !== 'sold_out' && navigate('/web/compra', {
                               state: {
                                 movie,
                                 cinema: cinema.name,
@@ -134,6 +136,7 @@ function CinemaDetailsView({ cinema }) {
                             })}
                           >
                             <span className="time-lbl">{s.startTime}</span>
+                            {s.status === 'sold_out' && <span className="soldout-lbl" aria-hidden="true">Agotada</span>}
                             <span className="chair-icon" style={{display: 'flex'}}>
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>

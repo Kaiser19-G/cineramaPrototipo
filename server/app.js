@@ -3,7 +3,9 @@ import { createAuth } from './auth/router.js';
 import { createClaims } from './claims/router.js';
 import { createMovies } from './admin/movies.js';
 import { createScreenings } from './admin/screenings.js';
-import { todayInLima } from '../src/data/limaDate.js';
+import { createHalls } from './admin/halls.js';
+import { todayInLima, nowInLima } from '../src/data/limaDate.js';
+import { screeningSpan } from '../src/shared/scheduling.js';
 import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
 
 
@@ -33,7 +35,8 @@ export function createApp(db, opts = {}) {
   const auth = createAuth(db, opts);
   const claims = createClaims(db, auth, opts);
   const adminMovies = createMovies(db, auth, opts);
-  const adminScreenings = createScreenings(db);
+  const adminScreenings = createScreenings(db, opts);
+  const adminHalls = createHalls(db, opts);
   const clock = opts.clock ?? Date.now;
   const today = () => todayInLima(new Date(clock()));
   const app = express();
@@ -63,6 +66,7 @@ export function createApp(db, opts = {}) {
   const staffOnly = [auth.loadSession, auth.requireAuth, auth.requireTier('central', 'branch')];
   app.use('/api/admin/movies', ...staffOnly, adminMovies.router);
   app.use('/api/admin/screenings', ...staffOnly, adminScreenings.router);
+  app.use('/api/admin/halls', ...staffOnly, adminHalls.router);
   app.use('/api/admin', auth.adminRouter);
   // Lecturas publicas: se revalidan siempre (ETag) para que un cambio del panel llegue sin esperar.
   app.use(['/api/movies', '/api/branches', '/api/halls', '/api/screenings', '/api/catalog'], (_req, res, next) => {
@@ -72,14 +76,26 @@ export function createApp(db, opts = {}) {
   app.get('/api/movies', listHandler(q.movies, q.moviesByBranch, (r) => mapMovie(r, today())));
   app.get('/api/branches', (_req, res) => res.json(q.branches.all().map(mapBranch)));
   app.get('/api/halls', listHandler(q.halls, q.hallsByBranch, mapHall));
-  app.get('/api/screenings', listHandler(q.screenings, q.screeningsByBranch, mapScreening));
+  // Publico: estado efectivo y sin funciones que ya empezaron (hora de Lima).
+  const publicScreenings = (rows) => {
+    const t = nowInLima(new Date(clock())).abs;
+    return rows
+      .filter((r) => screeningSpan(r.starts_on, r.start_time, r.end_time).start > t)
+      .map((r) => mapScreening(r, t))
+      .filter((s) => s.status !== 'finished');
+  };
+  app.get('/api/screenings', (req, res) => {
+    const b = branchParam(req, res);
+    if (b === false) return;
+    res.json(publicScreenings(b === null ? q.screenings.all() : q.screeningsByBranch.all(b)));
+  });
   app.get('/api/catalog', (_req, res) => {
     const t = today();
     res.json({
     movies: q.movies.all().map((r) => mapMovie(r, t)),
     branches: q.branches.all().map(mapBranch),
     halls: q.halls.all().map(mapHall),
-    screenings: q.screenings.all().map(mapScreening),
+    screenings: publicScreenings(q.screenings.all()),
     movieCinema: q.movieBranch.all().map(mapMovieBranch),
     });
   });
