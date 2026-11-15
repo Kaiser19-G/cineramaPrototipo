@@ -77,6 +77,25 @@ Solo el administrador central entra a `/users`, `/cinema` y `/settings`. Las rut
   por un reclamo no se reactivan desde aquí; al desactivar, cambiar de rol o restablecer la contraseña se cierran las sesiones de esa cuenta.
   Emitir contraseñas temporales está limitado (10 cada 15 min por administrador).
 
+## Compras de entradas (fase 4a)
+- **Compra real, pago simulado:** `/web/compra/:id` (con la función elegida; sin sesión lleva a iniciar sesión y vuelve al mismo mapa).
+  Solo compran las cuentas de cliente. El pago es **simulado**: el número, titular, vencimiento y CVV no salen del navegador (el cuerpo de
+  `POST /api/orders` solo lleva función, butacas, clave de idempotencia y `payment {method, simulatedOutcome}`); el selector "Resultado de
+  la simulación" permite probar un pago rechazado (se guarda una orden `rejected` sin butacas activas).
+- **API:** `GET /api/screenings/:id/seats` (público: mapa, butacas ocupadas y, con sesión, el cupo de la cuenta) y `POST /api/orders`
+  (límite de 15 intentos cada 15 min por cuenta). Errores: `validation`, `unauthenticated`, `customer_only`, `not_found`, `not_on_sale`,
+  `sold_out`, `seats_taken`, `limit_exceeded`, `idempotency_conflict`, `payment_declined`, `too_many_attempts`.
+- **Butacas:** la distribución se genera de `screenings.total_seats` (`src/shared/seatLayout.js`); la verdad de lo vendido es `order_seats`
+  (`active = 1`); `screenings.booked_seats` es una caché que solo escribe `server/orders/service.js`. "Agotada" se deriva, nunca se guarda.
+- **Topes** (`src/shared/purchase.js`, `src/shared/presale.js`): 8 entradas por cuenta y función (acumulado) y, en preventa, 4 por cuenta y
+  película (acumulado entre funciones). La venta web cierra a la hora de inicio (`WEB_SALE_CUTOFF_MINUTES`, hora de Lima).
+- **Código de orden:** `CIN-XXXXX-XXXXX` (≈49 bits). Mis entradas, el panel real (Pagos, Reportes, Dashboard) y Taquilla llegan en 4b, 4c y 4d:
+  hasta entonces esas pantallas del panel siguen con datos de ejemplo.
+- **Cancelar una función con ventas** reembolsa (simulado) sus órdenes y libera las butacas en la misma transacción.
+- **Migración 4** (se aplica sola al arrancar): agrega columnas e índices y **borra las órdenes de ejemplo heredadas** (todas las filas de
+  `orders` y sus `order_seats` existentes en ese momento), deja `booked_seats` en el conteo real y repone a `scheduled` las funciones
+  guardadas como `sold_out`. El seed ya no crea órdenes ni contadores.
+
 ## Reclamos de DNI usado por otra persona (fase 2b)
 
 Si al registrarse alguien ve "Ya existe una cuenta con este documento", el enlace **"¿Este DNI es tuyo? Presenta un reclamo"**

@@ -7,6 +7,7 @@ import {
 import { mapAdminScreening } from '../mappers.js';
 import { requirePerm, branchScope, failValidation, isRealDate, createAudit } from './common.js';
 import { createRules } from './screeningRules.js';
+import { createOrderService } from '../orders/service.js';
 
 const FIELDS = ['movieId', 'hallId', 'date', 'startTime', 'language', 'format', 'price', 'status'];
 // Cambiar cualquiera de estos campos obliga a volver a validar las reglas de negocio.
@@ -37,6 +38,7 @@ export function createScreenings(db, opts = {}) {
   const { clock = Date.now } = opts;
   const audit = createAudit(db, clock);
   const rules = createRules(db);
+  const orders = createOrderService(db, clock);
   const now = () => nowInLima(new Date(clock()));
 
   const SELECT = `SELECT s.*, (s.booked_seats > 0 OR EXISTS (SELECT 1 FROM order_seats os WHERE os.screening_id = s.id AND os.active = 1)) AS has_sales
@@ -180,9 +182,11 @@ export function createScreenings(db, opts = {}) {
       if (eff === 'finished') return { status: 409, body: { error: 'not_cancellable', status: eff } };
       const info = q.cancel.run({ id, version: b.version, now: clock(), by: req.user.id, reason });
       if (info.changes !== 1) return { status: 409, body: { error: 'stale', current: view(id) } };
+      // Reembolso SIMULADO de las ordenes de la funcion y butacas liberadas, en la misma transaccion.
+      const refund = orders.refundScreening(id, req.user.id);
       // El texto del motivo no va al registro de auditoria (podria contener datos personales).
-      audit(req, 'screening.cancel', 'screening', id, row.branch_id, { sold: !!row.has_sales });
-      return { status: 200, body: { screening: view(id), soldSeats: row.booked_seats, refundsPending: !!row.has_sales } };
+      audit(req, 'screening.cancel', 'screening', id, row.branch_id, { sold: !!row.has_sales, refundedOrders: refund.refundedOrders });
+      return { status: 200, body: { screening: view(id), soldSeats: row.booked_seats, refundedOrders: refund.refundedOrders, refundedAmount: refund.refundedAmount, refundsPending: false } };
     }).immediate();
     res.status(out.status).json(out.body);
   });

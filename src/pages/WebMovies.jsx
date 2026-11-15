@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import { getNextDays } from '../data/dateHelpers';
 import Poster from '../components/Poster';
@@ -13,6 +13,9 @@ const FORMAT_ORDER = ['2D', '3D'];
 
 export default function WebMovies() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Mensaje al llegar redirigido (p. ej. desde la ruta de compra antigua, sin función).
+  const notice = typeof location.state?.notice === 'string' ? location.state.notice : '';
   const { publicMovies: enabledMovies, branches, publicScreenings: activeScreenings } = useCinema();
 
   const [openAccordion, setOpenAccordion] = useState('Día');
@@ -211,6 +214,7 @@ export default function WebMovies() {
 
       {/* Grilla de Películas */}
       <main className="movies-list">
+        {notice && <p className="movie-notice" role="status">{notice}</p>}
         <div className="movies-top-bar">
           <h3 aria-live="polite"><span className="count">{filteredMovies.length}</span> Películas encontradas</h3>
           <div className="active-filters-pills">

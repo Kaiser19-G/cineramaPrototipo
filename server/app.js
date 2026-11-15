@@ -5,6 +5,7 @@ import { createMovies } from './admin/movies.js';
 import { createScreenings } from './admin/screenings.js';
 import { createHalls } from './admin/halls.js';
 import { createUsers } from './admin/users.js';
+import { createOrders } from './orders/router.js';
 import { todayInLima, nowInLima } from '../src/data/limaDate.js';
 import { screeningSpan } from '../src/shared/scheduling.js';
 import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
@@ -39,6 +40,7 @@ export function createApp(db, opts = {}) {
   const adminScreenings = createScreenings(db, opts);
   const adminHalls = createHalls(db, opts);
   const adminUsers = createUsers(db, auth, opts);
+  const orders = createOrders(db, auth, opts);
   const clock = opts.clock ?? Date.now;
   const today = () => todayInLima(new Date(clock()));
   const app = express();
@@ -89,6 +91,8 @@ export function createApp(db, opts = {}) {
       .map((r) => mapScreening(r, t))
       .filter((s) => s.status !== 'finished');
   };
+  // Compras (mapa de butacas publico; comprar exige cuenta de cliente).
+  app.use('/api', orders.router);
   app.get('/api/screenings', (req, res) => {
     const b = branchParam(req, res);
     if (b === false) return;

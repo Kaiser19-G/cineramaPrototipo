@@ -286,14 +286,26 @@ describe('editar, ventas y cancelar', () => {
     const again = await cancel(admin, s.id, { version: 2, confirm: true, reason: 'otra vez' });
     assert.equal(again.status, 409); assert.equal(again.json.error, 'already_cancelled');
     assert.equal((await patch(admin, s.id, { version: 2, price: 10 })).json.error, 'not_editable');
-    // con ventas
+    // con ventas: las ordenes quedan reembolsadas (simulado), las butacas libres y el contador en cero
     const sold = await make({ date: '2027-01-10', startTime: '15:00' });
-    sell(sold.id, 12);
+    const order = (id, seats, status = 'approved') => {
+      env.db.prepare(`INSERT INTO orders (id,screening_id,branch_id,customer_name,email,amount,method,status,created_at,created_ms,payment_ref) VALUES (?,?,?,'x','x@x.com',?,'card',?,'2027-01-01 10:00',1,'SIM-ABC123')`)
+        .run(id, sold.id, sold.branchId, seats.length * sold.price, status);
+      for (const st of seats) env.db.prepare('INSERT INTO order_seats (order_id,screening_id,seat,active) VALUES (?,?,?,?)').run(id, sold.id, st, status === 'approved' ? 1 : 0);
+    };
+    order('CIN-AAAAA-22222', ['A1', 'A2']); order('CIN-AAAAA-33333', ['B1']); order('CIN-AAAAA-44444', ['C1'], 'rejected');
+    sell(sold.id, 3);
     const r = await cancel(manager, sold.id, { version: 1, confirm: true, reason: 'Sala inundada' });
-    assert.equal(r.status, 200); assert.equal(r.json.refundsPending, true); assert.equal(r.json.soldSeats, 12);
+    assert.equal(r.status, 200); assert.equal(r.json.refundsPending, false); assert.equal(r.json.soldSeats, 3);
+    assert.equal(r.json.refundedOrders, 2); assert.equal(r.json.refundedAmount, 3 * sold.price);
+    const st = env.db.prepare('SELECT id, status, refund_reason, refunded_at FROM orders WHERE screening_id = ? ORDER BY id').all(sold.id);
+    assert.deepEqual(st.map((o) => o.status), ['refunded', 'refunded', 'rejected']);
+    assert.ok(st.slice(0, 2).every((o) => o.refund_reason === 'screening_cancelled' && o.refunded_at));
+    assert.equal(env.db.prepare('SELECT COUNT(*) c FROM order_seats WHERE screening_id = ? AND active = 1').get(sold.id).c, 0);
+    assert.equal(env.db.prepare('SELECT booked_seats b FROM screenings WHERE id = ?').get(sold.id).b, 0);
     assert.equal(env.db.prepare('SELECT COUNT(*) c FROM screenings WHERE id = ?').get(sold.id).c, 1, 'no se borra');
     const audit = env.db.prepare(`SELECT detail_json FROM audit_log WHERE action = 'screening.cancel' AND entity_id = ?`).get(sold.id);
-    assert.ok(!/inundada|proyector/i.test(audit.detail_json));
+    assert.ok(!/inundada|proyector|CIN-/i.test(audit.detail_json));
   });
 
   test('GET con filtros', async () => {

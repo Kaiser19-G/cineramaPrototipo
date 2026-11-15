@@ -33,8 +33,12 @@ function MovieDetailsView({ movie }) {
   const showtimesRef = useRef(null);
   const { branches, publicScreenings: activeScreenings } = useCinema();
   const upcoming = movie.status === 'upcoming';
+  // Las próximas con preventa también se venden (el servidor solo permite programarlas si tienen preventa).
+  const sellable = !upcoming || movie.presale;
 
-  const days = getNextDays(7);
+  // En preventa las funciones empiezan en el estreno, que puede estar lejos: se ofrecen los próximos 30 días (el filtro de
+  // fecha solo muestra los días que de verdad tienen funciones).
+  const days = getNextDays(movie.presale ? 30 : 7);
   const [filterCity, setFilterCity] = useState(location.state?.city || null);
   const [filterCinema, setFilterCinema] = useState(location.state?.cinema || null);
   const [filterDate, setFilterDate] = useState(location.state?.date || null);
@@ -109,13 +113,13 @@ function MovieDetailsView({ movie }) {
                 <strong>Preventa:</strong> máximo {PRESALE_MAX_TICKETS} entradas por cuenta. Estreno el {formatDateLong(movie.releaseDate)}.
               </p>
             )}
-            {upcoming && (
+            {upcoming && !movie.presale && (
               <p className="movie-notice" role="note">
                 <strong>Próximamente{movie.releaseDate ? `: estreno el ${formatDateLong(movie.releaseDate)}` : ''}.</strong> Todavía no hay funciones programadas.
               </p>
             )}
           </div>
-          {!upcoming && <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
+          {sellable && <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px', verticalAlign: 'text-bottom'}}>
               <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/>
             </svg>
@@ -154,7 +158,7 @@ function MovieDetailsView({ movie }) {
 
         {/* 4. Sección de funciones y horarios — H-03/H-05: siempre visibles,
             sin acordeón, con el indicador de pasos ya activo desde aquí. */}
-        {!upcoming && <div className="movie-showtimes-section" ref={showtimesRef}>
+        {sellable && <div className="movie-showtimes-section" ref={showtimesRef}>
           <h2 className="section-title-fun">La función perfecta para ti.</h2>
 
           <div className="showtimes-filters-bar">
@@ -206,15 +210,7 @@ function MovieDetailsView({ movie }) {
                             className={`showtime-btn${s.status === 'sold_out' ? ' soldout' : ''}`}
                             aria-label={`${d.label}, ${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}, ${branch.name}${s.status === 'sold_out' ? ', agotada' : ''}`}
                             aria-disabled={s.status === 'sold_out' ? 'true' : undefined}
-                            onClick={() => s.status !== 'sold_out' && navigate('/web/compra', {
-                              state: {
-                                movie,
-                                cinema: branch.name,
-                                date: d.label,
-                                time: s.startTime,
-                                roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
-                              }
-                            })}
+                            onClick={() => s.status !== 'sold_out' && navigate(`/web/compra/${s.id}`)}
                           >
                             <span className="time-lbl">{s.startTime}</span>
                             {s.status === 'sold_out' && <span className="soldout-lbl" aria-hidden="true">Agotada</span>}

@@ -7,7 +7,7 @@ export const PERMS = {
              'create_hall','edit_hall','schedule_any','view_global_reports','manage_users','manage_settings',
              'view_all_sales','create_screening','cancel_screening'],
   manager:  ['schedule_any','create_screening','cancel_screening','edit_hall','view_local_reports',
-             'view_local_sales','block_hall'],
+             'view_local_sales','block_hall','process_refund'],
   cashier:  ['view_local_screenings','process_sale','validate_ticket'],
   support:  ['view_orders','process_refund'],
   operator: ['view_local_screenings','validate_ticket'],

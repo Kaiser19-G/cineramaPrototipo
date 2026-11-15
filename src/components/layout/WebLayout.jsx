@@ -113,10 +113,7 @@ export default function WebLayout() {
 
         <div className="footer-bottom">
           <div className="payment-methods">
-            <span>Pagos 100% seguros con</span>
-            <div className="payment-icons">
-              <span className="pay-card">VISA</span>
-            </div>
+            <span>Los pagos de este sitio son simulados: no se cobra nada.</span>
           </div>
         </div>
       </footer>

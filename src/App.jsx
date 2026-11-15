@@ -75,7 +75,9 @@ export default function App() {
               <Route path="/web/privacidad" element={<WebPrivacy />} />
               <Route path="/web/reclamo-dni" element={<WebClaim />} />
               <Route path="/web/reclamo-dni/estado" element={<WebClaimStatus />} />
-              <Route path="/web/compra" element={<WebBooking />} />
+              <Route path="/web/compra/:screeningId" element={<WebBooking />} />
+              {/* La ruta anterior no tenía función: ahora la compra siempre es de una función concreta. */}
+              <Route path="/web/compra" element={<Navigate to="/web/peliculas" replace state={{ notice: 'Elige una película y una función para comprar tus entradas.' }} />} />
               <Route path="*" element={<WebNotFound />} />
             </Route>
 
