@@ -1200,6 +1200,9 @@
   margin: 0;
   padding: 6px 0;
   z-index: 100;
+  /* Con 7 días u otras listas largas el menú se desplaza en vez de salirse de la pantalla. */
+  max-height: min(60vh, 22rem);
+  overflow-y: auto;
   animation: ddFadeIn 0.15s ease;
 }
 
@@ -1298,8 +1301,11 @@
 
 .showtime-buttons-grid {
   display: flex;
+  flex-wrap: wrap; /* con 7 días hay más horarios por sede: pasan a otra línea en vez de salirse */
   gap: 1.5rem;
 }
+.showtime-day { margin: 0.9rem 0 0.5rem; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.showtime-day-group:first-of-type .showtime-day { margin-top: 0.25rem; }
 
 /* "Ticket" de horario: metáfora de boleto de papel, se queda blanco con
    texto en rojo-marca a propósito en ambos temas (como el chip de VISA).
@@ -1534,6 +1540,7 @@ html[data-theme="dark"][data-vision="mono"] .legend-selected {
 .filter-title:focus-visible,
 .active-filters-pills .pill:focus-visible,
 .custom-dd-item:focus-visible,
+.tab-btn:focus-visible,
 .carousel-indicators .dot:focus-visible,
 .carousel-control:focus-visible,
 .btn-auth:focus-visible,
@@ -1728,3 +1735,39 @@ html[data-theme="dark"][data-vision="mono"] .legend-selected {
 }
 /* El ícono del error no se encoge cuando el mensaje ocupa varias líneas. */
 .auth-form .field-error svg { flex: none; }
+
+
+/* ── Etiquetas sobre pósters: Preventa y Próximamente (texto visible, pareja de tokens con contraste verificado) ── */
+.poster-chip {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  z-index: 2; /* por encima del degradado (.movie-poster::after) */
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: var(--accent-solid);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
+}
+.poster-chip-soon {
+  background-color: var(--surface-3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-interactive);
+}
+
+/* Avisos en la ficha de la película (preventa, próximamente) */
+.movie-notice {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-interactive);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.movie-notice strong { color: var(--text-main); }

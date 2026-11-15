@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Search, RefreshCw, QrCode, X, CheckCircle, MapPin, Ticket as TicketIcon } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
-import { halls } from '../data/store';
+import DemoNotice from '../components/DemoNotice';
+import { money } from '../utils/money';
 
 const statusConfig = {
   approved:  { label: 'Válido',    cls: 'badge-green' },
@@ -13,7 +14,7 @@ const ticketStatus = { approved: 'Válido', refunded: 'Reembolsado', rejected: '
 const tabs = ['Pedidos', 'Boletos', 'Reembolsos', 'Validación', 'Venta Presencial'];
 
 export default function TicketOperations() {
-  const { activeOrders, activeScreenings, enabledMovies, activeBranch, processLocalSale, refundOrder, cancelOrder } = useCinema();
+  const { activeOrders, activeScreenings, enabledMovies, activeBranch, processLocalSale, refundOrder, cancelOrder, halls } = useCinema();
 
   const [activeTab, setActiveTab] = useState('Pedidos');
   const [search, setSearch] = useState('');
@@ -63,6 +64,7 @@ export default function TicketOperations() {
           </p>
         </div>
       </div>
+      <DemoNotice>Simulación: los pedidos, ventas, reembolsos y validaciones de esta pantalla son de ejemplo y no se guardan; al recargar vuelven a su estado inicial.</DemoNotice>
 
       <div className="tabs mb-6">
         {tabs.map(t => (
@@ -104,7 +106,7 @@ export default function TicketOperations() {
                         </div>
                       </td>
                       <td style={{ fontSize: 12 }}>{o.seats.join(', ')}</td>
-                      <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>${o.amount}</td>
+                      <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>{money(o.amount)}</td>
                       <td><span className={`badge ${methodBadge[o.method]}`}>{methodLabel[o.method]}</span></td>
                       <td><span className={`badge ${cfg.cls}`}>{cfg.label}</span></td>
                       <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.date}</td>
@@ -147,7 +149,7 @@ export default function TicketOperations() {
                 </div>
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.date}</span>
-                  <span style={{ fontWeight: 700, color: 'var(--cinema-gold)' }}>${o.amount}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--cinema-gold)' }}>{money(o.amount)}</span>
                 </div>
               </div>
             );
@@ -168,7 +170,7 @@ export default function TicketOperations() {
                   <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{o.id}</td>
                   <td style={{ fontWeight: 600 }}>{o.movieTitle}</td>
                   <td>{o.customer}</td>
-                  <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>${o.amount}</td>
+                  <td style={{ color: 'var(--cinema-gold)', fontWeight: 700 }}>{money(o.amount)}</td>
                   <td><span className={`badge ${o.status === 'refunded' ? 'badge-orange' : 'badge-green'}`}>{o.status === 'refunded' ? 'Reembolsado' : 'Elegible'}</span></td>
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.date}</td>
                   <td>
@@ -214,7 +216,7 @@ export default function TicketOperations() {
                       <p><strong>Película:</strong> {qrResult.order.movieTitle}</p>
                       <p><strong>Cliente:</strong> {qrResult.order.customer}</p>
                       <p><strong>Asientos:</strong> {qrResult.order.seats.join(', ')}</p>
-                      <p><strong>Monto:</strong> ${qrResult.order.amount}</p>
+                      <p><strong>Monto:</strong> {money(qrResult.order.amount)}</p>
                     </div>
                   </div>
                 ) : (
@@ -323,7 +325,7 @@ export default function TicketOperations() {
                         <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Monto por {selectedSeats.length} asiento(s):</div>
-                            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--cinema-gold)' }}>${total}</div>
+                            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--cinema-gold)' }}>{money(total)}</div>
                           </div>
                           <button className="btn btn-primary" onClick={() => {
                             const res = processLocalSale(Number(selectedScreeningId), selectedSeats, customerName, customerEmail, paymentMethod);

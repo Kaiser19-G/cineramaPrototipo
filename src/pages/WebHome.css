@@ -186,6 +186,7 @@
 .movies-tabs {
   display: flex;
   gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -288,4 +289,10 @@
     gap: 1rem;
     flex-wrap: wrap;
   }
+}
+
+.movies-empty {
+  grid-column: 1 / -1;
+  color: var(--text-primary);
+  padding: 1.5rem 0;
 }

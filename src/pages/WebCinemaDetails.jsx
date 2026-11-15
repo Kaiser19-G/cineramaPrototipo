@@ -3,20 +3,32 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
 import { getNextDays } from '../data/dateHelpers';
-import { handlePosterError } from '../utils/posterFallback';
+import Poster from '../components/Poster';
+import PosterTags from '../components/PosterTags';
+import { movieLabel } from '../utils/movieLabel';
+import WebNotFound from './WebNotFound';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import { buildScreeningEntries } from '../data/screeningEntries';
 import './WebPages.css';
 
 export default function WebCinemaDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { branches, enabledMovies, activeScreenings } = useCinema();
+  const { branches } = useCinema();
+  const cinema = /^\d+$/.test(id ?? '') ? branches.find(b => b.id === Number(id)) : undefined;
+  if (!cinema) return <WebNotFound />;
+  return <CinemaDetailsView cinema={cinema} />;
+}
 
-  const cinema = branches.find(b => b.id === parseInt(id)) || branches[0];
+function CinemaDetailsView({ cinema }) {
+  const navigate = useNavigate();
+  const { publicMovies, publicScreenings: activeScreenings, publicMovieCinema } = useCinema();
+  // Solo las películas habilitadas en ESTA sede (las que el administrador central asignó).
+  const enabledMovies = publicMovies.filter(
+    (m) => publicMovieCinema.some((mc) => mc.movieId === m.id && mc.branchId === cinema.id && mc.activa)
+  );
 
   const [activeTab, setActiveTab] = useState('Horarios');
-  const days = getNextDays(3);
+  const days = getNextDays(7);
 
   // R1 (mismo origen que H-01/H-02/H-03/H-07): antes esta pantalla mostraba
   // las 3 primeras películas del catálogo con horarios inventados e iguales
@@ -91,8 +103,8 @@ export default function WebCinemaDetails() {
 
                     <div className="cinema-movie-poster-col">
                       <div className="poster-wrapper">
-                        <img src={movie.poster} alt={movie.title} data-fallback-title={movie.title} onError={handlePosterError} />
-                        {movie.featured && <div className="diagonal-tag">Estreno</div>}
+                        <Poster movie={movie} alt={movie.title} />
+                        <PosterTags movie={movie} />
                       </div>
                     </div>
 
@@ -141,7 +153,8 @@ export default function WebCinemaDetails() {
 
         {activeTab === 'Películas' && (
           <div className="cinema-peliculas-view">
-            <div className="movies-grid" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
+            {enabledMovies.length === 0 && <p className="no-functions-message" role="status">Esta sede todavía no tiene películas habilitadas.</p>}
+            {enabledMovies.length > 0 && <div className="movies-grid" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
               {enabledMovies.map((movie, i) => (
                 <button
                   type="button"
@@ -154,16 +167,16 @@ export default function WebCinemaDetails() {
                   onClick={() => navigate(`/web/pelicula/${movie.id}`)}
                   onFocus={() => posterGrid.setFocusedIndex(i)}
                   style={{ position: 'relative' }}
-                  aria-label={`Ver detalle de ${movie.title}`}
+                  aria-label={movieLabel(movie)}
                 >
-                  <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
-                  {movie.featured && <div className="diagonal-tag">Estreno</div>}
+                  <Poster movie={movie} />
+                  <PosterTags movie={movie} />
                   <div className="movie-hover-overlay">
                     <span aria-hidden="true">Ver detalle ⟩</span>
                   </div>
                 </button>
               ))}
-            </div>
+            </div>}
           </div>
         )}
 

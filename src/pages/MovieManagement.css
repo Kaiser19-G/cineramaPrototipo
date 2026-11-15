@@ -150,3 +150,88 @@
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--emerald); flex-shrink: 0;
 }
+
+/* ══ Fase 3a: lista y formulario reales de películas ══ */
+.demo-notice {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border-interactive); background: var(--surface-2); color: var(--text-primary);
+  font-size: 13.5px; line-height: 1.5;
+}
+.demo-notice svg { flex: none; margin-top: 3px; }
+.demo-notice p { margin: 0; }
+.demo-notice strong { color: var(--text-main); }
+
+.mv-page .page-subtitle { color: var(--text-secondary); }
+.mv-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px; }
+.mv-filter { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.mv-filter label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.mv-filter-grow { flex: 1; min-width: 220px; max-width: 380px; }
+.mv-flash { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border-interactive); background: var(--surface-2); color: var(--text-primary); font-weight: 600; }
+.mv-error-text { color: var(--error-text); font-weight: 600; }
+.mv-table th { color: var(--text-secondary); }
+.mv-table td { vertical-align: middle; }
+.mv-thumb { width: 36px; height: 54px; object-fit: cover; border-radius: 4px; background: var(--surface-3); display: block; }
+.mv-thumb-empty { width: 36px; height: 54px; border-radius: 4px; background: var(--surface-3); border: 1px dashed var(--border-interactive); }
+.mv-title { font-weight: 700; color: var(--text-main); }
+.mv-sub { font-size: 12px; color: var(--text-secondary); }
+.mv-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mv-actions .btn { white-space: nowrap; }
+.mv-star[aria-pressed="true"] { border-color: var(--cinema-gold); }
+.mv-pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; border: 1px solid var(--border-interactive); color: var(--text-primary); background: var(--surface-2); }
+.mv-pill-presale { border-color: var(--cinema-gold); color: var(--text-main); }
+
+.mv-dialog {
+  margin: auto; /* el reinicio global (* { margin: 0 }) lo dejaría pegado a la esquina */
+  width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 24px;
+  border: 1px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface); color: var(--text-primary);
+  box-shadow: var(--shadow-lg); font-size: 14px; line-height: 1.55;
+}
+.mv-dialog::backdrop { background: rgba(0, 0, 0, 0.75); }
+.mv-dialog h2 { margin: 0 0 12px; font-size: 18px; color: var(--text-main); }
+.mv-dialog h3 { margin: 0 0 8px; font-size: 15px; color: var(--text-main); }
+.mv-dialog p { margin: 0 0 10px; }
+.mv-fieldset { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
+.mv-fieldset > legend { padding: 0; margin-bottom: 8px; font-weight: 700; font-size: 15px; color: var(--text-main); }
+.mv-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mv-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; min-width: 0; }
+.mv-field label, .mv-field .mv-label { font-weight: 600; color: var(--text-primary); }
+.mv-field .input, .mv-field .select, .mv-field textarea { width: 100%; border-color: var(--border-interactive); }
+.mv-field textarea { padding: 10px 14px; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border-interactive); border-radius: var(--radius); font: inherit; resize: vertical; }
+.mv-field [aria-invalid="true"] { border-color: var(--error); }
+.mv-field-error { color: var(--error-text); font-size: 13px; font-weight: 600; margin: 0; }
+.mv-hint { color: var(--text-secondary); font-size: 12.5px; margin: 0; }
+.mv-check { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; cursor: pointer; }
+.mv-check input { flex: none; width: 18px; height: 18px; margin-top: 2px; accent-color: var(--action-red); }
+.mv-checks { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.mv-branch-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 16px; }
+.mv-summary { margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--error); border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); }
+.mv-summary h3 { color: var(--error-text); }
+.mv-summary ul { margin: 6px 0 0; padding-left: 18px; }
+.mv-summary a { color: var(--text-main); }
+.mv-conflict { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--cinema-gold); border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); }
+.mv-conflict ul { margin: 6px 0 10px; padding-left: 18px; }
+.mv-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.mv-dialog input:focus-visible, .mv-dialog select:focus-visible, .mv-dialog textarea:focus-visible,
+.mv-page input:focus-visible, .mv-page select:focus-visible, .mv-page .btn:focus-visible, .mv-check input:focus-visible {
+  outline: 2px solid var(--electric-blue); outline-offset: 2px;
+}
+@media (max-width: 560px) { .mv-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* Encabezado de fila (th scope="row") con el aspecto de una celda normal */
+.table tbody th[scope="row"] {
+  padding: 14px 18px; font-size: 13.5px; font-weight: 700; text-transform: none; letter-spacing: normal;
+  color: var(--text-main); border-bottom: 1px solid var(--border-subtle);
+}
+.table tbody tr:hover th[scope="row"] { background: var(--surface-2); }
+.table th { color: var(--text-secondary); }
+
+/* Contraste de las pantallas nuevas (Películas y Gestión de cines): los estilos globales del panel usan
+   --text-muted (≈3:1) y --border (≈1.4:1); aquí se suben a --text-secondary (≥4.5:1) y --border-interactive (≥3:1).
+   Lo demás del panel no se toca (se audita en la fase 6). */
+.mv-page .table th, .cm-page .table th { color: var(--text-secondary); }
+.mv-page .input, .mv-page .select, .mv-page .btn-secondary,
+.mv-dialog .btn-secondary, .cm-page .tabs { border-color: var(--border-interactive); }
+.mv-page .input::placeholder, .mv-dialog .input::placeholder { color: var(--text-secondary); }
+.cm-page .tab { color: var(--text-secondary); }
+.cm-page .tab.active { color: var(--text-primary); }

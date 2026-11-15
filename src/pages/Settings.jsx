@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import { Save, Bell, Lock, Globe, CreditCard, Plug } from 'lucide-react';
+import DemoNotice from '../components/DemoNotice';
 
 const tabs = ['General', 'Precios', 'Impuestos', 'Notificaciones', 'Seguridad', 'Integraciones'];
 const tabIcons = { General: Globe, Precios: CreditCard, Impuestos: CreditCard, Notificaciones: Bell, Seguridad: Lock, Integraciones: Plug };
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('General');
-  const [saved, setSaved] = useState(false);
-  const [general, setGeneral] = useState({ cinemaName: 'Cinerama', timezone: 'America/Lima', currency: 'USD', locale: 'es-ES', email: 'admin@cinerama.com' });
+  const [general, setGeneral] = useState({ cinemaName: 'Cinerama', timezone: 'America/Lima', currency: 'PEN', locale: 'es-ES', email: 'admin@cinerama.com' });
   const [pricing, setPricing] = useState({ base2D: 18, base3D: 25, weekendSurcharge: 10, holidaySurcharge: 20 });
   const [taxes, setTaxes] = useState({ vatRate: 18, includeVAT: true, taxLabel: 'IGV' });
   const [notif, setNotif] = useState({ emailAlerts: true, paymentFailures: true, lowOccupancy: true, systemErrors: true, dailyReport: false });
   const [security, setSecurity] = useState({ sessionTimeout: 30, twoFactor: false, loginAttempts: 5 });
-
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
   const Field = ({ label, children }) => (
     <div className="form-group">
@@ -44,10 +42,12 @@ export default function Settings() {
           <h1 className="page-title">Configuración</h1>
           <p className="page-subtitle">Configuración del sistema y preferencias</p>
         </div>
-        <button className="btn btn-primary" onClick={handleSave}>
-          <Save size={15} /> {saved ? '¡Guardado!' : 'Guardar Cambios'}
+        <button type="button" className="btn btn-primary" disabled title="Esta pantalla todavía no guarda cambios">
+          <Save size={15} aria-hidden="true" /> Guardar cambios (no disponible)
         </button>
       </div>
+
+      <DemoNotice>Estos ajustes son de ejemplo: no se guardan ni cambian el comportamiento del sistema. Los precios reales se definen al programar funciones.</DemoNotice>
 
       <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 24 }}>
         {/* Nav vertical */}
@@ -81,8 +81,7 @@ export default function Settings() {
                 </Field>
                 <Field label="Moneda">
                   <select className="select" style={{ width: '100%' }} value={general.currency} onChange={e => setGeneral(p => ({ ...p, currency: e.target.value }))}>
-                    <option value="USD">USD — Dólar Estadounidense</option>
-                    <option value="PEN">PEN — Sol Peruano</option>
+                    <option value="PEN">PEN — Sol peruano (S/)</option>
                     <option value="EUR">EUR — Euro</option>
                   </select>
                 </Field>
@@ -95,7 +94,7 @@ export default function Settings() {
               <div className="section-title mb-4">Precios Base de Boletos</div>
               <div className="grid-3">
                 {[['base2D','2D'],['base3D','3D']].map(([key, label]) => (
-                  <Field key={key} label={`Precio ${label} ($)`}>
+                  <Field key={key} label={`Precio ${label} (S/)`}>
                     <input className="input" type="number" value={pricing[key]} onChange={e => setPricing(p => ({ ...p, [key]: e.target.value }))} />
                   </Field>
                 ))}

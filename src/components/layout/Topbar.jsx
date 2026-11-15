@@ -105,7 +105,7 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
                 <button className="icon-btn" onClick={onNotifClose}><X size={14} /></button>
               </div>
               <div className="notif-section-label">
-                Alertas {!isGlobal && `— ${activeBranch?.name}`}
+                Alertas (ejemplo) {!isGlobal && `— ${activeBranch?.name}`}
               </div>
               {activeAlerts.map(a => {
                 const Icon = levelIcon[a.level] || Info;
@@ -116,7 +116,7 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
                   </div>
                 );
               })}
-              <div className="notif-section-label" style={{ marginTop: 8 }}>Actividad Reciente</div>
+              <div className="notif-section-label" style={{ marginTop: 8 }}>Actividad reciente (ejemplo)</div>
               {activeActivity.slice(0, 4).map(a => {
                 const Icon = levelIcon[a.level] || Info;
                 return (

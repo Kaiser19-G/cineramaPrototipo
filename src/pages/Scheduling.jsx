@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Calendar, Plus, Search, MapPin, AlertTriangle, ShieldAlert, X, ChevronRight, Check } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
-import { branches, halls } from '../data/store';
+import DemoNotice from '../components/DemoNotice';
+import { money } from '../utils/money';
 
 const statusConfig = {
   draft:     { label: 'Borrador',   cls: 'badge-muted' },
@@ -23,7 +24,7 @@ export default function Scheduling() {
   const {
     activeScreenings, enabledMovies, activeHalls, activeAlerts,
     can, isAdminCentral, activeBranch, isGlobal,
-    currentCinemaId, setCinema, isMovieInCinema, branches: allBranches,
+    currentCinemaId, setCinema, isMovieInCinema, branches: allBranches, halls,
   } = useCinema();
 
   const [activeTab, setActiveTab] = useState('Calendario');
@@ -81,9 +82,8 @@ export default function Scheduling() {
   };
 
   const saveFunc = () => {
-    // En producción se llamaría a la API. Aquí solo cerramos.
     setShowModal(false);
-    alert('Función programada correctamente.');
+    // Simulación: no se guarda nada (ver aviso en pantalla).
   };
 
   return (
@@ -99,6 +99,8 @@ export default function Scheduling() {
           <button className="btn btn-primary" onClick={openModal}><Plus size={16} /> Programar Función</button>
         )}
       </div>
+
+      <DemoNotice>La programación todavía es de ejemplo: lo que programes aquí no se guarda ni aparece en el sitio. Se vuelve real en la siguiente entrega.</DemoNotice>
 
       <div className="tabs mb-6">
         {tabs.map(t => (
@@ -310,7 +312,7 @@ export default function Scheduling() {
                         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, cursor: 'pointer', border: `1px solid ${newFunc.hallId===h.id ? 'var(--action-red)' : 'var(--border)'}`, background: newFunc.hallId===h.id ? 'var(--action-red-dim)' : 'var(--surface-2)', transition: 'all var(--transition)' }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 14 }}>{h.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{h.type} · {h.capacity} asientos · ${h.priceBase}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{h.type} · {h.capacity} asientos · {money(h.priceBase)}</div>
                         </div>
                         <span className="badge badge-blue">{h.type}</span>
                       </div>
@@ -380,7 +382,7 @@ export default function Scheduling() {
                   }>
                     Siguiente <ChevronRight size={14} />
                   </button>
-                : <button className="btn btn-primary" onClick={saveFunc}>Confirmar y Programar</button>}
+                : <button className="btn btn-primary" onClick={saveFunc}>Confirmar (simulación, no se guarda)</button>}
             </div>
           </div>
         </div>

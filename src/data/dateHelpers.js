@@ -16,3 +16,10 @@ export function getNextDays(count = 3, now = new Date()) {
   }
   return days;
 }
+
+// "10 de diciembre de 2026" a partir de una fecha de calendario YYYY-MM-DD (sin zona horaria).
+export function formatDateLong(ymd) {
+  if (!ymd) return '';
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(`${ymd}T12:00:00Z`));
+}

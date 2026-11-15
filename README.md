@@ -7,12 +7,17 @@ local (Express 5 + SQLite con `better-sqlite3`) en `server/`.
 
 ```bash
 npm install
-npm run seed      # crea/actualiza la base (`~/.cinerama-data/cinerama.db`, ver "Dónde viven los datos") y la contraseña de demostración del personal
+npm run seed      # carga los datos de ejemplo en una base vacía (`~/.cinerama-data/cinerama.db`, ver "Dónde viven los datos") y la contraseña de demostración del personal; no pisa una base con datos
 npm run dev       # Vite (5173) + API (3001); Vite expone la API en /api
 npm run test:api  # pruebas de la API (base temporal, no toca tus datos)
 ```
 
-Si ya tenías una base de datos anterior a la fase 2, el servidor la migra solo al arrancar (conserva tus datos).
+Si ya tenías una base de datos anterior, el servidor la migra solo al arrancar (conserva tus datos). La migración 3 (fase 3) solo
+agrega columnas y tablas, convierte las clasificaciones antiguas (G/PG → APT, PG-13/PG-14 → +14, R/NC-17 → +18) y agrega salas de ejemplo
+a las sedes que declaran salas y no tienen ninguna.
+
+`npm run seed` **ya no pisa datos**: solo carga las tablas que están vacías. Para recrearlo todo: `npm run seed -- --reset`. Para renovar
+solo las fechas de las funciones de ejemplo: `npm run seed -- --refresh-screenings` (las funciones se programan desde el panel).
 Si el personal no puede iniciar sesión, ejecuta `npm run seed:auth`.
 
 ## Dónde viven los datos

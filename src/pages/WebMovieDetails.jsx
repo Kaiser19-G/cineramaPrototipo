@@ -3,8 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
 import StepIndicator from '../components/StepIndicator';
-import { getNextDays } from '../data/dateHelpers';
-import { handlePosterError } from '../utils/posterFallback';
+import { getNextDays, formatDateLong } from '../data/dateHelpers';
+import Poster from '../components/Poster';
+import PosterTags from '../components/PosterTags';
+import WebNotFound from './WebNotFound';
+import { cssUrl } from '../utils/cssUrl';
+import { PRESALE_MAX_TICKETS } from '../shared/presale';
 import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import './WebPages.css';
 
@@ -14,16 +18,23 @@ const DETAIL_DIMENSIONS = {
   date: (e) => e.dayLabel,
 };
 
+// Una película inexistente, archivada o sin sede habilitada no se sustituye por otra: página de no encontrada.
 export default function WebMovieDetails() {
   const { id } = useParams();
+  const { publicMovies } = useCinema();
+  const movie = /^\d+$/.test(id ?? '') ? publicMovies.find(m => m.id === Number(id)) : undefined;
+  if (!movie) return <WebNotFound />;
+  return <MovieDetailsView movie={movie} />;
+}
+
+function MovieDetailsView({ movie }) {
   const navigate = useNavigate();
   const location = useLocation();
   const showtimesRef = useRef(null);
-  const { enabledMovies, branches, activeScreenings } = useCinema();
+  const { branches, publicScreenings: activeScreenings } = useCinema();
+  const upcoming = movie.status === 'upcoming';
 
-  const movie = enabledMovies.find(m => m.id === parseInt(id)) || enabledMovies[0];
-
-  const days = getNextDays(3);
+  const days = getNextDays(7);
   const [filterCity, setFilterCity] = useState(location.state?.city || null);
   const [filterCinema, setFilterCinema] = useState(location.state?.cinema || null);
   const [filterDate, setFilterDate] = useState(location.state?.date || null);
@@ -71,7 +82,7 @@ export default function WebMovieDetails() {
     <div className="movie-details-page">
 
       {/* 1. Banner superior con trailer */}
-      <div className="movie-detail-banner" style={{ backgroundImage: `url(${movie.backdrop || movie.poster})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="movie-detail-banner" style={{ backgroundImage: cssUrl(movie.backdrop || movie.poster), backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <button className="btn-play-trailer">
           <span className="play-icon" style={{display: 'flex'}}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -93,21 +104,31 @@ export default function WebMovieDetails() {
             <p className="movie-meta-tags">
               {movie.genre} | {Math.floor(movie.duration / 60)}h {movie.duration % 60}min | {movie.rating}
             </p>
+            {movie.presale && (
+              <p className="movie-notice" role="note">
+                <strong>Preventa:</strong> máximo {PRESALE_MAX_TICKETS} entradas por cuenta. Estreno el {formatDateLong(movie.releaseDate)}.
+              </p>
+            )}
+            {upcoming && (
+              <p className="movie-notice" role="note">
+                <strong>Próximamente{movie.releaseDate ? `: estreno el ${formatDateLong(movie.releaseDate)}` : ''}.</strong> Todavía no hay funciones programadas.
+              </p>
+            )}
           </div>
-          <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
+          {!upcoming && <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px', verticalAlign: 'text-bottom'}}>
               <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/>
             </svg>
             Comprar
-          </button>
+          </button>}
         </div>
 
         {/* 3. Dos columnas: Póster y Sinopsis */}
         <div className="movie-info-cols">
           <div className="movie-info-left">
             <div className="poster-wrapper">
-              <img src={movie.poster} alt={movie.title} data-fallback-title={movie.title} onError={handlePosterError} />
-              {movie.featured && <div className="diagonal-tag">Estreno</div>}
+              <Poster movie={movie} alt={movie.title} />
+              <PosterTags movie={movie} />
             </div>
           </div>
 
@@ -133,7 +154,7 @@ export default function WebMovieDetails() {
 
         {/* 4. Sección de funciones y horarios — H-03/H-05: siempre visibles,
             sin acordeón, con el indicador de pasos ya activo desde aquí. */}
-        <div className="movie-showtimes-section" ref={showtimesRef}>
+        {!upcoming && <div className="movie-showtimes-section" ref={showtimesRef}>
           <h2 className="section-title-fun">La función perfecta para ti.</h2>
 
           <div className="showtimes-filters-bar">
@@ -175,35 +196,41 @@ export default function WebMovieDetails() {
                     <span className="cinema-showtimes-city">{branch.city}</span>
                   </div>
 
-                  <div className="showtime-buttons-grid">
-                    {showtimes.map((s) => (
-                      <button
-                        key={s.id}
-                        className="showtime-btn"
-                        onClick={() => navigate('/web/compra', {
-                          state: {
-                            movie,
-                            cinema: branch.name,
-                            date: days.find((d) => d.value === s.date)?.label || s.date,
-                            time: s.startTime,
-                            roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
-                          }
-                        })}
-                      >
-                        <span className="time-lbl">{s.startTime}</span>
-                        <span className="chair-icon" style={{display: 'flex'}}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-                          </svg>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  {days.map((d) => ({ d, items: showtimes.filter((s) => s.date === d.value) })).filter((g) => g.items.length > 0).map(({ d, items }) => (
+                    <div key={d.value} className="showtime-day-group">
+                      <h4 className="showtime-day">{d.label}</h4>
+                      <div className="showtime-buttons-grid">
+                        {items.map((s) => (
+                          <button
+                            key={s.id}
+                            className="showtime-btn"
+                            aria-label={`${d.label}, ${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}, ${branch.name}`}
+                            onClick={() => navigate('/web/compra', {
+                              state: {
+                                movie,
+                                cinema: branch.name,
+                                date: d.label,
+                                time: s.startTime,
+                                roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
+                              }
+                            })}
+                          >
+                            <span className="time-lbl">{s.startTime}</span>
+                            <span className="chair-icon" style={{display: 'flex'}} aria-hidden="true">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                              </svg>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
       </div>
 
