@@ -40,6 +40,9 @@ export function createOrderService(db, clock = Date.now) {
       WHERE o.user_id = ? AND s.movie_id = ? AND o.presale = 1 AND os.active = 1 AND o.status = 'approved'`),
     byIdem: db.prepare('SELECT * FROM orders WHERE user_id = ? AND idempotency_key = ?'),
     orderSeats: db.prepare('SELECT seat, checked_in_at FROM order_seats WHERE order_id = ?'),
+    userOrders: db.prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY created_ms DESC, id'),
+    userOrder: db.prepare('SELECT * FROM orders WHERE user_id = ? AND id = ?'),
+    moviePresale: db.prepare('SELECT id, presale, release_date FROM movies WHERE id = ?'),
     insertOrder: db.prepare(`INSERT INTO orders (id,screening_id,branch_id,user_id,customer_name,email,amount,method,status,created_at,
         channel,presale,idempotency_key,payment_ref,created_ms)
       VALUES (@id,@screening_id,@branch_id,@user_id,@customer_name,@email,@amount,'card',@status,@created_at,'web',@presale,@key,@payment_ref,@now)`),
@@ -111,19 +114,61 @@ export function createOrderService(db, clock = Date.now) {
     };
   }
 
+  // Estado para mostrar (lo decide el servidor): valid (aprobada y vigente), used (todas las butacas con ingreso),
+  // past (aprobada, la funcion ya termino), refunded, rejected, cancelled.
+  function displayState(o, s, seats) {
+    if (o.status !== 'approved') return o.status;
+    if (seats.length && seats.every((r) => r.checked_in_at)) return 'used';
+    if (s && screeningSpan(s.starts_on, s.start_time, s.end_time).end <= nowAbs()) return 'past';
+    return 'valid';
+  }
+
   const mapOrder = (o) => {
     const s = q.screening.get(o.screening_id);
+    const rawSeats = q.orderSeats.all(o.id);
     return {
-      code: o.id, status: o.status, amount: o.amount, createdAt: o.created_ms ?? null, presale: !!o.presale,
+      code: o.id, status: o.status, displayStatus: displayState(o, s, rawSeats), amount: o.amount, createdAt: o.created_ms ?? null, presale: !!o.presale,
       screening: s && {
         id: s.id, date: s.starts_on, startTime: s.start_time, endTime: s.end_time, format: s.format, language: s.language,
         movieTitle: s.movie_title, branchName: s.branch_name, hallName: s.hall_name,
       },
-      seats: q.orderSeats.all(o.id).sort((a, b) => compareSeats(a.seat, b.seat)).map((r) => ({ seat: r.seat, checkedIn: !!r.checked_in_at })),
+      seats: rawSeats.sort((a, b) => compareSeats(a.seat, b.seat)).map((r) => ({ seat: r.seat, checkedIn: !!r.checked_in_at })),
       refund: o.status === 'refunded' ? { at: o.refunded_at ?? null, reasonCode: o.refund_reason, reason: REFUND_REASONS[o.refund_reason] ?? null } : null,
       payment: { method: o.method, simulated: true, ref: (o.payment_ref || '').split('|')[0] },
     };
   };
+
+  // Mis entradas. Las rechazadas (pago fallido, sin butacas ni entrada) y las canceladas no se listan nunca; si se
+  // conoce el codigo, el detalle si las devuelve. upcoming = vigentes; past = usadas, terminadas y reembolsadas.
+  function listOrders(userId, { scope = null, page = 1, pageSize = 10 } = {}) {
+    const all = q.userOrders.all(userId).filter((o) => o.status !== 'rejected' && o.status !== 'cancelled').map(mapOrder);
+    const isUp = (o) => o.displayStatus === 'valid';
+    const counts = { upcoming: all.filter(isUp).length, past: all.filter((o) => !isUp(o)).length };
+    const rows = scope === 'upcoming' ? all.filter(isUp) : scope === 'past' ? all.filter((o) => !isUp(o)) : all;
+    // Las proximas se ordenan por la funcion mas cercana; el resto, por compra mas reciente.
+    if (scope === 'upcoming') rows.sort((a, b) => `${a.screening?.date} ${a.screening?.startTime}`.localeCompare(`${b.screening?.date} ${b.screening?.startTime}`));
+    const total = rows.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const cur = Math.min(Math.max(1, page), totalPages);
+    return { orders: rows.slice((cur - 1) * pageSize, cur * pageSize), page: cur, pageSize, total, totalPages, counts };
+  }
+
+  // Una orden de la cuenta; null si no existe o es de otra cuenta (el llamador responde 404 igual en ambos casos).
+  function getOrder(userId, code) {
+    if (typeof code !== 'string' || !ORDER_CODE_RE.test(code)) return null;
+    const o = q.userOrder.get(userId, code);
+    return o ? mapOrder(o) : null;
+  }
+
+  // Cupo de preventa de la cuenta para una pelicula; null en .presale si la pelicula no esta en preventa.
+  function presaleQuota(userId, movieId) {
+    const m = q.moviePresale.get(movieId);
+    if (!m) return null;
+    const active = isPresaleEffective({ presale: !!m.presale, releaseDate: m.release_date }, todayInLima(new Date(clock())));
+    if (!active) return { presale: null };
+    const bought = q.userPresaleCount.get(userId, movieId).c;
+    return { presale: { limit: PRESALE_MAX_TICKETS, bought, remaining: Math.max(0, PRESALE_MAX_TICKETS - bought) } };
+  }
 
   const fail = (status, error, extra = {}) => ({ status, body: { error, ...extra } });
 
@@ -220,5 +265,5 @@ export function createOrderService(db, clock = Date.now) {
     return { refundedOrders, refundedAmount: round2(refundedAmount) };
   }
 
-  return { seatMap, purchase, refundScreening, syncBooked, mapOrder, limitsFor };
+  return { seatMap, listOrders, getOrder, presaleQuota, purchase, refundScreening, syncBooked, mapOrder, limitsFor };
 }

@@ -1884,6 +1884,7 @@ html[data-theme="dark"][data-vision="mono"] .legend-selected {
   user-select: all;
   overflow-wrap: anywhere;
 }
+.booking-success-link { display: block; width: 100%; box-sizing: border-box; text-align: center; text-decoration: none; }
 .booking-copy-status { text-align: center !important; min-height: 1.2em; margin: 0.5rem 0 1rem !important; }
 .order-summary { text-align: left; margin: 0 0 1.25rem; display: grid; gap: 0.35rem; }
 .order-summary div { display: flex; gap: 0.75rem; justify-content: space-between; font-size: 0.92rem; }
