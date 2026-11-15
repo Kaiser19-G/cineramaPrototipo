@@ -10,11 +10,11 @@ import { fileURLToPath } from 'node:url';
 import { openDb, prepareData, DB_FILE } from './db.js';
 import { seedDemoCredentials } from './seedAuth.js';
 import { ensureSampleHalls } from './sampleHalls.js';
-import { movies, branches, halls, movieCinema, screenings, orders, users } from '../src/data/store.js';
+import { movies, branches, halls, movieCinema, screenings, users } from '../src/data/store.js';
 
 const run = (db, { refreshScreenings = false } = {}) => {
   // Tablas que ya tienen filas: no se tocan.
-  const skip = new Set(['branches','halls','movies','movie_branch','screenings','users','orders']
+  const skip = new Set(['branches','halls','movies','movie_branch','screenings','users']
     .filter((t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c > 0));
   if (refreshScreenings) skip.delete('screenings');
   const up = (table, cols, rows) => {
@@ -75,27 +75,17 @@ const run = (db, { refreshScreenings = false } = {}) => {
       'price','status','booked_seats','total_seats'],
       screenings.map((s) => ({ id: s.id, movie_id: s.movieId, hall_id: s.hallId, branch_id: s.branchId,
         starts_on: s.date, start_time: s.startTime, end_time: s.endTime, language: s.language, format: s.format,
-        price: s.price, status: s.status, booked_seats: s.bookedSeats, total_seats: s.totalSeats })));
+        // Sin ventas de ejemplo: las butacas vendidas son las de las compras reales (order_seats). El estado 'agotada'
+        // se deriva del conteo y nunca se guarda.
+        price: s.price, status: s.status === 'sold_out' ? 'scheduled' : s.status, booked_seats: 0, total_seats: s.totalSeats })));
 
     up('users', ['id','name','email','role','branch_id','status','last_login','avatar'],
       users.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, branch_id: u.branchId,
         status: u.status, last_login: u.lastLogin, avatar: u.avatar })));
 
-    // CORRECCION DE DATOS: la sede de cada orden debe ser la de su funcion
-    // (store.js tiene 1248 -> sede 3 y 1252 -> sede 2, pero sus funciones son de la sede 1).
-    const scrBranch = Object.fromEntries(screenings.map((s) => [s.id, s.branchId]));
-    up('orders', ['id','screening_id','branch_id','customer_name','email','amount','method','status','created_at'],
-      orders.map((o) => ({ id: o.id, screening_id: o.screeningId, branch_id: scrBranch[o.screeningId],
-        customer_name: o.customer, email: o.email, amount: o.amount, method: o.method, status: o.status,
-        created_at: o.date })));
-
     // Sedes que declaran salas y no tienen ninguna (solo si las salas se cargaron en esta pasada).
     if (!skip.has('halls')) ensureSampleHalls(db);
 
-    const seatStmt = db.prepare(`INSERT INTO order_seats (order_id,screening_id,seat,active) VALUES (?,?,?,?)
-      ON CONFLICT(order_id,seat) DO UPDATE SET screening_id=excluded.screening_id, active=excluded.active`);
-    if (!skip.has('orders')) orders.forEach((o) => o.seats.forEach((seat) =>
-      seatStmt.run(o.id, o.screeningId, seat, o.status === 'approved' ? 1 : 0)));
   })();
 };
 

@@ -125,15 +125,7 @@ function CinemaDetailsView({ cinema }) {
                             className={`showtime-btn${s.status === 'sold_out' ? ' soldout' : ''}`}
                             aria-label={`${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}${s.status === 'sold_out' ? ', agotada' : ''}`}
                             aria-disabled={s.status === 'sold_out' ? 'true' : undefined}
-                            onClick={() => s.status !== 'sold_out' && navigate('/web/compra', {
-                              state: {
-                                movie,
-                                cinema: cinema.name,
-                                date: selectedDate,
-                                time: s.startTime,
-                                roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
-                              }
-                            })}
+                            onClick={() => s.status !== 'sold_out' && navigate(`/web/compra/${s.id}`)}
                           >
                             <span className="time-lbl">{s.startTime}</span>
                             {s.status === 'sold_out' && <span className="soldout-lbl" aria-hidden="true">Agotada</span>}

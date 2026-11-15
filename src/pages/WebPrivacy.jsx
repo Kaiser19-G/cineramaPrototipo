@@ -14,8 +14,9 @@ export default function WebPrivacy() {
 
       <h2>1. Qué es este sitio</h2>
       <p>
-        Cinerama es un prototipo académico de una cadena de cines. No es un servicio comercial: no se venden
-        entradas reales, no se cobra ningún pago y funciona solo en una red local.
+        Cinerama es un prototipo académico de una cadena de cines. No es un servicio comercial: las entradas se
+        compran de forma <strong>simulada</strong> (quedan guardadas, pero no valen para entrar a una sala real), no
+        se cobra ningún pago y funciona solo en una red local.
       </p>
 
       <h2>2. Qué datos te pedimos</h2>
@@ -26,7 +27,16 @@ export default function WebPrivacy() {
         <li>Celular (9 dígitos).</li>
         <li>Una contraseña.</li>
         <li>La fecha y hora en que aceptaste esta política, y la versión que aceptaste.</li>
+        <li>
+          Por cada compra: la función elegida, las butacas, el monto, la fecha y hora de la compra, el estado de la orden
+          (aprobada, rechazada o reembolsada), una referencia de pago simulado y un código de orden. Si el cine cancela una
+          función, la orden queda como reembolsada (de forma simulada).
+        </li>
       </ul>
+      <p>
+        <strong>No te pedimos ni guardamos datos de tarjeta.</strong> El formulario de pago es un ensayo: el número, el
+        titular, el vencimiento y el CVV se quedan en tu navegador y nunca se envían al servidor. Usa datos inventados.
+      </p>
       <p>
         Si presentas un <a href="#reclamo">reclamo por un DNI usado por otra persona</a> (sección 9) te pedimos además
         fotos de tu DNI y una carta firmada; ahí el tratamiento es distinto y se explica aparte.
@@ -37,9 +47,10 @@ export default function WebPrivacy() {
         <li>Crear tu cuenta e identificarte cuando inicias sesión.</li>
         <li>
           Mantener una sola cuenta por persona: el DNI, el correo y el celular no pueden repetirse. El objetivo es
-          evitar que una misma persona acapare entradas en las preventas (en una fase futura habrá un máximo de
-          entradas por cuenta y por película).
+          evitar que una misma persona acapare entradas. Por eso hay un máximo de entradas: en preventa, 4 por cuenta y
+          por película (sumando todas tus compras), y 8 por cuenta en cada función. Para comprar necesitas una cuenta.
         </li>
+        <li>Mostrar tus compras y que el personal las compruebe y las reembolse cuando corresponda.</li>
         <li>Confirmar que el celular es tuyo mediante un código de verificación.</li>
         <li>
           Suspender una cuenta cuando se aprueba un reclamo de DNI sobre el documento con el que se creó (sección 9).
@@ -67,6 +78,16 @@ export default function WebPrivacy() {
           <strong>Nombre, correo y celular:</strong> se guardan tal cual en la base de datos local del prototipo.
         </li>
         <li>
+          <strong>Tus compras:</strong> cada orden guarda tu nombre y correo tal como estaban en tu cuenta al comprar. El
+          administrador central ve las órdenes de toda la red y el personal de sede las de su sede; en ambos casos el
+          correo se muestra con parte de los caracteres ocultos, y nunca ven tu DNI ni tu celular. Ninguna pantalla
+          muestra datos de tarjeta, porque no existen.
+        </li>
+        <li>
+          <strong>Código de orden:</strong> es el comprobante de tu compra. No enviamos correo ni SMS: guárdalo al
+          terminar la compra. Lo guardamos en claro en la base del prototipo para poder comprobarlo.
+        </li>
+        <li>
           <strong>Verificación del celular simulada:</strong> no se envía ningún SMS. El código aparece en pantalla,
           marcado como simulación.
         </li>
@@ -84,7 +105,8 @@ export default function WebPrivacy() {
         Un registro que no se verifica se borra automáticamente a los 30 minutos. Los plazos de los reclamos de DNI
         están en la sección 9. Las cuentas verificadas se
         conservan mientras exista la base de datos del prototipo; todavía no hay una opción para borrar tu cuenta
-        desde el sitio. Una cuenta suspendida por un reclamo aprobado también se conserva (suspendida).
+        desde el sitio. Una cuenta suspendida por un reclamo aprobado también se conserva (suspendida). Las órdenes
+        de compra se conservan mientras exista la base de datos del prototipo, aunque la cuenta se suspenda.
       </p>
 
       <h2>7. Tus derechos</h2>

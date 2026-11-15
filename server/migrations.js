@@ -142,6 +142,38 @@ export const MIGRATIONS = [
     for (const [from, to] of Object.entries(LEGACY_RATING_MAP)) upd.run(to, from);
     ensureSampleHalls(db);
   },
+  // 4: compras reales (fase 4a). Columnas e indices nuevos; ademas BORRA las ordenes de ejemplo heredadas (todas las
+  // filas de orders existentes en este momento: hasta ahora solo el seed insertaba ordenes, ninguna compra real) con sus
+  // butacas, deja screenings.booked_seats en el conteo real de butacas activas y repone a 'scheduled' las funciones
+  // guardadas como 'sold_out' (el estado agotada se deriva del conteo; nunca se guarda). No toca nada mas.
+  (db) => {
+    addColumns(db, 'orders', [
+      ['channel', `TEXT NOT NULL DEFAULT 'web'`],  // web | counter (taquilla, fase 4d)
+      ['presale', 'INTEGER NOT NULL DEFAULT 0'],   // 1 si se compro con la pelicula en preventa efectiva
+      ['idempotency_key', 'TEXT'],
+      ['payment_ref', 'TEXT'],                     // referencia simulada (SIM-...); nunca datos de tarjeta
+      ['created_ms', 'INTEGER'],                   // instante de la compra (ms); las ordenes heredadas lo tienen NULL
+      ['refunded_at', 'INTEGER'],
+      ['refund_reason', 'TEXT'],                   // codigo fijo (p. ej. screening_cancelled), nunca texto libre
+      ['refunded_by', 'INTEGER'],
+    ]);
+    addColumns(db, 'order_seats', [
+      ['unit_price', 'REAL'],
+      ['checked_in_at', 'INTEGER'],                // ingreso a sala (fase 4d)
+      ['checked_in_by', 'INTEGER'],
+    ]);
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_orders_idem ON orders(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id, created_ms);
+      CREATE INDEX IF NOT EXISTS idx_orders_screening ON orders(screening_id, status);
+      CREATE INDEX IF NOT EXISTS idx_orders_branch ON orders(branch_id, created_ms);
+      CREATE INDEX IF NOT EXISTS idx_order_seats_screening ON order_seats(screening_id, active);
+    `);
+    db.prepare('DELETE FROM order_seats WHERE order_id IN (SELECT id FROM orders WHERE created_ms IS NULL)').run();
+    db.prepare('DELETE FROM orders WHERE created_ms IS NULL').run();
+    db.prepare(`UPDATE screenings SET booked_seats = (SELECT COUNT(*) FROM order_seats os WHERE os.screening_id = screenings.id AND os.active = 1)`).run();
+    db.prepare(`UPDATE screenings SET status = 'scheduled' WHERE status = 'sold_out'`).run();
+  },
 ];
 
 export function migrate(db) {

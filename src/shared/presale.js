@@ -1,7 +1,7 @@
 import { todayInLima, addDaysToDate } from '../data/limaDate.js';
 
 // Maximo de entradas por cuenta y por pelicula mientras la pelicula esta en preventa.
-// Lo aplica la fase 4 (compras); aqui solo se comparte el valor.
+// Lo aplica el servidor al comprar (server/orders/service.js) y el sitio lo anuncia.
 export const PRESALE_MAX_TICKETS = 4;
 // "Estreno": pelicula activa cuyo estreno cae en los ultimos 14 dias (dia de Lima).
 export const PREMIERE_WINDOW_DAYS = 14;

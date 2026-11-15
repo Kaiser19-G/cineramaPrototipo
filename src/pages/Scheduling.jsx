@@ -327,8 +327,8 @@ function CancelDialog({ screening, movieTitle, hallName, onClose, onDone }) {
         <p><strong>{movieTitle}</strong>, {screening.date} a las {screening.startTime}, {hallName}.</p>
         {screening.hasSales && (
           <p className="mv-summary" role="note">
-            <strong>Tiene {screening.bookedSeats} entrada(s) vendida(s).</strong> Al cancelarla quedarán <strong>reembolsos pendientes</strong>:
-            los reembolsos reales se gestionan en el módulo de pagos (todavía no disponible). La función no se borra: queda como cancelada.
+            <strong>Tiene {screening.bookedSeats} entrada(s) vendida(s).</strong> Al cancelarla, sus órdenes quedarán <strong>reembolsadas
+            (simulado)</strong> y las butacas, libres; el cliente lo verá en sus entradas. La función no se borra: queda como cancelada.
           </p>
         )}
         <p>La función dejará de verse en el sitio público. Esta acción no se puede deshacer desde esta pantalla.</p>
@@ -342,7 +342,7 @@ function CancelDialog({ screening, movieTitle, hallName, onClose, onDone }) {
         <label className="mv-check" htmlFor="cn-confirm">
           <input type="checkbox" id="cn-confirm" checked={confirm} onChange={(e) => { setConfirm(e.target.checked); setErrs((p) => ({ ...p, confirm: undefined })); }}
             aria-invalid={errs.confirm ? 'true' : undefined} aria-describedby={errs.confirm ? 'cn-confirm-err' : undefined} />
-          <span>Confirmo que quiero cancelar esta función{screening.hasSales ? ' y dejar sus reembolsos pendientes' : ''}.</span>
+          <span>Confirmo que quiero cancelar esta función{screening.hasSales ? ' y reembolsar (simulado) sus entradas' : ''}.</span>
         </label>
         {errs.confirm && <p id="cn-confirm-err" className="mv-field-error">{errs.confirm}</p>}
         {message && <p className="mv-error-text" role="alert">{message}</p>}
@@ -538,7 +538,7 @@ export default function Scheduling() {
       {cancelling && (
         <CancelDialog screening={cancelling} movieTitle={movieTitle(cancelling.movieId)} hallName={hallOf(cancelling.hallId)?.name}
           onClose={() => setCancelling(null)}
-          onDone={(d) => { refreshAll(); say(d.refundsPending ? 'Función cancelada. Quedaron reembolsos pendientes (todavía no hay módulo de pagos).' : 'Función cancelada.'); }} />
+          onDone={(d) => { refreshAll(); say(d.refundedOrders > 0 ? `Función cancelada. ${d.refundedOrders} ${d.refundedOrders === 1 ? 'orden reembolsada' : 'órdenes reembolsadas'} (simulado) y butacas liberadas.` : 'Función cancelada.'); }} />
       )}
     </div>
   );

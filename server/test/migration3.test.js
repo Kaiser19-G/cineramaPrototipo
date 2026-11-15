@@ -49,7 +49,7 @@ test('migracion 3 sobre una base de la fase 2b: conserva todo y solo cambia cali
   old.close();
 
   const db = openDb(file);
-  assert.equal(db.pragma('user_version', { simple: true }), 3);
+  assert.equal(db.pragma('user_version', { simple: true }), 4);
   const after = dump(db);
   const project = (t, rows) => rows.map((r) => Object.fromEntries(Object.keys(before[t][0] ?? r).filter((k) => k in r).map((k) => [k, r[k]])));
 
@@ -85,7 +85,7 @@ test('migracion 3 sobre una base de la fase 2b: conserva todo y solo cambia cali
 
   // Idempotente
   const again = openDb(file);
-  assert.equal(again.pragma('user_version', { simple: true }), 3);
+  assert.equal(again.pragma('user_version', { simple: true }), 4);
   assert.equal(count(again, 'halls'), 34);
   again.close();
   fs.rmSync(dir, { recursive: true, force: true });
@@ -94,7 +94,7 @@ test('migracion 3 sobre una base de la fase 2b: conserva todo y solo cambia cali
 test('migracion 3 sobre base nueva: sin salas hasta sembrar; la semilla deja las salas coherentes', () => {
   const dir = tmp();
   const db = openDb(path.join(dir, 'new.db'));
-  assert.equal(db.pragma('user_version', { simple: true }), 3);
+  assert.equal(db.pragma('user_version', { simple: true }), 4);
   assert.equal(count(db, 'halls'), 0);
   seed(db);
   assert.equal(count(db, 'halls'), 34);
