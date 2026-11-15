@@ -4,6 +4,7 @@ import { createClaims } from './claims/router.js';
 import { createMovies } from './admin/movies.js';
 import { createScreenings } from './admin/screenings.js';
 import { createHalls } from './admin/halls.js';
+import { createUsers } from './admin/users.js';
 import { todayInLima, nowInLima } from '../src/data/limaDate.js';
 import { screeningSpan } from '../src/shared/scheduling.js';
 import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
@@ -37,6 +38,7 @@ export function createApp(db, opts = {}) {
   const adminMovies = createMovies(db, auth, opts);
   const adminScreenings = createScreenings(db, opts);
   const adminHalls = createHalls(db, opts);
+  const adminUsers = createUsers(db, auth, opts);
   const clock = opts.clock ?? Date.now;
   const today = () => todayInLima(new Date(clock()));
   const app = express();
@@ -62,7 +64,10 @@ export function createApp(db, opts = {}) {
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
   app.use('/api/auth', auth.router);
   app.use('/api/claims', claims.router);
+  // Con contrasena temporal pendiente, ninguna ruta del panel responde (403 password_change_required).
+  app.use('/api/admin', auth.loadSession, auth.passwordChangeGate);
   app.use('/api/admin/central/claims', claims.adminRouter);
+  app.use('/api/admin/central/users', adminUsers.router);
   const staffOnly = [auth.loadSession, auth.requireAuth, auth.requireTier('central', 'branch')];
   app.use('/api/admin/movies', ...staffOnly, adminMovies.router);
   app.use('/api/admin/screenings', ...staffOnly, adminScreenings.router);

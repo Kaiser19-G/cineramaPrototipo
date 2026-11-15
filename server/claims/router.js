@@ -4,9 +4,9 @@ import path from 'node:path';
 import express from 'express';
 import { CLAIMS, REASONS, reasonText } from './config.js';
 import { detectImage, createFileStore, STORED_NAME_RE } from './files.js';
-import { claimCodeHash, contactHash, dniHash, verifyPassword } from '../auth/crypto.js';
-import { DEMO_PASSWORD } from '../auth/config.js';
+import { claimCodeHash, contactHash, dniHash } from '../auth/crypto.js';
 import { createThrottle } from '../auth/throttle.js';
+import { createDemoGate } from '../auth/demoGate.js';
 import { assertOutsideRepo } from '../dataDir.js';
 import { normalizeName, normalizeEmail, normalizeDni, normalizePhone, validateClaim } from '../../src/shared/validators.js';
 import { POLICY_VERSION } from '../../src/shared/policy.js';
@@ -71,7 +71,6 @@ export function createClaims(db, auth, opts = {}) {
     tombEmail: db.prepare('UPDATE users SET email = ? WHERE id = ?'),
     tombPhone: db.prepare('UPDATE users SET phone = NULL WHERE id = ?'),
     dropSessions: db.prepare('DELETE FROM sessions WHERE user_id = ?'),
-    adminHashes: db.prepare(`SELECT password_hash FROM users WHERE role='admin' AND status='active' AND password_hash IS NOT NULL`),
   };
 
   // ── borrado de archivos: primero se marca en la BD, luego se borra del disco ──
@@ -264,22 +263,8 @@ export function createClaims(db, auth, opts = {}) {
   });
 
   // ═════════════ administracion (solo central) ═════════════
-  // Mientras algun admin central conserve la contrasena de demostracion, todo queda bloqueado.
-  const demoCache = new Map(); // password_hash -> bool
-  const hasDemoPassword = async () => {
-    for (const { password_hash: h } of q.adminHashes.all()) {
-      if (!demoCache.has(h)) {
-        if (demoCache.size > 50) demoCache.clear();
-        demoCache.set(h, await verifyPassword(DEMO_PASSWORD, h));
-      }
-      if (demoCache.get(h)) return true;
-    }
-    return false;
-  };
-  const demoGate = async (_req, res, next) => {
-    if (await hasDemoPassword()) return res.status(403).json({ error: 'demo_password' });
-    return next();
-  };
+  // Mientras algun admin central conserve la contrasena de demostracion, todo queda bloqueado (ver auth/demoGate.js).
+  const { demoGate } = createDemoGate(db);
 
   const adminRouter = express.Router();
   adminRouter.use(loadSession, requireAuth, requireTier('central'), (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, demoGate);

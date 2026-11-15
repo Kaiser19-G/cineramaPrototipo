@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Search, Bell, ChevronDown, X, AlertTriangle, CheckCircle, Info, AlertCircle, Globe, MapPin, Lock, LogOut, Settings, User } from 'lucide-react';
+import { Menu, Search, Bell, ChevronDown, X, AlertTriangle, CheckCircle, Info, AlertCircle, Globe, MapPin, Lock, LogOut, Settings, User, KeyRound } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../shared/permissions';
@@ -162,6 +162,10 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
                   <div className="dropdown-divider"></div>
                 </>
               )}
+              <button type="button" role="menuitem" className="user-dropdown-item" onClick={() => { setUserMenuOpen(false); navigate('/account/password'); }}>
+                <KeyRound size={16} aria-hidden="true" />
+                <span>Cambiar contraseña</span>
+              </button>
               <button type="button" role="menuitem" className="user-dropdown-item logout-item" onClick={handleLogout}>
                 <LogOut size={16} aria-hidden="true" />
                 <span>Cerrar Sesión</span>

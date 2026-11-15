@@ -57,6 +57,13 @@ export default function WebPrivacy() {
         </li>
         <li><strong>Contraseña:</strong> se guarda cifrada con un algoritmo de un solo sentido (scrypt); nadie puede leerla.</li>
         <li>
+          <strong>Quién ve los datos de tu cuenta:</strong> solo el administrador central, en el panel de usuarios. Ahí ve tu
+          nombre, tu correo y tu celular con parte de los caracteres ocultos, los últimos 3 dígitos de tu DNI, el estado de la
+          cuenta, la fecha de registro y el último acceso. Nunca ve tu contraseña ni tu DNI completo, y no puede editar tu
+          cuenta de cliente desde ese panel. Los cambios que hace el personal en el panel quedan en un registro de actividad
+          que guarda solo códigos y números de identificación, sin datos personales.
+        </li>
+        <li>
           <strong>Nombre, correo y celular:</strong> se guardan tal cual en la base de datos local del prototipo.
         </li>
         <li>

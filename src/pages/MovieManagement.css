@@ -101,3 +101,26 @@
 .sc-day-title { margin: 0 0 10px; font-size: 16px; color: var(--text-main); }
 .mv-page .tabs .tab { color: var(--text-secondary); }
 .mv-page .badge-red { color: var(--error-text); }
+
+/* Usuarios y accesos / cambio de contraseña */
+.us-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
+.us-name { color: var(--text-main); }
+.us-pager { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin: 16px 0; color: var(--text-primary); }
+.us-notice { margin: 0 0 16px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--cinema-gold); background: var(--surface-2); color: var(--text-primary); line-height: 1.55; }
+.us-notice h2 { margin: 0 0 8px; font-size: 16px; color: var(--text-main); }
+.us-notice p { margin: 0 0 8px; }
+.us-code { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--border-interactive); border-radius: var(--radius-sm); background: var(--surface-3); color: var(--text-main); overflow-x: auto; }
+.us-code:focus-visible, .us-temp:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.us-temp { display: inline-block; padding: 10px 14px; border: 1px solid var(--border-interactive); border-radius: var(--radius-sm); background: var(--surface-3); color: var(--text-main); font-size: 20px; letter-spacing: 0.05em; user-select: all; }
+.us-copied { min-height: 1.4em; color: var(--text-primary); font-weight: 600; margin: 8px 0 0; }
+.us-role h2 { margin: 0 0 4px; font-size: 16px; color: var(--text-main); }
+.us-role ul { margin: 10px 0 0; padding-left: 18px; color: var(--text-primary); line-height: 1.6; }
+.pw-card { max-width: 520px; padding: 20px; }
+.us-page .tabs .tab, .pw-page .tabs .tab { color: var(--text-secondary); }
+.us-page .tab.active { color: var(--text-primary); }
+.us-page .table th, .us-page .table td { padding: 10px 12px; }
+.us-page .table td:nth-child(2) { overflow-wrap: anywhere; }
+.us-page .mv-actions .btn { white-space: normal; text-align: left; }
+.mv-page .btn-primary:hover, .mv-dialog .btn-primary:hover { background: var(--accent-solid-light); color: var(--on-accent); }
+.mv-page .tab { border: 1px solid transparent; }
+.mv-page .tab.active { border-color: var(--border-interactive); }

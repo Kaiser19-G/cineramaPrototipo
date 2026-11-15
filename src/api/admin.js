@@ -17,6 +17,13 @@ export const adminApi = {
     update: (id, body) => request('PATCH', `/api/admin/screenings/${id}`, body),
     cancel: (id, body) => request('POST', `/api/admin/screenings/${id}/cancel`, body),
   },
+  users: {
+    list: (params = {}) => request('GET', `/api/admin/central/users?${new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined)).toString()}`),
+    create: (body) => request('POST', '/api/admin/central/users', body),
+    update: (id, body) => request('PATCH', `/api/admin/central/users/${id}`, body),
+    resetPassword: (id) => request('POST', `/api/admin/central/users/${id}/reset-password`, {}),
+    audit: (page = 1) => request('GET', `/api/admin/central/users/audit/log?page=${page}`),
+  },
   halls: {
     setStatus: (id, status) => request('PATCH', `/api/admin/halls/${id}`, { status }),
   },

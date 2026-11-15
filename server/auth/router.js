@@ -1,5 +1,5 @@
 import express from 'express';
-import { AUTH, HOUR } from './config.js';
+import { AUTH, HOUR, DEMO_PASSWORD } from './config.js';
 import {
   hashPassword, verifyPassword, dummyVerify, sha256, randomToken, randomCode, safeEqualHex, dniHash, loadPepper, contactHash,
 } from './crypto.js';
@@ -8,6 +8,7 @@ import {
   validateRegistration, normalizeName, normalizeEmail, normalizeDni, normalizePhone,
 } from '../../src/shared/validators.js';
 import { PERMS, tierOf, isStaffTier } from '../../src/shared/permissions.js';
+import { PASSWORD_MIN, PASSWORD_MAX } from '../../src/shared/validators.js';
 
 // Notas de privacidad: este modulo nunca escribe DNI, correo ni celular en consola.
 // Con SMS simulado solo se registra "usuario #id" y el codigo de prueba.
@@ -83,6 +84,7 @@ export function createAuth(db, opts = {}) {
   const publicUser = (u) => ({
     id: u.id, name: u.name, email: u.email, role: u.role, tier: tierOf(u.role),
     branchId: u.branch_id ?? null, avatar: u.avatar || initials(u.name), perms: PERMS[u.role] ?? [],
+    mustChangePassword: !!u.must_change_password,
   });
 
   // ── sesiones ──
@@ -116,6 +118,11 @@ export function createAuth(db, opts = {}) {
     req.user ? next() : res.status(401).json({ error: 'unauthenticated' });
   const requireTier = (...tiers) => (req, res, next) =>
     tiers.includes(req.user?.tier) ? next() : res.status(403).json({ error: 'forbidden' });
+
+  // Cuenta con contrasena temporal: hasta cambiarla, ninguna ruta de /api/admin responde (el servidor lo impone,
+  // no solo la pantalla). Siguen disponibles /api/auth/change-password, /logout y /me.
+  const passwordChangeGate = (req, res, next) =>
+    (req.user?.mustChangePassword ? res.status(403).json({ error: 'password_change_required' }) : next());
 
   // ── CSRF: Origin debe coincidir con Host (+ JSON obligatorio) ──
   const csrf = (req, res, next) => {
@@ -331,6 +338,37 @@ export function createAuth(db, opts = {}) {
     res.status(204).end();
   });
 
+  // Cambio de contrasena de quien tiene sesion (obligatorio con contrasena temporal, voluntario en cualquier momento).
+  router.post('/change-password', requireAuth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body ?? {};
+    const errors = {};
+    if (typeof currentPassword !== 'string' || !currentPassword || currentPassword.length > 1024) errors.currentPassword = 'required';
+    if (typeof newPassword !== 'string' || newPassword.length === 0) errors.newPassword = 'password_required';
+    else if (newPassword.length < PASSWORD_MIN) errors.newPassword = 'password_short';
+    else if (newPassword.length > PASSWORD_MAX) errors.newPassword = 'password_long';
+    else if (newPassword === DEMO_PASSWORD) errors.newPassword = 'password_demo';
+    else if (newPassword === currentPassword) errors.newPassword = 'password_same';
+    if (Object.keys(errors).length) return res.status(400).json({ error: 'validation', errors });
+    const key = `chpw:user:${req.user.id}`;
+    const lock = throttle.check(key);
+    if (lock.locked) return res.status(429).json({ error: 'too_many_attempts', retryAfter: lock.retryAfter });
+    const row = q.userById.get(req.user.id);
+    if (!row?.password_hash || !(await verifyPassword(currentPassword, row.password_hash))) {
+      throttle.hit(key, AUTH.CHANGE_PASSWORD);
+      return res.status(400).json({ error: 'invalid_current_password' });
+    }
+    const hash = await hashPassword(newPassword);
+    db.transaction(() => {
+      db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = ? WHERE id = ?').run(hash, clock(), row.id);
+      // Se cierran las demas sesiones de la cuenta; esta sigue abierta.
+      db.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash != ?').run(row.id, req.sessionHash);
+      db.prepare(`INSERT INTO audit_log (at, actor_id, action, entity, entity_id, branch_id, detail_json) VALUES (?,?,?,?,?,?,NULL)`)
+        .run(clock(), row.id, 'user.change_password', 'user', row.id, row.branch_id ?? null);
+    })();
+    throttle.reset(key);
+    res.json({ user: publicUser(q.userById.get(row.id)) });
+  });
+
   router.get('/me', (req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ user: req.user });
@@ -342,5 +380,5 @@ export function createAuth(db, opts = {}) {
   adminRouter.get('/ping', (req, res) => res.json({ ok: true, role: req.user.role, tier: req.user.tier, branchId: req.user.branchId }));
   adminRouter.get('/central/ping', requireTier('central'), (_req, res) => res.json({ ok: true, scope: 'central' }));
 
-  return { router, adminRouter, csrf, loadSession, requireAuth, requireTier, isStaffTier, hashPassword, pepper, clock };
+  return { router, adminRouter, csrf, loadSession, requireAuth, requireTier, isStaffTier, hashPassword, pepper, clock, passwordChangeGate, publicUser, throttle };
 }
