@@ -9,6 +9,7 @@ import { addDaysToDate, nowInLima, todayInLima } from '../../src/data/limaDate.j
 import { compareSeats } from '../../src/shared/seatLayout.js';
 import { REFUND_REASONS } from '../../src/shared/purchase.js';
 import { branchScope, failValidation, isRealDate } from './common.js';
+import { createOrderService } from '../orders/service.js';
 
 const LIMA_OFFSET_MS = 5 * 3600 * 1000;
 export const MAX_RANGE_DAYS = 92;
@@ -28,6 +29,7 @@ const likeOf = (t) => `%${t.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 export function createSales(db, auth, opts = {}) {
   const { clock = Date.now } = opts;
   const { demoGate } = createDemoGate(db);
+  const service = createOrderService(db, clock);   // solo para los totales de preparacion (corre el barrido de "no recogido")
   const noStore = (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); };
   const staff = [auth.loadSession, auth.requireAuth, auth.requireTier('central', 'branch'), noStore];
   const forbid = (res) => res.status(403).json({ error: 'forbidden' });
@@ -207,7 +209,9 @@ export function createSales(db, auth, opts = {}) {
       totals: {
         revenue: round2(st.revenue), ticketRevenue: round2(st.revenue - st.foodRevenue), foodRevenue: round2(st.foodRevenue),
         ordersWithFood: st.ordersWithFood, foodAttachRate: pct(st.ordersWithFood, st.approved),
-        refundedFoodAmount: round2(st.refundedFood), tickets, transactions: st.n, approved: st.approved, rejected: st.rejected, refunded: st.refunded,
+        refundedFoodAmount: round2(st.refundedFood),
+        // Pedidos de confiteria de las funciones del rango: por entregar (aun abiertos), entregados y no recogidos.
+        pickups: service.pickupTotals(branch, from, to), tickets, transactions: st.n, approved: st.approved, rejected: st.rejected, refunded: st.refunded,
         refundedAmount: round2(st.refundedAmount), cancelled: st.cancelled, pending: st.pending,
         // Pagos intentados que fueron aceptados (aprobados o luego reembolsados) sobre los intentados (sin cancelados/pendientes).
         approvalRate: pct(st.approved + st.refunded, attempts),
@@ -255,6 +259,7 @@ export function createSales(db, auth, opts = {}) {
       const tickets = db.prepare(`SELECT COUNT(*) c FROM order_seats os JOIN orders o ON o.id = os.order_id
         WHERE o.status = 'approved' AND o.created_ms >= ? AND o.created_ms < ?${bSql}`).get(lo, hi, ...bArg).c;
       body.money = { revenue: round2(r.revenue), ticketRevenue: round2(r.revenue - r.food), foodRevenue: round2(r.food), tickets, rejected: r.rejected };
+      body.pickups = service.pickupTotals(branch, today, today);   // pedidos de confiteria de las funciones de hoy
     }
     // Ultimas acciones (audit_log: solo ids y codigos). Admin central: todas; gerente: las de su sede.
     if (hasAny(req, 'view_global_reports', 'view_local_reports')) {

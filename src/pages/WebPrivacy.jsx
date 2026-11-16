@@ -106,6 +106,14 @@ export default function WebPrivacy() {
           ya entraron; no muestra tu nombre, tu correo ni tu cuenta. Un código de otra sede no devuelve ningún dato.
         </li>
         <li>
+          <strong>Quién prepara y entrega tu pedido de confitería:</strong> el cajero, el operador o el gerente de la sede de la
+          función ve la cola de pedidos con los productos, el momento de preparación y los últimos 5 caracteres del código;
+          no ve tu nombre ni tu correo. Para entregarte el pedido escribe o escanea tu código completo, y se guarda cuándo y
+          qué persona del personal lo marcó listo y entregado. No enviamos avisos: el estado se ve en «Mis entradas». Un
+          código de otra sede no devuelve ningún dato. Cuando termina la función, un pedido no entregado queda como «no
+          recogido», sin reembolso automático.
+        </li>
+        <li>
           <strong>Compras en la taquilla:</strong> comprar en el mostrador no exige cuenta ni DNI. El cajero puede anotar un
           nombre, si el cliente quiere (opcional); si no, la orden queda como «Venta en mostrador», sin correo ni celular.
           Estas órdenes no están asociadas a ninguna cuenta y no aparecen en «Mis entradas»: el comprobante impreso con su

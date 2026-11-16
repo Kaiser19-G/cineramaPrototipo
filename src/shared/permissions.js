@@ -7,10 +7,10 @@ export const PERMS = {
              'create_hall','edit_hall','schedule_any','view_global_reports','manage_users','manage_settings',
              'view_all_sales','create_screening','cancel_screening','process_refund','manage_products','manage_stock'],
   manager:  ['schedule_any','create_screening','cancel_screening','edit_hall','view_local_reports',
-             'view_local_sales','block_hall','process_refund','validate_ticket','manage_stock'],
-  cashier:  ['view_local_screenings','process_sale','validate_ticket'],
+             'view_local_sales','block_hall','process_refund','validate_ticket','manage_stock','fulfill_orders'],
+  cashier:  ['view_local_screenings','process_sale','validate_ticket','fulfill_orders'],
   support:  ['view_orders','process_refund'],
-  operator: ['view_local_screenings','validate_ticket'],
+  operator: ['view_local_screenings','validate_ticket','fulfill_orders'],
   customer: [],
 };
 
@@ -53,4 +53,5 @@ export const PERM_LABELS = {
   view_orders: 'Ver pedidos', process_refund: 'Procesar reembolsos',
   manage_products: 'Gestionar productos de confitería (crear, editar, precios, activar)',
   manage_stock: 'Marcar productos agotados o disponibles en su sede',
+  fulfill_orders: 'Preparar y entregar pedidos de confitería de su sede',
 };

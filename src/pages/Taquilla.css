@@ -81,3 +81,37 @@
   .tq-print .tq-ok { display: none; }
   .tq-print .sl-dl { grid-template-columns: 120px 1fr; }
 }
+
+/* Pedidos de confiteria (cola de preparacion y entrega) */
+.tq-tabs { flex-wrap: wrap; }
+.tq-pickups { max-width: 980px; min-width: 0; }
+.tq-pk-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin: 20px 0 4px; }
+.tq-pk-section { margin: 0 0 22px; }
+.tq-pk-section-title { margin: 0 0 8px; font-size: 18px; color: var(--text-main); }
+.tq-pk-section-title:focus { outline: none; }
+.tq-pk-count { font-weight: 600; color: var(--text-secondary); }
+.tq-pk-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--border-interactive); border-radius: var(--radius); color: var(--text-primary); }
+.tq-pk-found { margin: 0 0 20px; padding: 14px; border: 2px solid var(--electric-blue); border-radius: var(--radius-lg); background: var(--surface-2); }
+.tq-pickup-list { display: grid; gap: 12px; margin: 0 0 8px; padding: 0; list-style: none; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); }
+.tq-pickup { min-width: 0; padding: 14px; border: 1px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface-2); color: var(--text-primary); }
+.tq-pickup-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.tq-pickup-title { margin: 0; font-size: 17px; color: var(--text-main); }
+.tq-pickup-title:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 3px; }
+.tq-pickup-title code { font-size: 20px; font-weight: 800; letter-spacing: 0.05em; }
+.tq-pickup-lines { margin: 0 0 10px; padding: 0; list-style: none; display: grid; gap: 4px; }
+.tq-pickup-includes { display: block; font-size: 13px; color: var(--text-secondary); }
+.tq-pickup-dl { grid-template-columns: minmax(0, 1fr); gap: 0 16px; margin-bottom: 10px; }
+.tq-pickup-dl dt { font-size: 12.5px; }
+.tq-pickup-dl dd { margin-bottom: 6px; }
+.tq-pickup-note { margin: 0 0 10px; font-weight: 600; color: var(--text-main); }
+.tq-pickup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tq-pickup-actions .btn { min-height: 44px; }
+.tq-pickup-actions .btn[aria-disabled="true"] { opacity: 0.6; cursor: progress; }
+.tq-pk-preparing { border-color: var(--cinema-gold); }
+.tq-pk-ready, .tq-pk-delivered { border-color: var(--emerald); }
+.tq-pk-cancelled, .tq-pk-not_collected { border-color: var(--error); }
+.tq-pickup .btn:focus-visible, .tq-pk-found .btn:focus-visible, .tq-pk-bar .btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+
+/* Las tablas de Taquilla (Vender, Ordenes) se desplazan dentro de su contenedor. Sin position: relative, el texto
+   .sr-only (position: absolute) de sus celdas no queda recortado por el contenedor y ensancha toda la pagina a 375 px. */
+.tq-page .sl-table-wrap { position: relative; max-width: 100%; }
