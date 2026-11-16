@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ordersApi } from '../api/orders';
 import OrderCode from '../components/OrderCode';
 import { OrderFacts, StatusBadge } from '../components/OrderParts';
+import OrderFood from '../components/OrderFood';
 import './WebOrders.css';
 
 const NOTES = {
@@ -71,6 +72,7 @@ export default function WebOrderDetail() {
             {o.seats.map((x) => <li key={x.seat}>{x.seat}{x.checkedIn ? ' · ya ingresó' : ''}</li>)}
           </ul>
           <OrderFacts order={o} hideSeats />
+          <OrderFood order={o} idPrefix="detail-food" />
           <p className="ticket-sim">Compra simulada: no se cobró nada y esta entrada no vale para entrar a una sala real.</p>
           <div className="ticket-actions">
             <button type="button" className="btn-outline" onClick={() => window.print()}>Imprimir entrada</button>

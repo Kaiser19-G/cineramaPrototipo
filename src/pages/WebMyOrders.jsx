@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ordersApi } from '../api/orders';
 import OrderCode from '../components/OrderCode';
 import { OrderFacts, StatusBadge } from '../components/OrderParts';
+import OrderFood from '../components/OrderFood';
 import './WebOrders.css';
 
 const PAGE_SIZE = 10;
@@ -97,6 +98,7 @@ export default function WebMyOrders() {
                     <StatusBadge order={o} />
                   </header>
                   <OrderFacts order={o} />
+                  <OrderFood order={o} compact />
                   <OrderCode code={o.code} />
                   <Link className="btn-outline orders-link-btn" to={`/web/mis-entradas/${o.code}`} aria-label={`Ver entrada de ${o.screening.movieTitle}, código ${o.code}`}>Ver entrada</Link>
                 </article>

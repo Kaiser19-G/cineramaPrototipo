@@ -5,15 +5,22 @@ import { ordersApi } from '../api/orders';
 import FieldError from '../components/FieldError';
 import StepIndicator from '../components/StepIndicator';
 import SeatMap from '../components/SeatMap';
+import FoodStep from '../components/FoodStep';
+import OrderFood from '../components/OrderFood';
 import { handlePosterError } from '../utils/posterFallback';
 import { formatDateLong } from '../data/dateHelpers';
 import { compareSeats } from '../shared/seatLayout';
 import { PRESALE_MAX_TICKETS } from '../shared/presale';
+import { PICKUP_TIMINGS } from '../shared/purchase';
+import { cartLines, cartTotals, reconcileCart, priceChanges, variantName, readFood, writeFood } from '../utils/foodCart';
 import './WebPages.css';
 
 const SEL_KEY = (id) => `cinerama-sel-${id}`;
 const POLL_MS = 20000;
+const STEP_SEATS = 1; const STEP_FOOD = 2; const STEP_PAY = 3;
+const round2 = (n) => Math.round(n * 100) / 100;
 const money = (n) => `S/ ${Number(n).toFixed(2)}`;
+const list = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}` : xs[0] ?? '');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `k${Date.now()}${Math.random().toString(36).slice(2)}`);
 
@@ -53,8 +60,16 @@ function BookingFlow({ screeningId }) {
   const navigate = useNavigate();
   const { refresh: refreshSession } = useAuth();
   const [load, setLoad] = useState({ status: 'loading', data: null }); // loading | ok | error | notfound
-  const [step, setStep] = useState(1); // 1 = Butacas, 2 = Pago
+  const [step, setStepState] = useState(STEP_SEATS); // 1 = Butacas, 2 = Confitería (opcional), 3 = Pago
+  const stepRef = useRef(STEP_SEATS);
+  const setStep = useCallback((s) => { stepRef.current = s; setStepState(s); }, []);
   const [selected, setSelected] = useState([]);
+  // Confitería: el carrito (variantId -> cantidad) vive aquí, junto con la tarjeta, para que Volver no pierda nada.
+  const [menu, setMenu] = useState({ status: 'loading', data: null }); // loading | ok | error
+  const [cart, setCartState] = useState(() => readFood(screeningId).cart);
+  const [timing, setTiming] = useState(() => readFood(screeningId).timing);
+  const cartRef = useRef(cart);
+  const menuRef = useRef(null);
   const [order, setOrder] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // null | 'cancel' | 'change'
   const [processing, setProcessing] = useState(false);
@@ -81,8 +96,16 @@ function BookingFlow({ screeningId }) {
   const limits = data?.limits;
   const maxSel = Math.max(0, Math.min(limits?.remaining ?? 0, limits?.perOrder ?? 8));
   const price = screening?.price ?? 0;
-  const total = selected.length * price;
   const onSale = !!screening?.onSale;
+
+  // ── confitería: carrito derivado del último menú recibido ──
+  const setCart = useCallback((next) => { cartRef.current = next; setCartState(next); }, []);
+  const foodLines = useMemo(() => cartLines(menu.data, cart), [menu.data, cart]);
+  const foodTotals = cartTotals(foodLines);
+  // Hasta saber lo contrario se asume que hay carta; con carta vacía el paso desaparece y se compra solo con entradas.
+  const hasFood = !(menu.status === 'ok' && menu.data.products.length === 0);
+  const ticketTotal = round2(selected.length * price);
+  const total = round2(ticketTotal + foodTotals.food);
 
   // ── carga y refresco del mapa ──
   const fetchMap = useCallback(async () => {
@@ -131,6 +154,49 @@ function BookingFlow({ screeningId }) {
   }, [fetchMap, onLoaded]);
 
   const retryLoad = () => { setLoad({ status: 'loading', data: null }); fetchMap().then(onLoaded); };
+
+  // Carta de la sede de la función. Quita del carrito lo agotado o retirado y avisa si cambió un precio; con `silent`
+  // el llamador explica el cambio por su cuenta (por ejemplo tras un 409 del servidor). Si falla y ya había carta,
+  // se conserva la anterior.
+  const applyMenu = useCallback((res, { silent = false } = {}) => {
+    if (!res.ok) { if (!menuRef.current) setMenu({ status: 'error', data: null }); return null; }
+    const prev = menuRef.current;
+    menuRef.current = res.data;
+    setMenu({ status: 'ok', data: res.data });
+    const { cart: next, removed } = reconcileCart(res.data, cartRef.current);
+    const changed = priceChanges(prev, res.data, cartRef.current).filter((c) => !removed.some((r) => r.variantId === c.variantId));
+    if (removed.length) setCart(next);
+    if (!res.data.products.length && stepRef.current === STEP_FOOD) {
+      setLive('Hoy no hay confitería disponible: pasamos al pago.');
+      setStep(STEP_PAY);
+    } else if (!silent && (removed.length || changed.length)) {
+      const parts = [];
+      if (removed.length) parts.push(`${list(removed.map((r) => r.fullName))} ya no ${removed.length === 1 ? 'está disponible' : 'están disponibles'} y ${removed.length === 1 ? 'lo quitamos' : 'los quitamos'} de tu pedido`);
+      if (changed.length) parts.push(`cambió el precio de ${list(changed.map((c) => `${c.fullName} (antes ${money(c.before)}, ahora ${money(c.after)})`))}`);
+      setLive('');
+      setAlertMsg({ text: `${parts.join('; ')}.`.replace(/^./, (c) => c.toUpperCase()), kind: 'food' });
+    }
+    return { menu: res.data, removed, changed };
+  }, [setCart, setStep]);
+  const refreshMenu = useCallback(async (opts) => applyMenu(await ordersApi.menu(screeningId), opts), [screeningId, applyMenu]);
+
+  // La carta se pide al abrir la compra (así se sabe si hay paso de confitería) y de nuevo al entrar en el paso.
+  useEffect(() => {
+    let off = false;
+    ordersApi.menu(screeningId).then((res) => { if (!off) applyMenu(res); });
+    return () => { off = true; };
+  }, [screeningId, applyMenu]);
+  useEffect(() => {
+    if (step !== STEP_FOOD || load.status !== 'ok') return undefined;
+    let off = false;
+    ordersApi.menu(screeningId).then((res) => { if (!off) applyMenu(res); });
+    return () => { off = true; };
+  }, [step, load.status, screeningId, applyMenu]);
+
+  // El carrito y el momento de preparación sobreviven a un reinicio de sesión (sin datos personales ni de tarjeta).
+  useEffect(() => { if (!order) writeFood(screeningId, cart, timing); }, [cart, timing, order, screeningId]);
+
+  const retryMenu = () => { setMenu({ status: 'loading', data: null }); refreshMenu(); };
 
   // Al volver a la pestaña y cada 20 s en el paso de butacas: otro comprador pudo tomar butacas.
   useEffect(() => {
@@ -261,12 +327,58 @@ function BookingFlow({ screeningId }) {
       if (lost.length) return;            // se quitó alguna butaca: se queda en el mapa con el aviso
       if (!r.data.screening.onSale) { setAlertMsg({ text: REASONS[r.data.screening.reason] ?? REASONS.not_on_sale, kind: 'closed' }); return; }
     }
-    setStep(2);
+    setStep(hasFood ? STEP_FOOD : STEP_PAY);
+  };
+
+  // ── confitería ──
+  const changeQty = (v, product, delta) => {
+    const cur = cartRef.current;
+    const q = cur[v.id] ?? 0;
+    const limits = menu.data?.limits ?? { maxQty: 10, maxUnits: 20, maxLines: 12 };
+    const full = variantName(product.name, v.label);
+    const units = Object.values(cur).reduce((a, n) => a + n, 0);
+    if (delta < 0 && q === 0) { setLive(`${full}: no tienes ninguna unidad en tu pedido.`); return; }
+    if (delta > 0) {
+      const why = q >= limits.maxQty ? `Máximo ${limits.maxQty} de ${full} por pedido. Quita una unidad para cambiar la cantidad.`
+        : units >= limits.maxUnits ? `Llegaste al tope de ${limits.maxUnits} unidades por pedido. Quita alguna para sumar otra.`
+          : q === 0 && Object.keys(cur).length >= limits.maxLines ? `Llegaste al tope de ${limits.maxLines} productos distintos por pedido. Quita uno para sumar otro.` : null;
+      if (why) { setLive(why); return; }
+    }
+    const nq = q + delta;
+    const next = { ...cur };
+    if (nq <= 0) delete next[v.id]; else next[v.id] = nq;
+    setCart(next);
+    const food = cartTotals(cartLines(menuRef.current, next)).food;
+    setLive(`${full}: ${nq}. Confitería ${money(food)}. Total de la compra ${money(round2(selectedRef.current.length * price + food))}.`);
+  };
+
+  const skipFood = () => {
+    const had = Object.keys(cartRef.current).length > 0;
+    setCart({});
+    setAlertMsg(null);
+    setLive(had ? 'Omitimos la confitería y quitamos tu pedido de confitería. Ahora, el pago.' : 'Omitimos la confitería. Ahora, el pago.');
+    setStep(STEP_PAY);
+  };
+
+  // Antes de pasar al pago se revisa la carta: si algo se agotó o cambió de precio, la persona lo ve aquí y no al pagar.
+  const continueFood = async () => {
+    setAlertMsg(null);
+    const r = await refreshMenu();
+    if (r && (r.removed.length || r.changed.length)) return;
+    if (stepRef.current === STEP_FOOD) setStep(STEP_PAY);
   };
 
   const failPurchase = (res) => {
     const d = res.data || {};
-    const back = (text, kind = 'error') => { setAlertMsg({ text, kind }); setStep(kind === 'declined' ? 2 : 1); };
+    const back = (text, kind = 'error') => { setAlertMsg({ text, kind }); setStep(kind === 'declined' ? STEP_PAY : STEP_SEATS); };
+    // Nada se cobró: se vuelve al paso de confitería con la carta al día y se conservan butacas y datos de pago.
+    const backToFood = async (text) => {
+      const [, seats] = await Promise.all([refreshMenu({ silent: true }), ordersApi.seats(screeningId)]);
+      if (seats.ok) applyMap(seats.data);
+      setLive('');
+      setAlertMsg({ text, kind: 'food' });
+      setStep(STEP_FOOD);
+    };
     switch (res.error) {
       case 'unauthenticated':
         // Sesión vencida: se guarda la selección (sin datos de tarjeta) y la puerta lleva al inicio de sesión y de vuelta aquí.
@@ -290,6 +402,23 @@ function BookingFlow({ screeningId }) {
         return back(d.scope === 'presale_movie'
           ? `Superas el máximo de preventa: ${PRESALE_MAX_TICKETS} entradas por cuenta y película. Ya compraste ${d.bought}; puedes comprar ${d.remaining} más.`
           : `Superas el máximo de ${d.limit} entradas por cuenta en esta función. Ya compraste ${d.bought}; puedes comprar ${d.remaining} más.`);
+      case 'price_changed': {
+        const changed = (d.items ?? []).filter((l) => l.previousUnitPrice != null && l.previousUnitPrice !== l.unitPrice);
+        const what = changed.length
+          ? `cambió el precio de ${list(changed.map((l) => `${variantName(l.name, l.variantLabel)} (antes ${money(l.previousUnitPrice)}, ahora ${money(l.unitPrice)})`))}`
+          : 'cambió el precio de las entradas';
+        backToFood(`No se cobró nada: ${what}. El nuevo total es ${money(d.amount)} (entradas ${money(d.ticketAmount)}, confitería ${money(d.foodAmount)}). Revisa tu pedido y confirma de nuevo. Tus butacas y tus datos de pago se conservan.`);
+        return undefined;
+      }
+      case 'item_unavailable': {
+        const gone = d.items ?? [];
+        const ids = new Set(d.variantIds ?? gone.map((i) => i.variantId));
+        const next = Object.fromEntries(Object.entries(cartRef.current).filter(([id]) => !ids.has(Number(id))));
+        setCart(next);   // por si la carta no se puede refrescar: igual se quita lo que el servidor rechazó
+        const names = gone.map((i) => `${variantName(i.name, i.variantLabel)} (${i.reason === 'sold_out' ? 'se agotó' : 'ya no se ofrece'})`);
+        backToFood(`No se cobró nada: ${names.length ? list(names) : 'un producto de tu pedido ya no está disponible'}. Lo quitamos de tu pedido; revisa lo que queda y confirma de nuevo. Tus butacas y tus datos de pago se conservan.`);
+        return undefined;
+      }
       case 'payment_declined':
         attemptRef.current = { sig: '', key: null };
         return back('El pago simulado fue rechazado (elegiste "Rechazado" en el resultado de la simulación). No se te cobró nada ni se reservaron butacas. Cambia el resultado a "Aprobado" para reintentar.', 'declined');
@@ -304,12 +433,19 @@ function BookingFlow({ screeningId }) {
     setAlertMsg(null);
     setProcessing(true);
     // Misma clave mientras no cambie la selección ni el resultado: un reintento tras un corte de red no duplica la orden.
-    const sig = `${selected.join(',')}|${outcome}`;
+    // Con confitería la firma incluye el carrito y el momento de preparación: el servidor responde 409 idempotency_conflict
+    // si una misma clave llega con otro carrito, así que cualquier cambio de carrito genera una clave nueva.
+    const items = foodLines.map((l) => ({ variantId: l.variantId, qty: l.qty, expectedUnitPrice: l.unitPrice }));
+    const sig = `${selected.join(',')}|${outcome}|${items.map((i) => `${i.variantId}x${i.qty}`).join(',')}|${items.length ? timing : ''}`;
     if (attemptRef.current.sig !== sig) attemptRef.current = { sig, key: newKey() };
-    const res = await ordersApi.purchase({ screeningId, seats: selected, idempotencyKey: attemptRef.current.key, simulatedOutcome: outcome });
+    const res = await ordersApi.purchase({
+      screeningId, seats: selected, idempotencyKey: attemptRef.current.key, simulatedOutcome: outcome,
+      items, pickup: items.length ? { timing } : undefined, expectedAmount: total,
+    });
     setProcessing(false);
     if (res.ok) {
       writeStored(screeningId, []);
+      writeFood(screeningId, {}, timing);
       setOrder(res.data.order);
       return;
     }
@@ -323,12 +459,19 @@ function BookingFlow({ screeningId }) {
     else setConfirmAction('change');
   };
   const runConfirmedAction = () => {
+    // Al cancelar o cambiar de función se vacía todo lo elegido (butacas y confitería): es lo que anuncia el diálogo.
+    writeStored(screeningId, []);
+    writeFood(screeningId, {}, timing);
     if (confirmAction === 'cancel') navigate('/WebHome');
     else if (confirmAction === 'change') navigate(-1);
     setConfirmAction(null);
   };
 
-  const currentStep = order ? 5 : step === 1 ? 3 : 4;
+  const steps = hasFood ? ['Película', 'Función', 'Butacas', 'Confitería', 'Pago', 'Confirmación'] : undefined;
+  const currentStep = hasFood
+    ? (order ? 6 : step === STEP_SEATS ? 3 : step === STEP_FOOD ? 4 : 5)
+    : (order ? 5 : step === STEP_SEATS ? 3 : 4);
+  const skippedSteps = hasFood && foodLines.length === 0 ? [4] : [];
   const modalOpen = !!order || !!confirmAction;
 
   // ── estados sin mapa ──
@@ -373,8 +516,8 @@ function BookingFlow({ screeningId }) {
             <h2 id="confirm-title">{confirmAction === 'cancel' ? '¿Cancelar tu compra?' : '¿Cambiar de función?'}</h2>
             <p id="confirm-desc">
               {confirmAction === 'cancel'
-                ? `Perderás la selección de butacas${step === 2 ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.`
-                : 'Perderás la selección de butacas actual. Podrás elegir otro horario.'}
+                ? `Perderás la selección de butacas${foodLines.length ? ', el pedido de confitería' : ''}${step === STEP_PAY ? ' y los datos de pago ingresados' : ''}. Esta acción no se puede deshacer.`
+                : `Perderás la selección de butacas${foodLines.length ? ' y el pedido de confitería' : ''} actual. Podrás elegir otro horario.`}
             </p>
             <div className="booking-actions booking-actions-split" style={{ marginTop: '8px' }}>
               <button className="btn-outline" onClick={() => setConfirmAction(null)} autoFocus>
@@ -390,7 +533,7 @@ function BookingFlow({ screeningId }) {
 
       <div className="booking-main" inert={modalOpen ? true : undefined}>
         <div className="booking-header-row">
-          <StepIndicator current={currentStep} />
+          <StepIndicator current={currentStep} steps={steps} skipped={skippedSteps} />
           <button type="button" className="btn-cancel-purchase" onClick={handleCancelPurchase}>
             Cancelar compra
           </button>
@@ -435,6 +578,12 @@ function BookingFlow({ screeningId }) {
               </button>
             </div>
           </div>
+        ) : step === STEP_FOOD ? (
+          <FoodStep
+            menuState={menu} cart={cart} totals={foodTotals} timing={timing} onTiming={setTiming}
+            startTime={screening.startTime} onChangeQty={changeQty} onSkip={skipFood} onContinue={continueFood}
+            onBack={() => { setAlertMsg(null); setStep(STEP_SEATS); }} onRetry={retryMenu} headingRef={headingRef}
+          />
         ) : (
           <div className="payment-section">
             <h2 className="booking-step-title" tabIndex={-1} ref={headingRef}>Pago simulado</h2>
@@ -516,7 +665,7 @@ function BookingFlow({ screeningId }) {
             </form>
 
             <div className="booking-actions booking-actions-split">
-              <button className="btn-outline" onClick={() => setStep(1)} disabled={processing}>⟨ Volver</button>
+              <button className="btn-outline" onClick={() => { setAlertMsg(null); setStep(hasFood ? STEP_FOOD : STEP_SEATS); }} disabled={processing}>⟨ Volver</button>
               <button className="btn-solid" disabled={!isPaymentValid || processing} onClick={handlePayment}>
                 {processing ? 'Procesando...' : `Confirmar compra simulada ${money(total)} ⟩`}
               </button>
@@ -563,8 +712,24 @@ function BookingFlow({ screeningId }) {
 
         {selected.length > 0 && (
           <p className="price-breakdown">
-            {selected.length} {selected.length === 1 ? 'butaca' : 'butacas'} × {money(price)} = {money(total)}
+            {selected.length} {selected.length === 1 ? 'butaca' : 'butacas'} × {money(price)} = {money(ticketTotal)}
           </p>
+        )}
+
+        {foodLines.length > 0 && (
+          <>
+            <div className="summary-food">
+              <p className="summary-label">Confitería:</p>
+              <ul>
+                {foodLines.map((l) => <li key={l.variantId}><span>{l.qty} × {l.fullName}</span><span>{money(l.lineTotal)}</span></li>)}
+              </ul>
+              <p className="summary-food-timing">Preparación: {PICKUP_TIMINGS[timing]}</p>
+            </div>
+            <dl className="summary-totals">
+              <div><dt>Entradas</dt><dd>{money(ticketTotal)}</dd></div>
+              <div><dt>Confitería</dt><dd>{money(foodTotals.food)}</dd></div>
+            </dl>
+          </>
         )}
 
         <div className="total-row">
@@ -634,8 +799,11 @@ function SuccessDialog({ order, onHome }) {
           <div><dt>Cine</dt><dd>{s.branchName}</dd></div>
           <div><dt>Función</dt><dd>{formatDateLong(s.date)}, {s.startTime}</dd></div>
           <div><dt>Butacas</dt><dd>{order.seats.map((x) => x.seat).join(', ')}</dd></div>
+          {order.foodAmount > 0 && <div><dt>Entradas</dt><dd>{money(order.ticketAmount)}</dd></div>}
+          {order.foodAmount > 0 && <div><dt>Confitería</dt><dd>{money(order.foodAmount)}</dd></div>}
           <div><dt>Total</dt><dd>{money(order.amount)} (simulado)</dd></div>
         </dl>
+        <OrderFood order={order} idPrefix="success-food" />
         <Link className="btn-solid booking-success-link" to="/web/mis-entradas">Ver mis entradas</Link>
         <button className="btn-outline" onClick={onHome} style={{ width: '100%', marginTop: '0.75rem' }}>
           Volver al inicio

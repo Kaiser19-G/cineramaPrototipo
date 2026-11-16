@@ -601,7 +601,7 @@
 }
 .booking-step.current { color: var(--text-main); }
 .booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: var(--on-accent); }
-.booking-step.done .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: var(--on-accent-success); }
+.booking-step.done .step-num, .booking-step.skipped .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: var(--on-accent-success); }
 .step-arrow { color: var(--text-muted); }
 
 /* width:100% evita que .booking-main (align-items:center) encoja este

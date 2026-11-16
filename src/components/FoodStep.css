@@ -1,0 +1,99 @@
+/* Paso de confitería y bloque del pedido en el comprobante. Solo tokens existentes del tema (claro/oscuro y modos de visión). */
+.food-step { width: 100%; min-width: 0; }
+.food-skip-top { margin: 0 0 1.25rem; }
+.food-skip-btn { min-height: 44px; font-size: 1rem; }
+.food-state { padding: 1rem; border: 1px solid var(--border-interactive); border-radius: 10px; background: var(--surface-2); color: var(--text-primary); margin: 0 0 1.25rem; }
+.food-state p { margin: 0 0 0.75rem; }
+.food-error-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.food-error-actions .btn-outline, .food-error-actions .btn-solid { min-height: 44px; font-size: 1rem; }
+.food-limits { margin: 0 0 1.25rem; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.45; }
+.food-cap-note { color: var(--text-main); }
+
+.food-group { margin: 0 0 1.75rem; }
+.food-group-title { margin: 0 0 0.75rem; color: var(--text-main); font-size: 1.25rem; }
+.food-product {
+  margin: 0 0 1rem; padding: 1rem; border: 1px solid var(--border-interactive); border-radius: 12px;
+  background: var(--surface-2); color: var(--text-primary); min-width: 0;
+}
+.food-product-head { display: flex; gap: 1rem; align-items: flex-start; margin: 0 0 0.5rem; }
+.food-art { width: 72px; max-width: 72px; flex: none; }
+.food-product-text { min-width: 0; flex: 1; }
+.food-product-text h4 { margin: 0 0 0.25rem; color: var(--text-main); font-size: 1.1rem; overflow-wrap: anywhere; }
+.food-product-text p { margin: 0; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.4; }
+
+.food-variants { list-style: none; margin: 0; padding: 0; }
+.food-variant {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;
+  padding: 0.75rem 0; border-top: 1px solid var(--border);
+}
+.food-variant-info { flex: 1 1 11rem; min-width: 0; }
+.food-variant-info p { margin: 0; overflow-wrap: anywhere; }
+.food-variant-name { color: var(--text-main); font-weight: 700; }
+.food-variant-vol { font-weight: 400; color: var(--text-secondary); }
+.food-includes, .food-variant-meta { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; }
+.food-price { margin: 0; color: var(--text-main); font-weight: 800; font-size: 1.05rem; white-space: nowrap; }
+.food-soldout {
+  margin: 0; padding: 0.35rem 0.8rem; border: 2px solid var(--border-interactive); border-radius: 999px;
+  background: var(--surface-3); color: var(--text-primary); font-weight: 700; font-size: 0.95rem;
+}
+.food-cap-row { flex-basis: 100%; margin: 0; font-size: 0.88rem; }
+
+.food-qty { display: inline-flex; align-items: center; gap: 0.25rem; }
+.food-qty-btn {
+  min-width: 44px; min-height: 44px; border: 2px solid var(--border-interactive); border-radius: 10px;
+  background: var(--surface-3); color: var(--text-main); font: inherit; font-size: 1.5rem; font-weight: 700; line-height: 1; cursor: pointer;
+}
+.food-qty-btn:hover { background: var(--action-red-dim); }
+.food-qty-btn:focus-visible { outline: 3px solid var(--electric-blue); outline-offset: 2px; }
+.food-qty-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.food-qty-btn[aria-disabled="true"]:hover { background: var(--surface-3); }
+.food-qty-value { min-width: 2.25rem; text-align: center; color: var(--text-main); font-size: 1.15rem; font-weight: 800; }
+
+.food-pickup { margin: 0 0 1.25rem; padding: 0.75rem 1rem; border: 1px solid var(--border-interactive); border-radius: 10px; min-width: 0; }
+.food-pickup legend { padding: 0 0.4rem; color: var(--text-main); font-weight: 700; }
+.food-pickup-opt { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem 0; min-height: 44px; cursor: pointer; color: var(--text-primary); }
+.food-pickup-opt input { margin-top: 0.3rem; width: 1.15rem; height: 1.15rem; flex: none; }
+.food-pickup-opt:focus-within { outline: 2px solid var(--electric-blue); outline-offset: 2px; border-radius: 6px; }
+.food-pickup-label { display: block; font-weight: 700; color: var(--text-main); }
+.food-pickup-desc { display: block; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; }
+.food-subtotal { margin: 0 0 1rem; color: var(--text-primary); }
+.food-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; margin-top: 1.5rem; width: 100%; }
+.food-actions .btn-outline, .food-actions .btn-solid { min-height: 44px; }
+
+@media (max-width: 480px) {
+  .food-product { padding: 0.75rem; }
+  .food-actions { flex-direction: column-reverse; margin-bottom: 96px; }
+  .food-actions > button { width: 100%; }
+}
+
+/* Resumen de la compra: líneas de confitería */
+.summary-food { margin: 0 0 1rem; }
+.summary-food ul { list-style: none; margin: 0 0 0.5rem; padding: 0; display: grid; gap: 0.35rem; }
+.summary-food li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.9rem; color: var(--text-primary); }
+.summary-food li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.summary-food li span:last-child { white-space: nowrap; font-weight: 600; }
+.summary-food-timing { margin: 0; color: var(--text-secondary); font-size: 0.88rem; }
+.summary-totals { margin: 0 0 1rem; display: grid; gap: 0.25rem; }
+.summary-totals div { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.95rem; }
+.summary-totals dt { color: var(--text-secondary); }
+.summary-totals dd { margin: 0; color: var(--text-primary); font-weight: 600; }
+
+/* Pedido de confitería en el comprobante, Mis entradas y el detalle de la entrada */
+.order-food { display: grid; gap: 0.6rem; text-align: left; margin: 0 0 1.25rem; padding: 0.9rem 1rem; border: 1px solid var(--border-interactive); border-radius: 10px; background: var(--surface-3); color: var(--text-primary); }
+.booking-success-modal .order-food h3, .order-food h3 { margin: 0; color: var(--text-main); font-size: 1.05rem; }
+.order-food-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.order-food-lines li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.92rem; }
+.order-food-lines li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.order-food-lines li > span:last-child { white-space: nowrap; font-weight: 600; }
+.order-food-includes { display: block; color: var(--text-secondary); font-size: 0.85rem; }
+.order-food-facts { margin: 0; display: grid; gap: 0.35rem; }
+.order-food-facts div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 0.75rem; font-size: 0.92rem; }
+.order-food-facts dt { color: var(--text-secondary); }
+.order-food-facts dd { margin: 0; font-weight: 600; color: var(--text-primary); text-align: right; overflow-wrap: anywhere; }
+.booking-success-modal .order-food p, .order-food p { margin: 0; font-size: 0.92rem; color: var(--text-primary); line-height: 1.4; }
+.order-food-compact { margin: 0; font-size: 0.95rem; color: var(--text-primary); }
+@media (max-width: 600px) { .order-food-facts dd { text-align: left; } }
+@media print {
+  .order-food, .order-food * { color: #000 !important; background: transparent !important; }
+  .order-food { border: 1px solid #000; break-inside: avoid; }
+}
