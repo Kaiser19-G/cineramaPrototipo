@@ -1,4 +1,5 @@
 import ProductArt from './ProductArt';
+import SizeCompare from './SizeCompare';
 import { PICKUP_POINT_LABEL, PICKUP_TIMINGS, PICKUP_PREP_LEAD_MINUTES } from '../shared/purchase';
 import { variantName, minusMinutes } from '../utils/foodCart';
 import './FoodStep.css';
@@ -66,7 +67,6 @@ export default function FoodStep({
                     <div className="food-product-text">
                       <h4 id={`food-p-${p.id}`}>{p.name}</h4>
                       {p.description && <p>{p.description}</p>}
-                      {/* 5e: aquí irá el botón "Comparar tamaños" de este producto. */}
                     </div>
                   </div>
                   <ul className="food-variants">
@@ -109,6 +109,7 @@ export default function FoodStep({
                       );
                     })}
                   </ul>
+                  <SizeCompare product={p} />
                 </article>
               ))}
             </section>
