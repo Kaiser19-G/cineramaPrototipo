@@ -1,6 +1,6 @@
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { isStaffTier } from '../shared/permissions';
+import { isStaffTier, hasAnyPerm } from '../shared/permissions';
 
 function SessionGate() {
   return <div className="session-gate" role="status">Verificando sesión…</div>;
@@ -24,6 +24,13 @@ export function RequireStaff({ children }) {
 export function RequireCentral({ children }) {
   const { user } = useAuth();
   if (user?.tier !== 'central') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+// Pantalla del panel con permiso propio (el servidor responde 403 igual): sin permiso, vuelve al resumen.
+export function RequirePerm({ any, children }) {
+  const { user } = useAuth();
+  if (!hasAnyPerm(user, any)) return <Navigate to="/dashboard" replace />;
   return children;
 }
 

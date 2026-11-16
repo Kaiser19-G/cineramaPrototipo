@@ -1,7 +1,5 @@
 import { createContext, useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import {
-  orders, recentActivity, alerts, occupancyByHall,
-} from '../data/store';
+import { orders } from '../data/store';
 import { useAuth } from './AuthContext';
 import { PERMS } from '../shared/permissions';
 
@@ -177,41 +175,12 @@ export function CinemaProvider({ children }) {
     return allOrders.filter(o => o.branchId === currentCinemaId);
   }, [currentCinemaId, allOrders]);
 
-  // Actividad filtrada
-  const activeActivity = useMemo(() => {
-    if (currentCinemaId === 'all') return recentActivity;
-    return recentActivity.filter(a => a.branchId === currentCinemaId || a.branchId === null);
-  }, [currentCinemaId]);
-
-  // Alertas filtradas
-  const activeAlerts = useMemo(() => {
-    if (currentCinemaId === 'all') return alerts;
-    return alerts.filter(a => a.branchId === currentCinemaId);
-  }, [currentCinemaId]);
-
-  // Ocupación filtrada
-  const activeOccupancy = useMemo(() => {
-    if (currentCinemaId === 'all') return occupancyByHall;
-    return occupancyByHall.filter(o => o.branchId === currentCinemaId);
-  }, [currentCinemaId]);
-
   // Verificar permiso
   const can = (action) => (PERMS[currentUser?.role] || []).includes(action);
 
   // Validar si una película está habilitada en un cine
   const isMovieInCinema = (movieId, branchId) =>
     movieCinema.some(mc => mc.movieId === movieId && mc.branchId === branchId && mc.activa);
-
-  // KPIs globales / locales
-  const kpiRevenue = activeOrders
-    .filter(o => o.status === 'approved')
-    .reduce((s, o) => s + o.amount, 0);
-  const kpiTickets = activeOrders.filter(o => o.status === 'approved').length;
-  const kpiFailed  = activeOrders.filter(o => o.status === 'rejected').length;
-  const kpiScreenings = activeScreenings.filter(s => s.status === 'active').length;
-  const kpiOccupancy = activeOccupancy.length
-    ? Math.round(activeOccupancy.reduce((s, h) => s + h.occupancy, 0) / activeOccupancy.length)
-    : 0;
 
   const setCinema = (id) => {
     // Solo Admin Central puede cambiar
@@ -275,9 +244,6 @@ export function CinemaProvider({ children }) {
       activeHalls,
       activeScreenings,
       activeOrders,
-      activeActivity,
-      activeAlerts,
-      activeOccupancy,
       // Catálogo PÚBLICO: no depende de la sede elegida en el panel ni de la sede del personal.
       publicMovies: catalog.movies,
       publicScreenings: catalog.screenings,
@@ -293,12 +259,6 @@ export function CinemaProvider({ children }) {
       reloadCatalog,
       // Tras un cambio en el panel: refresca el panel y el catálogo público sin mostrar "cargando".
       refreshAll: () => { admin.reload(); reloadCatalog({ silent: true }); },
-      // KPIs
-      kpiRevenue,
-      kpiTickets,
-      kpiFailed,
-      kpiScreenings,
-      kpiOccupancy,
       // Helpers
       can,
       isMovieInCinema,

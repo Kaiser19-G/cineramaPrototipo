@@ -1,207 +1,259 @@
-import { useState } from 'react';
-import { Download, TrendingUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts';
-import { revenueByDay, genreData, occupancyByHall, movies, orders } from '../data/store';
-import DemoNotice from '../components/DemoNotice';
+import { useCinema } from '../context/CinemaContext';
+import { adminApi } from '../api/admin';
+import { useAdminQuery } from '../hooks/useAdminQuery';
+import { QueryGate } from '../components/SalesParts';
+import { CHANNEL_LABELS, pctText, shortDay, dayLabel } from '../utils/salesFormat';
+import { addDaysToDate, todayInLima } from '../data/limaDate';
 import { money } from '../utils/money';
+import './MovieManagement.css';
+import './Sales.css';
 
-const tabs = ['Ingresos', 'Ocupación', 'Películas', 'Pagos', 'Rendimiento'];
+const TABS = ['Ingresos', 'Ocupación', 'Películas', 'Pagos'];
+const AXIS = { fill: 'var(--text-secondary)', fontSize: 12 };
+const TIP = { contentStyle: { background: 'var(--surface-2)', border: '1px solid var(--border-interactive)', borderRadius: 8, color: 'var(--text-primary)' }, labelStyle: { color: 'var(--text-main)', fontWeight: 700 }, itemStyle: { color: 'var(--text-primary)' } };
+const INK = 'var(--electric-blue)';
 
-const topMovies = movies.map(m => ({ name: m.title.split(':')[0], tickets: Math.floor(Math.random() * 600) + 100 })).sort((a, b) => b.tickets - a.tickets).slice(0, 6);
-const paymentMethods = [
-  { name: 'Tarjeta de Crédito', value: 52, color: 'var(--electric-blue)' },
-  { name: 'Tarjeta de Débito',  value: 28, color: 'var(--violet)' },
-  { name: 'Pago Móvil',         value: 14, color: 'var(--emerald)' },
-  { name: 'Efectivo',           value: 6,  color: 'var(--text-muted)' },
-];
-const monthlyData = [
-  { month: 'Ene', revenue: 92000, tickets: 4200 },
-  { month: 'Feb', revenue: 84000, tickets: 3800 },
-  { month: 'Mar', revenue: 110000, tickets: 5100 },
-  { month: 'Abr', revenue: 128000, tickets: 5900 },
-  { month: 'May', revenue: 145000, tickets: 6700 },
-];
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
+// Tabla de datos (alternativa accesible a un gráfico). columns: [{ key, label, num, fmt }]
+function DataTable({ caption, columns, rows }) {
   return (
-    <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
-      <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-      {payload.map((p, i) => <p key={i} style={{ color: p.color, fontWeight: 700 }}>{p.name}: {typeof p.value === 'number' && p.name?.includes('Ingresos') ? money(p.value) : p.value}</p>)}
+    <div className="sl-table-wrap">
+      <table className="sl-mini">
+        <caption className="sr-only">{caption}</caption>
+        <thead><tr>{columns.map((c) => <th key={c.key} scope="col" className={c.num ? 'num' : undefined}>{c.label}</th>)}</tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>{columns.map((c) => <td key={c.key} className={c.num ? 'num' : undefined}>{c.fmt ? c.fmt(r[c.key], r) : r[c.key]}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-};
+}
+
+// Gráfico con título, descripción y la misma información en una tabla desplegable (los valores también van rotulados en el gráfico).
+function ChartCard({ id, title, sub, columns, rows, height = 240, children }) {
+  return (
+    <section className="card sl-chart" aria-labelledby={`${id}-t`}>
+      <h2 id={`${id}-t`}>{title}</h2>
+      {sub && <p className="sl-sub">{sub}</p>}
+      <div className="sl-chart-box" role="img" aria-label={`Gráfico: ${title}. Los mismos datos están en la tabla «Ver como tabla de datos».`}>
+        <ResponsiveContainer width="100%" height={height}>{children}</ResponsiveContainer>
+      </div>
+      <details className="sl-details">
+        <summary>Ver como tabla de datos</summary>
+        <DataTable caption={title} columns={columns} rows={rows} />
+      </details>
+    </section>
+  );
+}
+
+const Kpis = ({ items }) => (
+  <ul className="sl-kpis">
+    {items.map((k) => (
+      <li key={k.label} className="card sl-kpi"><div className="sl-kpi-value">{k.value}</div><div className="sl-kpi-label">{k.label}</div>{k.note && <div className="sl-kpi-note">{k.note}</div>}</li>
+    ))}
+  </ul>
+);
+const Empty = ({ children }) => <div className="sl-empty"><p><strong>{children}</strong></p><p>Cambia el rango de fechas o espera a que haya compras.</p></div>;
+
+function Revenue({ d }) {
+  const { totals, range, byDay, byBranch } = d;
+  if (totals.transactions === 0) return <Empty>Todavía no hay ventas en este rango.</Empty>;
+  const dayRows = byDay.map((r) => ({ ...r, label: shortDay(r.date) }));
+  return (
+    <>
+      <Kpis items={[
+        { label: 'Ingresos aprobados', value: money(totals.revenue) },
+        { label: 'Entradas vendidas', value: totals.tickets },
+        { label: 'Promedio diario', value: money(totals.revenue / range.days), note: `en ${range.days} ${range.days === 1 ? 'día' : 'días'}` },
+        { label: 'Reembolsado', value: money(totals.refundedAmount) },
+      ]} />
+      <div className="sl-grid2">
+        <ChartCard id="rv-day" title="Ingresos por día" sub="Soles de órdenes aprobadas, por día de compra (Lima). Los días sin ventas valen 0."
+          columns={[{ key: 'date', label: 'Día', fmt: (v) => dayLabel(v) }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byDay}>
+          <LineChart data={dayRows} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" />
+            <XAxis dataKey="label" tick={AXIS} interval="preserveStartEnd" minTickGap={16} />
+            <YAxis tick={AXIS} tickFormatter={(v) => `S/ ${v}`} width={64} allowDecimals={false} />
+            <Tooltip {...TIP} formatter={(v) => [money(v), 'Ingresos']} />
+            <Line type="linear" dataKey="revenue" name="Ingresos" stroke={INK} strokeWidth={2.5} dot={{ r: 4, fill: INK }} isAnimationActive={false} />
+          </LineChart>
+        </ChartCard>
+        <ChartCard id="rv-branch" title="Ingresos por sede" sub="Soles de órdenes aprobadas en el rango."
+          columns={[{ key: 'name', label: 'Sede' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byBranch}>
+          <BarChart data={byBranch} margin={{ top: 22, right: 12, left: 4, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" vertical={false} />
+            <XAxis dataKey="name" tick={AXIS} />
+            <YAxis tick={AXIS} tickFormatter={(v) => `S/ ${v}`} width={64} allowDecimals={false} />
+            <Tooltip {...TIP} formatter={(v) => [money(v), 'Ingresos']} />
+            <Bar dataKey="revenue" name="Ingresos" fill={INK} isAnimationActive={false}>
+              <LabelList dataKey="revenue" position="top" formatter={money} fill="var(--text-primary)" fontSize={12} />
+            </Bar>
+          </BarChart>
+        </ChartCard>
+      </div>
+    </>
+  );
+}
+
+function Occupancy({ d }) {
+  const { occupancy, byHall, byScreening, screeningsTruncated } = d;
+  if (occupancy.screenings === 0) return <Empty>No hay funciones programadas en este rango.</Empty>;
+  const halls = byHall.map((h) => ({ ...h, label: `${h.branchName} · ${h.hallName}` }));
+  return (
+    <>
+      <Kpis items={[
+        { label: 'Ocupación general', value: pctText(occupancy.rate) },
+        { label: 'Butacas vendidas', value: occupancy.sold, note: `de ${occupancy.capacity} disponibles` },
+        { label: 'Funciones', value: occupancy.screenings, note: 'sin borradores ni canceladas' },
+      ]} />
+      <p className="sl-note">Ocupación = butacas vendidas sobre la capacidad de las funciones cuya fecha cae en el rango (incluye funciones futuras).</p>
+      <ChartCard id="oc-hall" title="Ocupación por sala" sub="Porcentaje de butacas vendidas en las funciones del rango." height={Math.max(220, halls.length * 44 + 40)}
+        columns={[{ key: 'label', label: 'Sala' }, { key: 'screenings', label: 'Funciones', num: true }, { key: 'sold', label: 'Vendidas', num: true }, { key: 'capacity', label: 'Capacidad', num: true }, { key: 'occupancy', label: 'Ocupación', num: true, fmt: pctText }]} rows={halls}>
+        <BarChart data={halls} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" horizontal={false} />
+          <XAxis type="number" domain={[0, 100]} tick={AXIS} tickFormatter={(v) => `${v} %`} />
+          <YAxis type="category" dataKey="label" tick={AXIS} width={170} />
+          <Tooltip {...TIP} formatter={(v) => [pctText(v), 'Ocupación']} />
+          <Bar dataKey="occupancy" name="Ocupación" fill={INK} isAnimationActive={false}>
+            <LabelList dataKey="occupancy" position="right" formatter={pctText} fill="var(--text-primary)" fontSize={12} />
+          </Bar>
+        </BarChart>
+      </ChartCard>
+      <section className="card sl-section" style={{ marginTop: 20 }} aria-labelledby="oc-fn-t">
+        <h2 id="oc-fn-t">Ocupación por función</h2>
+        <details className="sl-details" open>
+          <summary>Tabla de funciones</summary>
+          <DataTable caption="Ocupación por función"
+            columns={[{ key: 'date', label: 'Día' }, { key: 'startTime', label: 'Hora' }, { key: 'movieTitle', label: 'Película' }, { key: 'hallName', label: 'Sala', fmt: (v, r) => `${r.branchName} · ${v}` },
+              { key: 'sold', label: 'Vendidas', num: true }, { key: 'capacity', label: 'Capacidad', num: true }, { key: 'occupancy', label: 'Ocupación', num: true, fmt: pctText }]} rows={byScreening} />
+          {screeningsTruncated && <p className="sl-note">Se muestran las primeras {byScreening.length} funciones del rango.</p>}
+        </details>
+      </section>
+    </>
+  );
+}
+
+function Movies({ d }) {
+  const movies = d.byMovie.slice(0, 10);
+  if (d.totals.transactions === 0 || movies.length === 0) return <Empty>Todavía no hay ventas en este rango.</Empty>;
+  return (
+    <ChartCard id="mv-top" title="Películas por entradas vendidas" sub={`Las ${movies.length === 1 ? 'película' : `${movies.length} películas`} con más entradas en órdenes aprobadas.`} height={Math.max(200, movies.length * 44 + 40)}
+      columns={[{ key: 'title', label: 'Película' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={d.byMovie}>
+      <BarChart data={movies} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" horizontal={false} />
+        <XAxis type="number" tick={AXIS} allowDecimals={false} />
+        <YAxis type="category" dataKey="title" tick={AXIS} width={170} />
+        <Tooltip {...TIP} formatter={(v) => [v, 'Entradas']} />
+        <Bar dataKey="tickets" name="Entradas" fill={INK} isAnimationActive={false}>
+          <LabelList dataKey="tickets" position="right" fill="var(--text-primary)" fontSize={12} />
+        </Bar>
+      </BarChart>
+    </ChartCard>
+  );
+}
+
+function Payments({ d }) {
+  const { totals, byChannel, byPresale } = d;
+  if (totals.transactions === 0) return <Empty>Todavía no hay ventas en este rango.</Empty>;
+  const sumTickets = byChannel.reduce((a, r) => a + r.tickets, 0) || 1;
+  const share = (v) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span className="sl-bar" aria-hidden="true"><span style={{ width: `${Math.round((v / sumTickets) * 100)}%` }} /></span>{Math.round((v / sumTickets) * 100)} %
+    </span>
+  );
+  return (
+    <>
+      <Kpis items={[
+        { label: 'Tasa de aprobación', value: pctText(totals.approvalRate), note: 'pagos aceptados sobre intentados' },
+        { label: 'Pagos rechazados', value: totals.rejected },
+        { label: 'Órdenes reembolsadas', value: totals.refunded, note: money(totals.refundedAmount) },
+        { label: 'Transacciones', value: totals.transactions },
+      ]} />
+      <div className="sl-grid2">
+        <section className="card sl-section" aria-labelledby="pg-sum-t">
+          <h2 id="pg-sum-t">Resumen de transacciones</h2>
+          <DataTable caption="Resumen de transacciones por estado" columns={[{ key: 'label', label: 'Estado' }, { key: 'value', label: 'Órdenes', num: true }]}
+            rows={[{ label: 'Aprobadas', value: totals.approved }, { label: 'Rechazadas', value: totals.rejected }, { label: 'Reembolsadas (simulado)', value: totals.refunded },
+              { label: 'Canceladas', value: totals.cancelled }, { label: 'Pendientes', value: totals.pending }, { label: 'Total', value: totals.transactions }]} />
+        </section>
+        <section className="card sl-section" aria-labelledby="pg-ch-t">
+          <h2 id="pg-ch-t">Ventas por canal</h2>
+          <DataTable caption="Ventas aprobadas por canal" columns={[{ key: 'channel', label: 'Canal', fmt: (v) => CHANNEL_LABELS[v] ?? v }, { key: 'orders', label: 'Órdenes', num: true },
+            { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }, { key: 'share', label: 'Parte de las entradas', fmt: (_, r) => share(r.tickets) }]} rows={byChannel} />
+          <h2 id="pg-pre-t" style={{ marginTop: 20 }}>Preventa y venta normal</h2>
+          <DataTable caption="Ventas aprobadas, preventa frente a venta normal" columns={[{ key: 'presale', label: 'Tipo', fmt: (v) => (v ? 'Preventa' : 'Venta normal') }, { key: 'orders', label: 'Órdenes', num: true },
+            { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byPresale} />
+        </section>
+      </div>
+    </>
+  );
+}
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState('Ingresos');
-  const totalRevenue = orders.filter(o => o.status === 'approved').reduce((s, o) => s + o.amount, 0);
+  const { currentCinemaId, isAdminCentral, branches } = useCinema();
+  const today = todayInLima();
+  const initial = { from: addDaysToDate(today, -6), to: today };
+  const [draft, setDraft] = useState(initial);
+  const [applied, setApplied] = useState(initial);
+  const [tab, setTab] = useState('Ingresos');
+  const headingRef = useRef(null);
+  useEffect(() => { document.title = 'Reportes · Cinerama'; headingRef.current?.focus(); }, []);
+
+  const branchId = isAdminCentral && currentCinemaId !== 'all' ? currentCinemaId : '';
+  const params = { ...applied, branchId };
+  const query = useAdminQuery(() => adminApi.sales.reports(params), JSON.stringify(params));
+  const d = query.data;
+  const invalid = !draft.from || !draft.to || draft.from > draft.to;
+  const preset = (days) => { const r = { from: addDaysToDate(today, -(days - 1)), to: today }; setDraft(r); setApplied(r); };
+  const scopeName = isAdminCentral ? (branchId ? branches.find((b) => b.id === branchId)?.name : 'todas las sedes') : 'tu sede';
 
   return (
-    <div>
+    <div className="mv-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Reportes y Análisis</h1>
-          <p className="page-subtitle">Inteligencia de negocios y métricas de rendimiento</p>
-        </div>
-        <div className="flex gap-8">
-          <button type="button" className="btn btn-secondary" disabled title="Disponible cuando haya datos reales"><Download size={15} aria-hidden="true" /> Exportar PDF (no disponible)</button>
-          <button type="button" className="btn btn-secondary" disabled title="Disponible cuando haya datos reales"><Download size={15} aria-hidden="true" /> Exportar CSV (no disponible)</button>
+          <h1 className="page-title" tabIndex={-1} ref={headingRef}>{isAdminCentral ? 'Reportes globales' : 'Reportes de la sede'}</h1>
+          <p className="page-subtitle">Calculados por el servidor con las compras reales ({scopeName}). Fechas de Lima.</p>
         </div>
       </div>
-      <DemoNotice>Todas las cifras y gráficos de esta pantalla son de ejemplo. Se calcularán con datos reales cuando existan las compras.</DemoNotice>
 
-      <div className="tabs mb-6">
-        {tabs.map(t => <button key={t} className={`tab ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>{t}</button>)}
-      </div>
-
-      {activeTab === 'Ingresos' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="grid-4">
-            {[
-              { label: 'Ingresos Mayo', value: 'S/ 145,000', color: 'var(--emerald)' },
-              { label: 'Total Anual', value: 'S/ 559,000', color: 'var(--cinema-gold)' },
-              { label: 'Promedio Diario', value: 'S/ 4,833', color: 'var(--electric-blue)' },
-              { label: 'Crecimiento vs Abr', value: '+13%', color: 'var(--action-red)' },
-            ].map((k, i) => (
-              <div key={i} className="card" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: k.color, marginBottom: 4 }}>{k.value}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{k.label}</div>
-              </div>
-            ))}
-          </div>
-          <div className="grid-2">
-            <div className="card">
-              <div className="section-title mb-4">Tendencia Semanal de Ingresos</div>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={revenueByDay}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="revenue" name="Ingresos" stroke="var(--action-red)" strokeWidth={2.5} dot={{ fill: 'var(--action-red)', r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="card">
-              <div className="section-title mb-4">Ingresos y Tickets Mensuales</div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="revenue" name="Ingresos" fill="var(--action-red)" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+      <form className="mv-toolbar" role="search" aria-label="Rango de fechas del reporte" onSubmit={(e) => { e.preventDefault(); if (!invalid) setApplied(draft); }}>
+        <div className="mv-filter">
+          <label htmlFor="rp-from">Desde</label>
+          <input id="rp-from" className="input" type="date" value={draft.from} onChange={(e) => setDraft((x) => ({ ...x, from: e.target.value }))} />
         </div>
-      )}
-
-      {activeTab === 'Ocupación' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="card">
-            <div className="section-title mb-4">Tasa de Ocupación por Sala</div>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={occupancyByHall}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="hall" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
-                <Tooltip formatter={v => [`${v}%`, 'Ocupación']} contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8 }} />
-                <Bar dataKey="occupancy" name="Ocupación" radius={[6,6,0,0]}>
-                  {occupancyByHall.map((h, i) => <Cell key={i} fill={h.occupancy > 80 ? 'var(--action-red)' : h.occupancy === 0 ? 'var(--border)' : 'var(--electric-blue)'} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="mv-filter">
+          <label htmlFor="rp-to">Hasta</label>
+          <input id="rp-to" className="input" type="date" value={draft.to} onChange={(e) => setDraft((x) => ({ ...x, to: e.target.value }))} aria-describedby="rp-hint" />
         </div>
-      )}
-
-      {activeTab === 'Películas' && (
-        <div className="card">
-          <div className="section-title mb-4">Top Películas por Tickets Vendidos</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {topMovies.map((m, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <span style={{ width: 22, textAlign: 'right', color: i < 3 ? 'var(--cinema-gold)' : 'var(--text-muted)', fontWeight: 700, fontSize: 13 }}>#{i+1}</span>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{m.name}</span>
-                <div className="progress" style={{ width: 200 }}>
-                  <div className="progress-fill" style={{ width: `${(m.tickets / topMovies[0].tickets) * 100}%`, background: i === 0 ? 'var(--cinema-gold)' : 'var(--action-red)' }} />
-                </div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600, width: 60, textAlign: 'right' }}>{m.tickets}</span>
-              </div>
-            ))}
-          </div>
+        <button type="submit" className="btn btn-primary" disabled={invalid}>Ver reporte</button>
+        <div className="sl-range" role="group" aria-label="Rangos rápidos">
+          <button type="button" className="btn btn-secondary" onClick={() => preset(7)}>Últimos 7 días</button>
+          <button type="button" className="btn btn-secondary" onClick={() => preset(30)}>Últimos 30 días</button>
         </div>
-      )}
+      </form>
+      <p id="rp-hint" className={invalid ? 'mv-field-error' : 'sl-note'} role={invalid ? 'alert' : undefined}>
+        {invalid ? 'Elige las dos fechas y que «Hasta» no sea anterior a «Desde».' : 'Máximo 92 días por reporte.'}
+      </p>
 
-      {activeTab === 'Pagos' && (
-        <div className="grid-2">
-          <div className="card">
-            <div className="section-title mb-4">Distribución de Métodos de Pago</div>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={paymentMethods} cx="50%" cy="50%" outerRadius={85} innerRadius={50} dataKey="value" paddingAngle={3}>
-                  {paymentMethods.map((p, i) => <Cell key={i} fill={p.color} />)}
-                </Pie>
-                <Tooltip formatter={v => `${v}%`} contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8 }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {paymentMethods.map(p => (
-                <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color }} />
-                  <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{p.name}</span>
-                  <span style={{ fontWeight: 700 }}>{p.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="card">
-            <div className="section-title mb-4">Resumen de Transacciones</div>
-            {[
-              { label: 'Transacciones Totales', value: orders.length },
-              { label: 'Aprobadas', value: orders.filter(o => o.status === 'approved').length, color: 'var(--emerald)' },
-              { label: 'Rechazadas', value: orders.filter(o => o.status === 'rejected').length, color: 'var(--action-red)' },
-              { label: 'Reembolsadas', value: orders.filter(o => o.status === 'refunded').length, color: 'var(--intense-orange)' },
-              { label: 'Tasa de Aprobación', value: `${Math.round((orders.filter(o => o.status === 'approved').length / orders.length) * 100)}%`, color: 'var(--emerald)' },
-            ].map((s, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: 14 }}>
-                <span style={{ color: 'var(--text-secondary)' }}>{s.label}</span>
-                <span style={{ fontWeight: 700, color: s.color || 'var(--text-primary)' }}>{s.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <QueryGate query={query} what="el reporte" />
 
-      {activeTab === 'Rendimiento' && (
-        <div className="grid-2">
-          {[
-            { label: 'Horas Pico', items: [{ time: '20:00-22:00', pct: 94 }, { time: '18:00-20:00', pct: 81 }, { time: '16:00-18:00', pct: 67 }, { time: '14:00-16:00', pct: 55 }] },
-            { label: 'Ingresos por Sede', items: [{ time: 'Centro Cinerama', pct: 42 }, { time: 'Complejo Mall', pct: 30 }, { time: 'IMAX Premium', pct: 18 }, { time: 'Cine Suburbia', pct: 10 }] },
-          ].map(section => (
-            <div key={section.label} className="card">
-              <div className="section-title mb-4">{section.label}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {section.items.map((item, i) => (
-                  <div key={i}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>{item.time}</span>
-                      <span style={{ fontWeight: 700 }}>{item.pct}%</span>
-                    </div>
-                    <div className="progress">
-                      <div className="progress-fill" style={{ width: `${item.pct}%`, background: item.pct > 80 ? 'var(--action-red)' : 'var(--electric-blue)' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      {d && (
+        <>
+          <p className="sr-only" role="status">{query.status === 'loading' ? 'Actualizando el reporte…' : `Reporte del ${d.range.from} al ${d.range.to}`}</p>
+          <p className="sl-note">Del {dayLabel(d.range.from).toLowerCase()} al {dayLabel(d.range.to).toLowerCase()} ({d.range.days} {d.range.days === 1 ? 'día' : 'días'}).</p>
+          <div className="sl-tabs" role="group" aria-label="Secciones del reporte">
+            {TABS.map((t) => <button key={t} type="button" className="btn btn-secondary" aria-pressed={tab === t} onClick={() => setTab(t)}>{t}</button>)}
+          </div>
+          {tab === 'Ingresos' && <Revenue d={d} />}
+          {tab === 'Ocupación' && <Occupancy d={d} />}
+          {tab === 'Películas' && <Movies d={d} />}
+          {tab === 'Pagos' && <Payments d={d} />}
+        </>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CinemaProvider } from './context/CinemaContext';
-import { RequireStaff, RequireCentral, RequireCustomer } from './components/RequireAuth';
+import { RequireStaff, RequireCentral, RequireCustomer, RequirePerm } from './components/RequireAuth';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import Dashboard from './pages/Dashboard';
@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
+import { SALES_PERMS, REPORT_PERMS } from './shared/permissions';
 import WebHome from './pages/WebHome';
 import WebLayout from './components/layout/WebLayout';
 import WebAuth from './pages/WebAuth';
@@ -39,17 +40,11 @@ function AdminLayout() {
   // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
   const forced = !!user?.mustChangePassword;
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notifOpen, setNotifOpen] = useState(false);
   return (
     <div className="app-layout">
       <Sidebar open={sidebarOpen} />
       <div className="main-content">
-        <Topbar
-          onMenuToggle={() => setSidebarOpen(o => !o)}
-          onNotifToggle={() => setNotifOpen(o => !o)}
-          notifOpen={notifOpen}
-          onNotifClose={() => setNotifOpen(false)}
-        />
+        <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} />
         <div className="page-content">
           {forced ? <ChangePassword forced /> : <Outlet />}
         </div>
@@ -92,8 +87,8 @@ export default function App() {
               <Route path="/movies/*"     element={<MovieManagement />} />
               <Route path="/scheduling/*" element={<Scheduling />} />
               <Route path="/tickets/*"    element={<TicketOperations />} />
-              <Route path="/payments/*"   element={<Payments />} />
-              <Route path="/reports/*"    element={<Reports />} />
+              <Route path="/payments/*"   element={<RequirePerm any={SALES_PERMS}><Payments /></RequirePerm>} />
+              <Route path="/reports/*"    element={<RequirePerm any={REPORT_PERMS}><Reports /></RequirePerm>} />
               {/* Solo Admin Central */}
               <Route path="/cinema/*"     element={<RequireCentral><CinemaManagement /></RequireCentral>} />
               <Route path="/users/*"      element={<RequireCentral><UsersAccess /></RequireCentral>} />
