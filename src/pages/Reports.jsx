@@ -61,20 +61,22 @@ const Kpis = ({ items }) => (
 const Empty = ({ children }) => <div className="sl-empty"><p><strong>{children}</strong></p><p>Cambia el rango de fechas o espera a que haya compras.</p></div>;
 
 function Revenue({ d }) {
-  const { totals, range, byDay, byBranch } = d;
+  const { totals, range, byDay, byBranch, byProduct } = d;
   if (totals.transactions === 0) return <Empty>Todavía no hay ventas en este rango.</Empty>;
   const dayRows = byDay.map((r) => ({ ...r, label: shortDay(r.date) }));
   return (
     <>
       <Kpis items={[
-        { label: 'Ingresos aprobados', value: money(totals.revenue) },
+        { label: 'Ingresos totales', value: money(totals.revenue), note: 'entradas + confitería' },
+        { label: 'Ingresos de entradas', value: money(totals.ticketRevenue) },
+        { label: 'Ingresos de confitería', value: money(totals.foodRevenue), note: `${totals.ordersWithFood} ${totals.ordersWithFood === 1 ? 'orden la incluye' : 'órdenes la incluyen'} (${pctText(totals.foodAttachRate)})` },
         { label: 'Entradas vendidas', value: totals.tickets },
         { label: 'Promedio diario', value: money(totals.revenue / range.days), note: `en ${range.days} ${range.days === 1 ? 'día' : 'días'}` },
         { label: 'Reembolsado', value: money(totals.refundedAmount) },
       ]} />
       <div className="sl-grid2">
-        <ChartCard id="rv-day" title="Ingresos por día" sub="Soles de órdenes aprobadas, por día de compra (Lima). Los días sin ventas valen 0."
-          columns={[{ key: 'date', label: 'Día', fmt: (v) => dayLabel(v) }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byDay}>
+        <ChartCard id="rv-day" title="Ingresos por día" sub="Soles totales (entradas y confitería) de órdenes aprobadas, por día de compra (Lima). Los días sin ventas valen 0. El desglose está en la tabla."
+          columns={[{ key: 'date', label: 'Día', fmt: (v) => dayLabel(v) }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'ticketRevenue', label: 'Ingresos de entradas', num: true, fmt: money }, { key: 'foodRevenue', label: 'Ingresos de confitería', num: true, fmt: money }, { key: 'revenue', label: 'Ingresos totales', num: true, fmt: money }]} rows={byDay}>
           <LineChart data={dayRows} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" />
             <XAxis dataKey="label" tick={AXIS} interval="preserveStartEnd" minTickGap={16} />
@@ -84,7 +86,7 @@ function Revenue({ d }) {
           </LineChart>
         </ChartCard>
         <ChartCard id="rv-branch" title="Ingresos por sede" sub="Soles de órdenes aprobadas en el rango."
-          columns={[{ key: 'name', label: 'Sede' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byBranch}>
+          columns={[{ key: 'name', label: 'Sede' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'ticketRevenue', label: 'Ingresos de entradas', num: true, fmt: money }, { key: 'foodRevenue', label: 'Ingresos de confitería', num: true, fmt: money }, { key: 'revenue', label: 'Ingresos totales', num: true, fmt: money }]} rows={byBranch}>
           <BarChart data={byBranch} margin={{ top: 22, right: 12, left: 4, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" vertical={false} />
             <XAxis dataKey="name" tick={AXIS} />
@@ -96,6 +98,14 @@ function Revenue({ d }) {
           </BarChart>
         </ChartCard>
       </div>
+      <section className="card sl-section" style={{ marginTop: 20 }} aria-labelledby="rv-prod-t">
+        <h2 id="rv-prod-t">Confitería por producto</h2>
+        <p className="sl-sub">Unidades e ingresos de órdenes aprobadas, por producto y tamaño. No se atribuye a ninguna película.</p>
+        {byProduct.length === 0 ? <p className="sl-note">Ninguna orden aprobada de este rango incluye confitería.</p> : (
+          <DataTable caption="Confitería vendida por producto y tamaño"
+            columns={[{ key: 'name', label: 'Producto', fmt: (v, r) => `${v} (${r.variantLabel})` }, { key: 'units', label: 'Unidades', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byProduct} />
+        )}
+      </section>
     </>
   );
 }
@@ -142,8 +152,8 @@ function Movies({ d }) {
   const movies = d.byMovie.slice(0, 10);
   if (d.totals.transactions === 0 || movies.length === 0) return <Empty>Todavía no hay ventas en este rango.</Empty>;
   return (
-    <ChartCard id="mv-top" title="Películas por entradas vendidas" sub={`Las ${movies.length === 1 ? 'película' : `${movies.length} películas`} con más entradas en órdenes aprobadas.`} height={Math.max(200, movies.length * 44 + 40)}
-      columns={[{ key: 'title', label: 'Película' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={d.byMovie}>
+    <ChartCard id="mv-top" title="Películas por entradas vendidas" sub={`Las ${movies.length === 1 ? 'película' : `${movies.length} películas`} con más entradas en órdenes aprobadas. Los ingresos son solo de entradas: la confitería no se atribuye a una película.`} height={Math.max(200, movies.length * 44 + 40)}
+      columns={[{ key: 'title', label: 'Película' }, { key: 'orders', label: 'Órdenes', num: true }, { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos de entradas', num: true, fmt: money }]} rows={d.byMovie}>
       <BarChart data={movies} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-interactive)" horizontal={false} />
         <XAxis type="number" tick={AXIS} allowDecimals={false} />
@@ -184,10 +194,10 @@ function Payments({ d }) {
         <section className="card sl-section" aria-labelledby="pg-ch-t">
           <h2 id="pg-ch-t">Ventas por canal</h2>
           <DataTable caption="Ventas aprobadas por canal" columns={[{ key: 'channel', label: 'Canal', fmt: (v) => CHANNEL_LABELS[v] ?? v }, { key: 'orders', label: 'Órdenes', num: true },
-            { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }, { key: 'share', label: 'Parte de las entradas', fmt: (_, r) => share(r.tickets) }]} rows={byChannel} />
+            { key: 'tickets', label: 'Entradas', num: true }, { key: 'ticketRevenue', label: 'Ingresos de entradas', num: true, fmt: money }, { key: 'foodRevenue', label: 'Ingresos de confitería', num: true, fmt: money }, { key: 'share', label: 'Parte de las entradas', fmt: (_, r) => share(r.tickets) }]} rows={byChannel} />
           <h2 id="pg-pre-t" style={{ marginTop: 20 }}>Preventa y venta normal</h2>
           <DataTable caption="Ventas aprobadas, preventa frente a venta normal" columns={[{ key: 'presale', label: 'Tipo', fmt: (v) => (v ? 'Preventa' : 'Venta normal') }, { key: 'orders', label: 'Órdenes', num: true },
-            { key: 'tickets', label: 'Entradas', num: true }, { key: 'revenue', label: 'Ingresos', num: true, fmt: money }]} rows={byPresale} />
+            { key: 'tickets', label: 'Entradas', num: true }, { key: 'ticketRevenue', label: 'Ingresos de entradas', num: true, fmt: money }, { key: 'foodRevenue', label: 'Ingresos de confitería', num: true, fmt: money }]} rows={byPresale} />
         </section>
       </div>
     </>

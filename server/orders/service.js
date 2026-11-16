@@ -10,8 +10,10 @@ import { layoutFor, isValidSeat, compareSeats } from '../../src/shared/seatLayou
 import {
   MAX_TICKETS_PER_SCREENING, WEB_SALE_CUTOFF_MINUTES, SIMULATED_OUTCOMES, REFUND_REASONS,
   MAX_TICKETS_PER_COUNTER_ORDER, COUNTER_SALE_GRACE_MINUTES, CHECKIN_OPENS_MINUTES_BEFORE, COUNTER_PAY_METHODS,
-  COUNTER_ANON_NAME, COUNTER_NAME_MAX,
+  COUNTER_ANON_NAME, COUNTER_NAME_MAX, PICKUP_PREP_LEAD_MINUTES, PICKUP_POINT_LABEL, PICKUP_TIMINGS, FULFILLMENT_STATUS_LABELS,
+  parseFoodRequest,
 } from '../../src/shared/purchase.js';
+import { createMenuModel } from '../menu.js';
 import { ORDER_CODE_RE, normalizeOrderCode } from '../../src/shared/orderCode.js';
 
 // Sin 0, 1, I, L ni O (se confunden al leerlos o teclearlos): 31 simbolos, 10 caracteres = ~49,5 bits.
@@ -21,6 +23,7 @@ export const newOrderCode = () => `CIN-${randomChars(5)}-${randomChars(5)}`;
 export { ORDER_CODE_RE };
 const KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const round2 = (n) => Math.round(n * 100) / 100;
+const LIMA_OFFSET_MS = 5 * 3600 * 1000;
 
 const limaStamp = (ms) => {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
@@ -30,6 +33,7 @@ const limaStamp = (ms) => {
 };
 
 export function createOrderService(db, clock = Date.now) {
+  const menu = createMenuModel(db);
   const q = {
     screening: db.prepare(`SELECT s.*, m.title AS movie_title, m.status AS movie_status, m.presale AS movie_presale,
         m.release_date AS movie_release_date, m.poster AS movie_poster, m.duration AS movie_duration, m.rating AS movie_rating,
@@ -49,8 +53,15 @@ export function createOrderService(db, clock = Date.now) {
     userOrder: db.prepare('SELECT * FROM orders WHERE user_id = ? AND id = ?'),
     moviePresale: db.prepare('SELECT id, presale, release_date FROM movies WHERE id = ?'),
     insertOrder: db.prepare(`INSERT INTO orders (id,screening_id,branch_id,user_id,customer_name,email,amount,method,status,created_at,
-        channel,presale,idempotency_key,payment_ref,created_ms)
-      VALUES (@id,@screening_id,@branch_id,@user_id,@customer_name,@email,@amount,'card',@status,@created_at,'web',@presale,@key,@payment_ref,@now)`),
+        channel,presale,idempotency_key,payment_ref,created_ms,food_amount,pickup_timing)
+      VALUES (@id,@screening_id,@branch_id,@user_id,@customer_name,@email,@amount,'card',@status,@created_at,'web',@presale,@key,@payment_ref,@now,@food_amount,@pickup_timing)`),
+    orderItems: db.prepare('SELECT variant_id, product_name, variant_label, includes_text, qty, unit_price, line_total FROM order_items WHERE order_id = ? ORDER BY id'),
+    insertItem: db.prepare(`INSERT INTO order_items (order_id,variant_id,product_name,variant_label,includes_text,qty,unit_price,line_total)
+      VALUES (?,?,?,?,?,?,?,?)`),
+    insertFulfillment: db.prepare(`INSERT INTO fulfillments (order_id,branch_id,timing,prepare_from_ms,status,created_ms)
+      VALUES (?,?,?,?,'ordered',?)`),
+    fulfillmentOf: db.prepare('SELECT * FROM fulfillments WHERE order_id = ?'),
+    cancelFulfillment: db.prepare(`UPDATE fulfillments SET status = 'cancelled' WHERE order_id = ? AND status != 'cancelled'`),
     insertSeat: db.prepare('INSERT INTO order_seats (order_id,screening_id,seat,active,unit_price) VALUES (?,?,?,?,?)'),
     sync: db.prepare(`UPDATE screenings SET booked_seats = (SELECT COUNT(*) FROM order_seats os WHERE os.screening_id = screenings.id AND os.active = 1) WHERE id = ?`),
     approvedOfScreening: db.prepare(`SELECT id, amount FROM orders WHERE screening_id = ? AND status = 'approved'`),
@@ -133,8 +144,19 @@ export function createOrderService(db, clock = Date.now) {
   const mapOrder = (o) => {
     const s = q.screening.get(o.screening_id);
     const rawSeats = q.orderSeats.all(o.id);
+    const food = o.food_amount ?? 0;
+    const items = q.orderItems.all(o.id);
+    const f = o.pickup_timing ? q.fulfillmentOf.get(o.id) : null;
     return {
       code: o.id, status: o.status, displayStatus: displayState(o, s, rawSeats), amount: o.amount, createdAt: o.created_ms ?? null, presale: !!o.presale,
+      // Desglose: amount = ticketAmount + foodAmount. Los items son una FOTO del momento de la compra.
+      foodAmount: food, ticketAmount: round2(o.amount - food),
+      items: items.map((i) => ({ variantId: i.variant_id, name: i.product_name, variantLabel: i.variant_label, includes: i.includes_text,
+        qty: i.qty, unitPrice: i.unit_price, lineTotal: i.line_total })),
+      pickup: o.pickup_timing ? {
+        point: PICKUP_POINT_LABEL, timing: o.pickup_timing, timingLabel: PICKUP_TIMINGS[o.pickup_timing] ?? null,
+        prepareFrom: f?.prepare_from_ms ?? null, status: f?.status ?? null, statusLabel: f ? FULFILLMENT_STATUS_LABELS[f.status] : null,
+      } : null,
       screening: s && {
         id: s.id, date: s.starts_on, startTime: s.start_time, endTime: s.end_time, format: s.format, language: s.language,
         movieTitle: s.movie_title, branchName: s.branch_name, hallName: s.hall_name,
@@ -195,22 +217,32 @@ export function createOrderService(db, clock = Date.now) {
     const outcome = pay.simulatedOutcome ?? 'approved';
     if (pay.method !== 'card') errors.payment = 'invalid_method';
     else if (!SIMULATED_OUTCOMES.includes(outcome)) errors.payment = 'invalid_outcome';
+    // Confiteria: solo variantId y qty cuentan. Los precios del cliente se usan unicamente para detectar cambios.
+    const food = parseFoodRequest(body.items, body.pickup);
+    if (food.errors) Object.assign(errors, food.errors);
+    const exp = body.expectedAmount;
+    if (exp !== undefined && !(typeof exp === 'number' && Number.isFinite(exp))) errors.expectedAmount = 'invalid';
     if (Object.keys(errors).length) return { errors };
-    return { value: { screeningId, seats: [...seats].sort(compareSeats), key: body.idempotencyKey, outcome } };
+    return { value: { screeningId, seats: [...seats].sort(compareSeats), key: body.idempotencyKey, outcome,
+      items: food.value.items, timing: food.value.timing, expectedAmount: exp ?? null } };
   }
 
   // Compra (pago simulado). `user`: { id, name, email }. Devuelve { status, body } y lo ejecuta en UNA transaccion.
   function purchase(user, rawBody) {
     const parsed = parseBody(rawBody);
     if (parsed.errors) return fail(400, 'validation', { errors: parsed.errors });
-    const { screeningId, seats, key, outcome } = parsed.value;
+    const { screeningId, seats, key, outcome, items, timing, expectedAmount } = parsed.value;
     return db.transaction(() => {
-      // 1. Idempotencia: la misma clave devuelve la orden original.
+      // 1. Idempotencia: la misma clave devuelve la orden original SOLO si la peticion es la misma (funcion, butacas,
+      // resultado simulado, carrito y momento de preparacion); si no, 409.
       const prev = q.byIdem.get(user.id, key);
       if (prev) {
         const prevSeats = q.orderSeats.all(prev.id).map((r) => r.seat).sort(compareSeats);
+        const sig = (list) => list.map((i) => `${i.variantId}x${i.qty}`).join();
+        const prevItems = q.orderItems.all(prev.id).map((r) => ({ variantId: r.variant_id, qty: r.qty })).sort((a, b) => a.variantId - b.variantId);
         const same = prev.screening_id === screeningId && prevSeats.join() === seats.join()
-          && (prev.status === 'rejected') === (outcome === 'declined');
+          && (prev.status === 'rejected') === (outcome === 'declined')
+          && sig(prevItems) === sig(items) && (prev.pickup_timing ?? null) === (items.length ? timing : null);
         if (!same) return fail(409, 'idempotency_conflict');
         return prev.status === 'rejected'
           ? { status: 402, body: { error: 'payment_declined', order: mapOrder(prev), replayed: true } }
@@ -234,10 +266,35 @@ export function createOrderService(db, clock = Date.now) {
       if (seats.length > lim.screening.remaining) {
         return fail(409, 'limit_exceeded', { scope: 'screening', limit: lim.screening.limit, bought: lim.screening.bought, remaining: lim.screening.remaining });
       }
-      // 5. Orden. Rechazada: se guarda sin butacas activas.
+      // 5. Confiteria: el servidor calcula SIEMPRE el precio desde la base (nunca el del cliente) y la disponibilidad
+      // en la sede de la funcion. Si algo no esta disponible o cambio el precio, NO se cobra ni se crea nada.
+      const ticketAmount = round2(row.price * seats.length);
+      const resolved = menu.resolveVariants(row.branch_id, items.map((i) => i.variantId));
+      if (items.some((i) => !resolved.get(i.variantId))) return fail(400, 'validation', { errors: { items: 'unknown_variant' } });
+      const unavailable = items.filter((i) => resolved.get(i.variantId).state !== 'ok');
+      if (unavailable.length) {
+        return fail(409, 'item_unavailable', {
+          variantIds: unavailable.map((i) => i.variantId),
+          items: unavailable.map((i) => { const v = resolved.get(i.variantId); return { variantId: v.variantId, name: v.productName, variantLabel: v.label, reason: v.state }; }),
+        });
+      }
+      const lines = items.map((i) => {
+        const v = resolved.get(i.variantId); const unitPrice = round2(v.price);
+        return { variantId: v.variantId, name: v.productName, label: v.label, includes: v.includesText, qty: i.qty, unitPrice,
+          lineTotal: round2(unitPrice * i.qty), previousUnitPrice: i.expectedUnitPrice === null ? null : round2(i.expectedUnitPrice) };
+      });
+      const foodAmount = round2(lines.reduce((a, l) => a + l.lineTotal, 0));
+      const amount = round2(ticketAmount + foodAmount);
+      const changed = lines.filter((l) => l.previousUnitPrice !== null && l.previousUnitPrice !== l.unitPrice);
+      if (changed.length || (expectedAmount !== null && round2(expectedAmount) !== amount)) {
+        return fail(409, 'price_changed', {
+          amount, ticketAmount, foodAmount, changedVariantIds: changed.map((l) => l.variantId),
+          items: lines.map((l) => ({ variantId: l.variantId, name: l.name, variantLabel: l.label, qty: l.qty, unitPrice: l.unitPrice, previousUnitPrice: l.previousUnitPrice })),
+        });
+      }
+      // 6. Orden. Rechazada: se guarda sin butacas activas (y sin fila de preparacion).
       const approved = outcome === 'approved';
       const now = clock();
-      const amount = round2(row.price * seats.length);
       let id;
       for (let i = 0; ; i++) {
         id = newOrderCode();
@@ -245,12 +302,17 @@ export function createOrderService(db, clock = Date.now) {
           q.insertOrder.run({
             id, screening_id: screeningId, branch_id: row.branch_id, user_id: user.id, customer_name: user.name, email: user.email,
             amount, status: approved ? 'approved' : 'rejected', created_at: limaStamp(now), presale: lim.presale ? 1 : 0, key,
-            payment_ref: `SIM-${randomChars(6)}`, now,
+            payment_ref: `SIM-${randomChars(6)}`, now, food_amount: foodAmount, pickup_timing: lines.length ? timing : null,
           });
           break;
         } catch (e) { if (i >= 5 || !String(e.code).startsWith('SQLITE_CONSTRAINT')) throw e; }
       }
       for (const s of seats) q.insertSeat.run(id, screeningId, s, approved ? 1 : 0, row.price);
+      for (const l of lines) q.insertItem.run(id, l.variantId, l.name, l.label, l.includes, l.qty, l.unitPrice, l.lineTotal);
+      if (approved && lines.length) {
+        const startMs = Date.parse(`${row.starts_on}T00:00:00Z`) + LIMA_OFFSET_MS + toMinutes(row.start_time) * 60000;
+        q.insertFulfillment.run(id, row.branch_id, timing, timing === 'at_showtime' ? Math.max(startMs - PICKUP_PREP_LEAD_MINUTES * 60000, now) : null, now);
+      }
       if (approved) syncBooked(screeningId);
       const order = mapOrder(q.byIdem.get(user.id, key));
       return approved ? { status: 201, body: { order } } : { status: 402, body: { error: 'payment_declined', order } };
@@ -265,6 +327,7 @@ export function createOrderService(db, clock = Date.now) {
     for (const o of q.approvedOfScreening.all(screeningId)) {
       q.refund.run({ id: o.id, now, reason: 'screening_cancelled', by, ref: randomChars(6) });
       q.releaseSeats.run(o.id);
+      q.cancelFulfillment.run(o.id);   // la funcion se cancelo: el pedido tambien, aunque ya se hubiera entregado
       refundedOrders++; refundedAmount += o.amount;
     }
     for (const o of q.pendingOfScreening.all(screeningId)) { q.cancelOrder.run(o.id); q.releaseSeats.run(o.id); }
@@ -470,8 +533,11 @@ export function createOrderService(db, clock = Date.now) {
       if (s && screeningSpan(s.starts_on, s.start_time, s.end_time).end <= nowAbs()) return fail(409, 'screening_finished');
       const seats = t.seatsFull.all(o.id);
       if (seats.some((r) => r.checked_in_at)) return fail(409, 'already_checked_in');
+      // Se reembolsa todo junto (entradas + confiteria) mientras la confiteria no se haya entregado.
+      if (q.fulfillmentOf.get(o.id)?.status === 'delivered') return fail(409, 'already_delivered');
       q.refund.run({ id: o.id, now: clock(), reason: reasonCode, by, ref: randomChars(6) });
       q.releaseSeats.run(o.id);
+      q.cancelFulfillment.run(o.id);
       syncBooked(o.screening_id);
       audit?.('order.refund', 'screening', o.screening_id, o.branch_id, { reason: reasonCode, seats: seats.length });
       return { status: 200, body: { order: mapOrder(t.order.get(o.id)) } };

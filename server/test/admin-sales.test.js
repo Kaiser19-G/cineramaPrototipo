@@ -91,7 +91,7 @@ describe('escenario', () => {
     const r = await admin.get(`${O}?from=2026-11-12&to=2026-11-13`);
     assert.equal(r.status, 200); assert.equal(r.headers.get('cache-control'), 'no-store');
     // aprobadas A 40 + B 20 + C 45 + F 12 = 117; reembolsada E 20; rechazada D (1); 6 ordenes
-    assert.deepEqual(r.json.totals, { revenue: 117, refunded: 20, rejected: 1, transactions: 6 });
+    assert.deepEqual(r.json.totals, { revenue: 117, ticketRevenue: 117, foodRevenue: 0, refunded: 20, refundedFood: 0, rejected: 1, transactions: 6 });
     assert.equal(r.json.total, 6);
     const byCode = Object.fromEntries(r.json.orders.map((o) => [o.code, o]));
     assert.equal(byCode[codes.E].status, 'refunded'); assert.equal(byCode[codes.E].refund.reasonCode, 'screening_cancelled');
@@ -101,7 +101,7 @@ describe('escenario', () => {
     assert.match(byCode[codes.A].payment.ref, /^SIM-/);
     // la sede 1 por separado: 40 + 20 + 12 aprobadas, 20 reembolsado, 0 rechazadas, 4 ordenes
     const b1 = await admin.get(`${O}?branchId=1`);
-    assert.deepEqual(b1.json.totals, { revenue: 72, refunded: 20, rejected: 0, transactions: 4 });
+    assert.deepEqual(b1.json.totals, { revenue: 72, ticketRevenue: 72, foodRevenue: 0, refunded: 20, refundedFood: 0, rejected: 0, transactions: 4 });
   });
 
   test('el JSON completo no trae correo completo, celular, DNI, user_id, hashes ni clave de idempotencia', async () => {
@@ -160,16 +160,16 @@ describe('reportes', () => {
     const r = await admin.get(`${R}?from=2026-11-11&to=2026-11-14`);
     assert.equal(r.status, 200); assert.equal(r.headers.get('cache-control'), 'no-store');
     assert.deepEqual(r.json.byDay, [
-      { date: '2026-11-11', revenue: 0, orders: 0, tickets: 0 },
-      { date: '2026-11-12', revenue: 40, orders: 1, tickets: 2 },                   // A, 23:59 Lima
-      { date: '2026-11-13', revenue: 77, orders: 3, tickets: 5 },                   // B 20 + C 45 + F 12
-      { date: '2026-11-14', revenue: 0, orders: 0, tickets: 0 },
+      { date: '2026-11-11', revenue: 0, ticketRevenue: 0, foodRevenue: 0, orders: 0, tickets: 0 },
+      { date: '2026-11-12', revenue: 40, ticketRevenue: 40, foodRevenue: 0, orders: 1, tickets: 2 },                   // A, 23:59 Lima
+      { date: '2026-11-13', revenue: 77, ticketRevenue: 77, foodRevenue: 0, orders: 3, tickets: 5 },                   // B 20 + C 45 + F 12
+      { date: '2026-11-14', revenue: 0, ticketRevenue: 0, foodRevenue: 0, orders: 0, tickets: 0 },
     ]);
-    assert.deepEqual(r.json.totals, { revenue: 117, tickets: 7, transactions: 6, approved: 4, rejected: 1, refunded: 1, refundedAmount: 20, cancelled: 0, pending: 0, approvalRate: 83.3 });
+    assert.deepEqual(r.json.totals, { revenue: 117, ticketRevenue: 117, foodRevenue: 0, ordersWithFood: 0, foodAttachRate: 0, refundedFoodAmount: 0, tickets: 7, transactions: 6, approved: 4, rejected: 1, refunded: 1, refundedAmount: 20, cancelled: 0, pending: 0, approvalRate: 83.3 });
     assert.deepEqual(r.json.byBranch.map((b) => [b.id, b.revenue, b.tickets]), [[1, 72, 4], [3, 45, 3]]);
     assert.deepEqual(r.json.byMovie.map((m) => [m.title, m.revenue, m.tickets]), [['Pelicula Ventas 4C', 117, 7]]);
-    assert.deepEqual(r.json.byChannel, [{ channel: 'web', orders: 4, revenue: 117, tickets: 7 }]);
-    assert.deepEqual(r.json.byPresale, [{ presale: false, orders: 4, revenue: 117, tickets: 7 }]);
+    assert.deepEqual(r.json.byChannel, [{ channel: 'web', orders: 4, revenue: 117, ticketRevenue: 117, foodRevenue: 0, tickets: 7 }]);
+    assert.deepEqual(r.json.byPresale, [{ presale: false, orders: 4, revenue: 117, ticketRevenue: 117, foodRevenue: 0, tickets: 7 }]);
     assert.equal(r.json.range.days, 4);
   });
 
@@ -219,7 +219,7 @@ describe('dashboard', () => {
     assert.equal(r.status, 200); assert.equal(r.headers.get('cache-control'), 'no-store');
     assert.equal(r.json.today, '2026-11-13');
     // hoy (13/11): B 20 + C 45 + F 12 aprobadas, 5 entradas; E (reembolsada) y A (12/11) no cuentan; 1 rechazada
-    assert.deepEqual(r.json.money, { revenue: 77, tickets: 5, rejected: 1 });
+    assert.deepEqual(r.json.money, { revenue: 77, ticketRevenue: 77, foodRevenue: 0, tickets: 5, rejected: 1 });
     const today = r.json.screenings.list.filter((s) => s.movieTitle === 'Pelicula Ventas 4C');
     assert.equal(today.length, 1); assert.deepEqual([today[0].sold, today[0].capacity, today[0].startTime], [1, 150, '18:00']);
     assert.ok(r.json.screenings.upcoming.every((s) => s.date > '2026-11-13') && !r.json.screenings.upcoming.some((s) => s.id === S4.id), 'proximas = de manana en adelante');
@@ -230,12 +230,12 @@ describe('dashboard', () => {
 
   test('gerente: su sede; cajero y operador solo funciones y ocupacion, sin dinero ni actividad', async () => {
     const s = await sarah.get(D);
-    assert.deepEqual(s.json.money, { revenue: 32, tickets: 2, rejected: 0 });   // B 20 + F 12 (sede 1)
+    assert.deepEqual(s.json.money, { revenue: 32, ticketRevenue: 32, foodRevenue: 0, tickets: 2, rejected: 0 });   // B 20 + F 12 (sede 1)
     assert.ok(s.json.activity.every((a) => a.branchId === 1));
-    const a3 = await admin.get(`${D}?branchId=3`); assert.deepEqual(a3.json.money, { revenue: 45, tickets: 3, rejected: 1 }); assert.equal(a3.json.scope.branchId, 3);
+    const a3 = await admin.get(`${D}?branchId=3`); assert.deepEqual(a3.json.money, { revenue: 45, ticketRevenue: 45, foodRevenue: 0, tickets: 3, rejected: 1 }); assert.equal(a3.json.scope.branchId, 3);
     assert.equal((await sarah.get(`${D}?branchId=3`)).json.scope.branchId, 1);
     assert.equal((await admin.get(`${D}?branchId=x`)).status, 400);
-    const e = await emily.get(D); assert.deepEqual(e.json.money, { revenue: 45, tickets: 3, rejected: 1 });
+    const e = await emily.get(D); assert.deepEqual(e.json.money, { revenue: 45, ticketRevenue: 45, foodRevenue: 0, tickets: 3, rejected: 1 });
     for (const c of [michael, anna, james]) {
       const r = await c.get(D); assert.equal(r.status, 200);
       assert.equal(r.json.money, null); assert.equal(r.json.activity, null);
@@ -249,7 +249,7 @@ describe('dashboard', () => {
   test('borde de medianoche de Lima en el dashboard', async () => {
     await setClock(T_MIDNIGHT_BEFORE); // 23:59 del 12/11 en Lima: hoy = 12/11
     const r = await admin.get(D);
-    assert.equal(r.json.today, '2026-11-12'); assert.deepEqual(r.json.money, { revenue: 40, tickets: 2, rejected: 0 });
+    assert.equal(r.json.today, '2026-11-12'); assert.deepEqual(r.json.money, { revenue: 40, ticketRevenue: 40, foodRevenue: 0, tickets: 2, rejected: 0 });
     await setClock(T_MIDNIGHT_AFTER);
     assert.equal((await admin.get(D)).json.today, '2026-11-13');
   });

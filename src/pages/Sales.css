@@ -51,3 +51,4 @@
 .dash-real .branch-card { color: var(--text-primary); }
 .dash-real .btn-ghost { color: var(--text-primary); }
 @media (max-width: 560px) { .sl-dl { grid-template-columns: minmax(0, 1fr); } .sl-grid2 { grid-template-columns: minmax(0, 1fr); } }
+.sl-items { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }

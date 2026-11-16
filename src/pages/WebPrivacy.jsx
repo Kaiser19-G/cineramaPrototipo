@@ -34,6 +34,13 @@ export default function WebPrivacy() {
           hizo, cuándo y un motivo elegido de una lista fija (nunca un texto libre).
         </li>
         <li>
+          Si pides confitería con tu compra: los productos y tamaños con su cantidad y el precio de cada uno al momento de
+          comprar, el monto de la confitería (separado del de las entradas), el momento de preparación que elegiste (al
+          llegar o a la hora de la función) y el estado del pedido. Para recoger el pedido sirve el mismo código de la orden.
+          Si la orden se reembolsa o el cine cancela la función, el pedido se cancela y se reembolsa junto con las entradas
+          (de forma simulada), mientras no se haya entregado.
+        </li>
+        <li>
           El ingreso a sala: cuando el personal de la puerta valida tu código, se guarda la fecha y hora en que entró cada
           butaca y qué persona del personal lo registró.
         </li>
@@ -56,6 +63,7 @@ export default function WebPrivacy() {
           por película (sumando todas tus compras), y 8 por cuenta en cada función. Para comprar necesitas una cuenta.
         </li>
         <li>Mostrar tus compras y que el personal las compruebe y las reembolse cuando corresponda.</li>
+        <li>Preparar tu pedido de confitería y evitar entregarlo dos veces.</li>
         <li>
           Comprobar tu entrada en la puerta del cine (solo el día de la función y en la sede de la función) y evitar que el
           mismo código entre dos veces.
@@ -126,7 +134,8 @@ export default function WebPrivacy() {
         están en la sección 9. Las cuentas verificadas se
         conservan mientras exista la base de datos del prototipo; todavía no hay una opción para borrar tu cuenta
         desde el sitio. Una cuenta suspendida por un reclamo aprobado también se conserva (suspendida). Las órdenes
-        de compra se conservan mientras exista la base de datos del prototipo, aunque la cuenta se suspenda.
+        de compra se conservan mientras exista la base de datos del prototipo, aunque la cuenta se suspenda. Los pedidos de confitería se conservan igual que las órdenes; un pedido que no se
+        recoge queda registrado como no recogido y no se reembolsa de forma automática.
       </p>
 
       <h2>7. Tus derechos</h2>
