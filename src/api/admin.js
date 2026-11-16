@@ -31,6 +31,15 @@ export const adminApi = {
     reports: (params = {}) => request('GET', `/api/admin/reports/summary?${qs(params)}`),
     dashboard: (params = {}) => request('GET', `/api/admin/dashboard?${qs(params)}`),
   },
+  // Taquilla: venta en mostrador, validacion en puerta y reembolso individual (el servidor decide permisos y sede).
+  counter: {
+    screenings: () => request('GET', '/api/admin/counter/screenings'),
+    seats: (id) => request('GET', `/api/admin/counter/screenings/${id}/seats`),
+    sell: (body) => request('POST', '/api/admin/counter/orders', body),
+    lookup: (code) => request('POST', '/api/admin/counter/tickets/lookup', { code }),
+    checkIn: (code, seats) => request('POST', '/api/admin/counter/tickets/checkin', seats ? { code, seats } : { code }),
+    refund: (code, reason) => request('POST', `/api/admin/orders/${encodeURIComponent(code)}/refund`, { reason }),
+  },
   halls: {
     setStatus: (id, status) => request('PATCH', `/api/admin/halls/${id}`, { status }),
   },

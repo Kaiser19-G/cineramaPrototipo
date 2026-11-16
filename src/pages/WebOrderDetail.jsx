@@ -64,11 +64,11 @@ export default function WebOrderDetail() {
           <h2 className="orders-title ticket-heading" tabIndex={-1} ref={titleRef}>Tu entrada</h2>
           <h3 className="ticket-movie" id="ticket-title">{o.screening.movieTitle}</h3>
           <p className="ticket-state"><StatusBadge order={o} /></p>
-          <p className="ticket-note">{NOTES[o.displayStatus]}</p>
+          <p className="ticket-note">{NOTES[o.displayStatus]}{o.refund?.reason ? ` Motivo: ${o.refund.reason}.` : ''}</p>
           <OrderCode code={o.code} large />
           <p className="ticket-seats-label" id="seats-label">Butacas</p>
           <ul className="ticket-seats" aria-labelledby="seats-label">
-            {o.seats.map((x) => <li key={x.seat}>{x.seat}</li>)}
+            {o.seats.map((x) => <li key={x.seat}>{x.seat}{x.checkedIn ? ' · ya ingresó' : ''}</li>)}
           </ul>
           <OrderFacts order={o} hideSeats />
           <p className="ticket-sim">Compra simulada: no se cobró nada y esta entrada no vale para entrar a una sala real.</p>

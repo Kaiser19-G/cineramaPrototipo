@@ -30,7 +30,12 @@ export default function WebPrivacy() {
         <li>
           Por cada compra: la función elegida, las butacas, el monto, la fecha y hora de la compra, el estado de la orden
           (aprobada, rechazada o reembolsada), una referencia de pago simulado y un código de orden. Si el cine cancela una
-          función, la orden queda como reembolsada (de forma simulada).
+          función, la orden queda como reembolsada (de forma simulada). Si el personal reembolsa tu orden, se guarda quién lo
+          hizo, cuándo y un motivo elegido de una lista fija (nunca un texto libre).
+        </li>
+        <li>
+          El ingreso a sala: cuando el personal de la puerta valida tu código, se guarda la fecha y hora en que entró cada
+          butaca y qué persona del personal lo registró.
         </li>
       </ul>
       <p>
@@ -51,6 +56,10 @@ export default function WebPrivacy() {
           por película (sumando todas tus compras), y 8 por cuenta en cada función. Para comprar necesitas una cuenta.
         </li>
         <li>Mostrar tus compras y que el personal las compruebe y las reembolse cuando corresponda.</li>
+        <li>
+          Comprobar tu entrada en la puerta del cine (solo el día de la función y en la sede de la función) y evitar que el
+          mismo código entre dos veces.
+        </li>
         <li>Confirmar que el celular es tuyo mediante un código de verificación.</li>
         <li>
           Suspender una cuenta cuando se aprueba un reclamo de DNI sobre el documento con el que se creó (sección 9).
@@ -82,6 +91,17 @@ export default function WebPrivacy() {
           administrador central ve las órdenes de toda la red y el personal de sede las de su sede; en ambos casos el
           correo se muestra con parte de los caracteres ocultos, y nunca ven tu DNI ni tu celular. Ninguna pantalla
           muestra datos de tarjeta, porque no existen.
+        </li>
+        <li>
+          <strong>Quién valida tu entrada:</strong> el cajero, el operador o el gerente de la sede de la función escribe o
+          escanea tu código. La pantalla de validación solo les muestra la película, la sala, el horario, las butacas y si
+          ya entraron; no muestra tu nombre, tu correo ni tu cuenta. Un código de otra sede no devuelve ningún dato.
+        </li>
+        <li>
+          <strong>Compras en la taquilla:</strong> comprar en el mostrador no exige cuenta ni DNI. El cajero puede anotar un
+          nombre, si el cliente quiere (opcional); si no, la orden queda como «Venta en mostrador», sin correo ni celular.
+          Estas órdenes no están asociadas a ninguna cuenta y no aparecen en «Mis entradas»: el comprobante impreso con su
+          código es lo único que sirve para entrar.
         </li>
         <li>
           <strong>Código de orden:</strong> es el comprobante de tu compra. No enviamos correo ni SMS: guárdalo al

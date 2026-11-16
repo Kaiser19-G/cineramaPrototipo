@@ -4,16 +4,21 @@
 // El pago es SIMULADO: no se recibe, guarda ni registra ningun dato de tarjeta.
 import crypto from 'node:crypto';
 import { nowInLima, todayInLima } from '../../src/data/limaDate.js';
-import { effectiveStatus, screeningSpan } from '../../src/shared/scheduling.js';
+import { effectiveStatus, screeningSpan, fromMinutes, toMinutes } from '../../src/shared/scheduling.js';
 import { isPresaleEffective, PRESALE_MAX_TICKETS } from '../../src/shared/presale.js';
 import { layoutFor, isValidSeat, compareSeats } from '../../src/shared/seatLayout.js';
-import { MAX_TICKETS_PER_SCREENING, WEB_SALE_CUTOFF_MINUTES, SIMULATED_OUTCOMES, REFUND_REASONS } from '../../src/shared/purchase.js';
+import {
+  MAX_TICKETS_PER_SCREENING, WEB_SALE_CUTOFF_MINUTES, SIMULATED_OUTCOMES, REFUND_REASONS,
+  MAX_TICKETS_PER_COUNTER_ORDER, COUNTER_SALE_GRACE_MINUTES, CHECKIN_OPENS_MINUTES_BEFORE, COUNTER_PAY_METHODS,
+  COUNTER_ANON_NAME, COUNTER_NAME_MAX,
+} from '../../src/shared/purchase.js';
+import { ORDER_CODE_RE, normalizeOrderCode } from '../../src/shared/orderCode.js';
 
 // Sin 0, 1, I, L ni O (se confunden al leerlos o teclearlos): 31 simbolos, 10 caracteres = ~49,5 bits.
 const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const randomChars = (n) => Array.from({ length: n }, () => CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join('');
 export const newOrderCode = () => `CIN-${randomChars(5)}-${randomChars(5)}`;
-export const ORDER_CODE_RE = /^CIN-[2-9A-HJKMNP-Z]{5}-[2-9A-HJKMNP-Z]{5}$/;
+export { ORDER_CODE_RE };
 const KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -62,13 +67,15 @@ export function createOrderService(db, clock = Date.now) {
   const nowAbs = () => nowInLima(new Date(clock())).abs;
 
   // Estado de venta de una funcion: { onSale, reason } (reason: not_on_sale | sold_out | closed).
-  function saleState(row, taken) {
+  // channel 'web' cierra al inicio (menos WEB_SALE_CUTOFF_MINUTES); 'counter' sigue COUNTER_SALE_GRACE_MINUTES despues.
+  function saleState(row, taken, channel = 'web') {
     const eff = effectiveStatus({ ...row, booked_seats: taken }, nowAbs());
     if (['draft', 'cancelled', 'finished'].includes(eff)) return { eff, onSale: false, reason: eff === 'finished' ? 'closed' : 'not_on_sale' };
     const movieOk = row.movie_status === 'active' || (row.movie_status === 'upcoming' && !!row.movie_presale);
     if (!movieOk || row.branch_status !== 'active' || !row.mb_active) return { eff, onSale: false, reason: 'not_on_sale' };
     const start = screeningSpan(row.starts_on, row.start_time, row.end_time).start;
-    if (nowAbs() >= start - WEB_SALE_CUTOFF_MINUTES) return { eff, onSale: false, reason: 'closed' };
+    const closesAt = channel === 'counter' ? start + COUNTER_SALE_GRACE_MINUTES : start - WEB_SALE_CUTOFF_MINUTES;
+    if (nowAbs() >= closesAt) return { eff, onSale: false, reason: 'closed' };
     if (taken >= row.total_seats) return { eff, onSale: false, reason: 'sold_out' };
     if (eff === 'sold_out') return { eff, onSale: false, reason: 'sold_out' };
     return { eff, onSale: true, reason: null };
@@ -265,5 +272,211 @@ export function createOrderService(db, clock = Date.now) {
     return { refundedOrders, refundedAmount: round2(refundedAmount) };
   }
 
-  return { seatMap, listOrders, getOrder, presaleQuota, purchase, refundScreening, syncBooked, mapOrder, limitsFor };
+  // ───────────────────────── Taquilla (fase 4d) ─────────────────────────
+  // Las ventas en mostrador, el ingreso a sala y el reembolso individual escriben aqui y en ningun otro modulo.
+  const t = {
+    insertCounter: db.prepare(`INSERT INTO orders (id,screening_id,branch_id,user_id,customer_name,email,amount,method,status,created_at,
+        channel,presale,idempotency_key,payment_ref,created_ms)
+      VALUES (@id,@screening_id,@branch_id,NULL,@customer_name,'',@amount,@method,'approved',@created_at,'counter',0,@key,@payment_ref,@now)`),
+    byCounterKey: db.prepare(`SELECT * FROM orders WHERE channel = 'counter' AND idempotency_key = ?`),
+    order: db.prepare('SELECT * FROM orders WHERE id = ?'),
+    seatsFull: db.prepare('SELECT seat, active, checked_in_at FROM order_seats WHERE order_id = ?'),
+    checkIn: db.prepare('UPDATE order_seats SET checked_in_at = @now, checked_in_by = @by WHERE order_id = @id AND seat = @seat AND checked_in_at IS NULL'),
+    today: db.prepare(`SELECT s.*, m.title AS movie_title, m.status AS movie_status, m.presale AS movie_presale, m.release_date AS movie_release_date,
+        b.status AS branch_status, h.name AS hall_name, mb.active AS mb_active,
+        (SELECT COUNT(*) FROM order_seats os WHERE os.screening_id = s.id AND os.active = 1) AS taken
+      FROM screenings s JOIN movies m ON m.id = s.movie_id JOIN branches b ON b.id = s.branch_id JOIN halls h ON h.id = s.hall_id
+      LEFT JOIN movie_branch mb ON mb.movie_id = s.movie_id AND mb.branch_id = s.branch_id
+      WHERE s.starts_on = ? AND s.status NOT IN ('draft','cancelled') AND (? IS NULL OR s.branch_id = ?)
+      ORDER BY s.start_time, s.id`),
+  };
+  const inBranch = (scope, branchId) => scope === null || (scope !== 'none' && branchId === scope);
+  const hhmm = (abs) => fromMinutes(abs % 1440);
+
+  // Estado de venta en mostrador de una funcion (lo que ve el cajero): open | closed | finished | sold_out | not_on_sale
+  // | presale_requires_account. `closesAt` = hora (HH:MM, Lima) hasta la que vende el mostrador.
+  function counterState(row, taken) {
+    const st = saleState(row, taken, 'counter');
+    const start = screeningSpan(row.starts_on, row.start_time, row.end_time).start;
+    const closesAt = hhmm(start + COUNTER_SALE_GRACE_MINUTES);
+    if (st.onSale && presaleActive(row)) return { ...st, onSale: false, reason: 'presale_requires_account', closesAt };
+    return { ...st, reason: st.onSale ? 'open' : (st.eff === 'finished' ? 'finished' : st.reason), closesAt };
+  }
+
+  // Funciones de HOY (Lima) de la sede, con butacas libres y estado de venta en mostrador.
+  function counterScreenings(scope) {
+    const date = nowInLima(new Date(clock())).date;
+    if (scope === 'none') return { date, screenings: [] };
+    const rows = t.today.all(date, scope, scope);
+    return {
+      date,
+      screenings: rows.map((r) => {
+        const st = counterState(r, r.taken);
+        return {
+          id: r.id, startTime: r.start_time, endTime: r.end_time, hallName: r.hall_name, movieTitle: r.movie_title, format: r.format,
+          language: r.language, price: r.price, totalSeats: r.total_seats, freeSeats: Math.max(0, r.total_seats - r.taken),
+          sale: { open: st.onSale, reason: st.reason, closesAt: st.closesAt },
+        };
+      }),
+    };
+  }
+
+  // Mapa de butacas para el mostrador: null = no existe, no se ofrece o es de otra sede.
+  function counterSeatMap(screeningId, scope) {
+    const row = q.screening.get(screeningId);
+    if (!row || row.status === 'draft' || row.status === 'cancelled' || !inBranch(scope, row.branch_id)) return null;
+    const taken = q.taken.all(screeningId).map((r) => r.seat).sort(compareSeats);
+    const st = counterState(row, taken.length);
+    return {
+      screening: {
+        id: row.id, date: row.starts_on, startTime: row.start_time, endTime: row.end_time, format: row.format, language: row.language,
+        price: row.price, totalSeats: row.total_seats, hallName: row.hall_name, movieTitle: row.movie_title,
+        sale: { open: st.onSale, reason: st.reason, closesAt: st.closesAt },
+      },
+      layout: layoutFor(row.total_seats),
+      taken,
+      limits: { perOrder: MAX_TICKETS_PER_COUNTER_ORDER, remaining: Math.max(0, Math.min(MAX_TICKETS_PER_COUNTER_ORDER, row.total_seats - taken.length)) },
+    };
+  }
+
+  function parseCounterBody(b) {
+    const errors = {};
+    const body = b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+    const screeningId = body.screeningId;
+    if (!(Number.isInteger(screeningId) && screeningId > 0)) errors.screeningId = screeningId === undefined ? 'required' : 'invalid';
+    const seats = body.seats;
+    if (!Array.isArray(seats) || seats.length === 0) errors.seats = 'required';
+    else if (seats.length > MAX_TICKETS_PER_COUNTER_ORDER) errors.seats = 'too_many';
+    else if (seats.some((s) => typeof s !== 'string')) errors.seats = 'invalid';
+    else if (new Set(seats).size !== seats.length) errors.seats = 'duplicated';
+    if (typeof body.idempotencyKey !== 'string' || !KEY_RE.test(body.idempotencyKey)) errors.idempotencyKey = body.idempotencyKey === undefined ? 'required' : 'invalid';
+    const pay = body.payment && typeof body.payment === 'object' ? body.payment : {};
+    if (!Object.hasOwn(COUNTER_PAY_METHODS, pay.method)) errors.payment = 'invalid_method';
+    let name = COUNTER_ANON_NAME;
+    if (body.customerName !== undefined && body.customerName !== null && body.customerName !== '') {
+      const n = typeof body.customerName === 'string' ? body.customerName.trim().replace(/\s+/g, ' ') : null;
+      // eslint-disable-next-line no-control-regex
+      if (n === null || /[\u0000-\u001f\u007f]/.test(n)) errors.customerName = 'invalid';
+      else if (n.length > COUNTER_NAME_MAX) errors.customerName = 'too_long';
+      else if (n) name = n;
+    }
+    if (Object.keys(errors).length) return { errors };
+    return { value: { screeningId, seats: [...seats].sort(compareSeats), key: body.idempotencyKey, method: pay.method, name } };
+  }
+
+  // Venta en mostrador (pago simulado). `staff`: { id, scope } (scope: id de sede, null = central, 'none' = sin sede).
+  // Sin cuenta: user_id NULL, nombre opcional (o 'Venta en mostrador') y correo vacio. Idempotencia por (cajero, clave).
+  function counterSale(staff, rawBody, audit) {
+    const parsed = parseCounterBody(rawBody);
+    if (parsed.errors) return fail(400, 'validation', { errors: parsed.errors });
+    const { screeningId, seats, key, method, name } = parsed.value;
+    const idemKey = `c${staff.id}:${key}`;
+    return db.transaction(() => {
+      const prev = t.byCounterKey.get(idemKey);
+      if (prev) {
+        const prevSeats = q.orderSeats.all(prev.id).map((r) => r.seat).sort(compareSeats);
+        if (prev.screening_id !== screeningId || prevSeats.join() !== seats.join() || prev.method !== method) return fail(409, 'idempotency_conflict');
+        return { status: 200, body: { order: mapOrder(prev), replayed: true } };
+      }
+      const row = q.screening.get(screeningId);
+      if (!row || row.status === 'draft' || row.status === 'cancelled' || !inBranch(staff.scope, row.branch_id)) return fail(404, 'not_found');
+      const taken = q.activeCount.get(screeningId).c;
+      const st = counterState(row, taken);
+      if (!st.onSale) {
+        if (st.reason === 'presale_requires_account') return fail(409, 'presale_requires_account');
+        return fail(409, st.reason === 'sold_out' ? 'sold_out' : 'not_on_sale', { status: st.eff });
+      }
+      if (!seats.every((s) => isValidSeat(row.total_seats, s))) return fail(400, 'validation', { errors: { seats: 'invalid' } });
+      const busy = q.taken.all(screeningId).map((r) => r.seat).filter((s) => seats.includes(s));
+      if (busy.length) return fail(409, 'seats_taken', { seats: busy.sort(compareSeats) });
+      const now = clock();
+      let id;
+      for (let i = 0; ; i++) {
+        id = newOrderCode();
+        try {
+          t.insertCounter.run({
+            id, screening_id: screeningId, branch_id: row.branch_id, customer_name: name, amount: round2(row.price * seats.length), method,
+            created_at: limaStamp(now), key: idemKey, payment_ref: `SIM-${randomChars(6)}`, now,
+          });
+          break;
+        } catch (e) { if (i >= 5 || !String(e.code).startsWith('SQLITE_CONSTRAINT')) throw e; }
+      }
+      for (const s of seats) q.insertSeat.run(id, screeningId, s, 1, row.price);
+      syncBooked(screeningId);
+      audit?.('counter.sale', 'screening', screeningId, row.branch_id, { seats: seats.length, method });
+      return { status: 201, body: { order: mapOrder(t.order.get(id)) } };
+    }).immediate();
+  }
+
+  // Evaluacion de un codigo en la puerta. `not_found` cubre inexistente, mal formado y de OTRA sede (misma respuesta,
+  // sin datos). El resumen nunca lleva nombre, correo ni cuenta del cliente.
+  function evaluateTicket(rawCode, scope) {
+    const code = normalizeOrderCode(rawCode);
+    const o = code ? t.order.get(code) : null;
+    if (!o || !inBranch(scope, o.branch_id)) return { result: 'not_found' };
+    const s = q.screening.get(o.screening_id);
+    const seats = t.seatsFull.all(o.id).sort((a, b) => compareSeats(a.seat, b.seat));
+    const summary = {
+      code: o.id, status: o.status, amount: o.amount, channel: o.channel,
+      screening: s && { id: s.id, date: s.starts_on, startTime: s.start_time, endTime: s.end_time, movieTitle: s.movie_title, hallName: s.hall_name, format: s.format, language: s.language },
+      seats: seats.map((r) => ({ seat: r.seat, checkedIn: !!r.checked_in_at })),
+      refund: o.status === 'refunded' ? { reasonCode: o.refund_reason, reason: REFUND_REASONS[o.refund_reason] ?? null } : null,
+    };
+    const out = (result, extra = {}) => ({ result, order: summary, ...extra });
+    if (o.status === 'refunded') return out('refunded');
+    if (o.status === 'rejected') return out('rejected');
+    if (o.status !== 'approved' || !s) return out('cancelled');
+    if (seats.length && seats.every((r) => r.checked_in_at)) return out('used');
+    const today = nowInLima(new Date(clock())).date;
+    if (s.starts_on !== today) return out('wrong_day');
+    const span = screeningSpan(s.starts_on, s.start_time, s.end_time);
+    if (nowAbs() >= span.end) return out('finished');
+    if (nowAbs() < span.start - CHECKIN_OPENS_MINUTES_BEFORE) return out('too_early', { opensAt: hhmm(span.start - CHECKIN_OPENS_MINUTES_BEFORE) });
+    return out('valid', { pending: seats.filter((r) => !r.checked_in_at).length });
+  }
+
+  // Registro de ingreso, total o parcial, idempotente: las butacas ya ingresadas no cambian. Solo con resultado
+  // 'valid' (o 'used', que no cambia nada). `seats` omitido = todas las pendientes.
+  function checkIn(rawCode, seatsReq, scope, by, audit) {
+    return db.transaction(() => {
+      const ev = evaluateTicket(rawCode, scope);
+      if (ev.result !== 'valid' && ev.result !== 'used') return { status: 409, body: { error: 'not_checkinable', ...ev } };
+      let target = ev.order.seats.map((x) => x.seat);
+      if (seatsReq !== undefined) {
+        if (!Array.isArray(seatsReq) || seatsReq.length === 0 || seatsReq.some((x) => typeof x !== 'string') || new Set(seatsReq).size !== seatsReq.length
+          || seatsReq.some((x) => !target.includes(x))) return fail(400, 'validation', { errors: { seats: 'invalid' } });
+        target = seatsReq;
+      }
+      const now = clock();
+      let changed = 0;
+      for (const seat of target) changed += t.checkIn.run({ now, by, id: ev.order.code, seat }).changes;
+      if (changed) {
+        const o = t.order.get(ev.order.code);
+        audit?.('ticket.checkin', 'screening', o.screening_id, o.branch_id, { seats: changed });
+      }
+      return { status: 200, body: { changed, ...evaluateTicket(rawCode, scope) } };
+    }).immediate();
+  }
+
+  // Reembolso individual (pago simulado). Solo ordenes aprobadas de funciones no terminadas y sin butacas ingresadas:
+  // una orden con ingreso parcial NO se reembolsa (parte del servicio ya se presto). 404 = no existe / otra sede.
+  function refundOrder(rawCode, reasonCode, scope, by, audit) {
+    const code = typeof rawCode === 'string' && ORDER_CODE_RE.test(rawCode) ? rawCode : null;
+    return db.transaction(() => {
+      const o = code ? t.order.get(code) : null;
+      if (!o || !inBranch(scope, o.branch_id)) return fail(404, 'not_found');
+      if (o.status !== 'approved') return fail(409, 'not_refundable', { status: o.status });
+      const s = q.screening.get(o.screening_id);
+      if (s && screeningSpan(s.starts_on, s.start_time, s.end_time).end <= nowAbs()) return fail(409, 'screening_finished');
+      const seats = t.seatsFull.all(o.id);
+      if (seats.some((r) => r.checked_in_at)) return fail(409, 'already_checked_in');
+      q.refund.run({ id: o.id, now: clock(), reason: reasonCode, by, ref: randomChars(6) });
+      q.releaseSeats.run(o.id);
+      syncBooked(o.screening_id);
+      audit?.('order.refund', 'screening', o.screening_id, o.branch_id, { reason: reasonCode, seats: seats.length });
+      return { status: 200, body: { order: mapOrder(t.order.get(o.id)) } };
+    }).immediate();
+  }
+
+  return { counterScreenings, counterSeatMap, counterSale, evaluateTicket, checkIn, refundOrder, seatMap, listOrders, getOrder, presaleQuota, purchase, refundScreening, syncBooked, mapOrder, limitsFor };
 }

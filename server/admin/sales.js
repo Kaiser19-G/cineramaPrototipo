@@ -15,7 +15,8 @@ const CHANNELS = ['web', 'counter'];
 const MAX_PAGE_SIZE = 50;
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 const pct = (a, b) => (b > 0 ? Math.round((a / b) * 1000) / 10 : 0);
-const maskEmail = (e) => { const [u, d] = String(e).split('@'); return `${u?.[0] ?? ''}***@${d ?? ''}`; };
+// Las ventas en mostrador sin cuenta guardan el correo vacio: no hay correo que mostrar.
+const maskEmail = (e) => { if (!e) return null; const [u, d] = String(e).split('@'); return `${u?.[0] ?? ''}***@${d ?? ''}`; };
 // Instante (ms) de la medianoche de Lima de una fecha 'YYYY-MM-DD'.
 export const limaDayStartMs = (ymd) => Date.parse(`${ymd}T00:00:00Z`) + LIMA_OFFSET_MS;
 const DAY_SQL = `date((o.created_ms - ${LIMA_OFFSET_MS}) / 1000, 'unixepoch')`;
@@ -41,7 +42,7 @@ export function createSales(db, auth, opts = {}) {
     return n;
   };
 
-  const seatsOf = db.prepare('SELECT seat FROM order_seats WHERE order_id = ?');
+  const seatsOf = db.prepare('SELECT seat, checked_in_at FROM order_seats WHERE order_id = ?');
 
   // ───────────────────────── Ordenes ─────────────────────────
   const orders = express.Router();
@@ -93,6 +94,7 @@ export function createSales(db, auth, opts = {}) {
         branch: { id: o.branch_id, name: o.branch_name },
         screening: { id: o.screening_id, date: o.starts_on, startTime: o.start_time, format: o.format, language: o.language, movieTitle: o.movie_title, hallName: o.hall_name },
         seats: seatsOf.all(o.id).map((r) => r.seat).sort(compareSeats),
+        checkedInCount: seatsOf.all(o.id).filter((r) => r.checked_in_at).length,
         payment: { method: o.method, simulated: true, ref: (o.payment_ref || '').split('|')[0] },
         refund: o.status === 'refunded' ? { at: o.refunded_at ?? null, reasonCode: o.refund_reason, reason: REFUND_REASONS[o.refund_reason] ?? null } : null,
       })),

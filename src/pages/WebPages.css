@@ -609,134 +609,6 @@
    empuja el ancho de todos sus ancestros en vez de desbordar solo adentro. */
 .seats-selection { width: 100%; }
 
-/* Pantalla */
-.screen-indicator { margin-bottom: 2.5rem; text-align: center; width: 100%; }
-.screen-bar {
-  height: 6px;
-  background: var(--action-red-dim);
-  border: 1px solid var(--action-red);
-  border-radius: 4px;
-  margin: 0 auto 12px;
-  width: 70%;
-  box-shadow: 0 0 15px var(--action-red-glow);
-}
-.screen-label {
-  font-size: 0.75rem;
-  color: var(--accent-text);
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  font-weight: 700;
-}
-
-/* Mapa de butacas — el scroll horizontal, si ocurre, queda contenido aquí */
-.seats-map-scroll {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  margin-bottom: 1.5rem;
-}
-.seats-map {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  width: max-content;
-  margin: 0 auto;
-}
-.seats-row { display: flex; align-items: center; gap: 0.625rem; }
-/* Letra de fila: se queda a la izquierda al desplazar el mapa en pantallas angostas. */
-.seat-rowlabel {
-  position: sticky; left: 0; z-index: 1;
-  flex: none; width: 1.5rem; text-align: center;
-  font-size: 0.8125rem; font-weight: 800;
-  color: var(--text-secondary);
-  background: var(--surface-2);
-}
-.seats-map-scroll:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-
-/* El tamaño de la butaca se expresa en rem (no px) junto con su texto, para
-   que ambos escalen como unidad: con texto más grande a 150% pero caja fija
-   en px, el número de butaca se cortaría. */
-.seat-btn {
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2rem;
-  min-height: 2rem;
-  border-radius: 8px;
-  border: 2px solid var(--border-interactive);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.625rem;
-  font-weight: 700;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: all var(--transition);
-}
-.seat-btn:hover:not(.seat-occupied):not(.seat-selected) { border-color: var(--action-red); color: var(--text-primary); }
-.seat-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-
-.seat-btn.seat-selected {
-  background: var(--accent-solid);
-  border-color: var(--action-red);
-  color: var(--on-accent);
-}
-.seat-btn.seat-occupied {
-  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
-  background-color: var(--surface);
-  border-color: var(--border-interactive);
-  border-style: dashed;
-  color: var(--text-dim);
-  cursor: not-allowed;
-}
-.seat-icon {
-  position: absolute;
-  top: -0.4375rem;
-  right: -0.4375rem;
-  width: 0.9375rem;
-  height: 0.9375rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.5625rem;
-  line-height: 1;
-}
-.seat-selected .seat-icon { background: var(--on-accent); color: var(--accent-solid); }
-.seat-occupied .seat-icon { background: var(--surface-3); color: var(--text-muted); }
-
-.seats-legend {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  list-style: none;
-  padding: 0;
-}
-.seats-legend li { display: flex; align-items: center; gap: 8px; }
-.legend-swatch {
-  width: 1.125rem; height: 1.125rem; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.625rem; flex-shrink: 0;
-  border: 2px solid var(--border);
-}
-.legend-available { background: transparent; }
-.legend-selected { background: var(--accent-solid); border-color: var(--action-red); color: var(--on-accent); font-weight: 800; }
-.legend-occupied {
-  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
-  background-color: var(--surface);
-  border-color: var(--border-interactive);
-  border-style: dashed;
-  color: var(--text-muted);
-  font-weight: 800;
-}
-
 .booking-actions {
   display: flex;
   justify-content: flex-end;
@@ -771,9 +643,6 @@
     gap: 0.75rem;
     margin-bottom: 96px;
   }
-  .seats-map { gap: 0.375rem; }
-  .seats-row { gap: 0.375rem; }
-  .seat-btn { width: 2rem; height: 2rem; font-size: 0.5625rem; }
 }
 
 .booking-success-overlay {
@@ -1502,10 +1371,6 @@ html[data-theme="light"] .showtime-btn {
    controles interactivos y un patrón propio para "seleccionada" (distinto
    del rayado de "ocupada"), además del ícono que ya existe en todos los modos.
    ══════════════════════════════════════════ */
-html[data-vision="mono"] .seat-btn,
-html[data-vision="mono"] .legend-swatch {
-  border-width: 3px;
-}
 html[data-vision="mono"] .input-web,
 html[data-vision="mono"] .custom-dd-btn {
   border-width: 2px;
@@ -1513,18 +1378,6 @@ html[data-vision="mono"] .custom-dd-btn {
 html[data-vision="mono"] .btn-outline {
   border-width: 2px;
 }
-html[data-vision="mono"] .seat-btn.seat-selected,
-html[data-vision="mono"] .legend-selected {
-  background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
-}
-/* Mono oscuro: el relleno es gris claro (#767676) con texto blanco; rayas
-   blancas lo aclaraban y bajaban el contraste a 2.9:1. Rayas oscuras: el
-   pixel mas claro es el propio relleno (4.54:1). */
-html[data-theme="dark"][data-vision="mono"] .seat-btn.seat-selected,
-html[data-theme="dark"][data-vision="mono"] .legend-selected {
-  background-image: repeating-linear-gradient(-45deg, rgba(0,0,0,0.25) 0 3px, transparent 3px 7px);
-}
-
 /* Placeholder: el gris por defecto del navegador (#757575) no llega a 4.5:1
    sobre los campos oscuros. */
 .web-container input::placeholder,
@@ -1829,7 +1682,6 @@ html[data-theme="dark"][data-vision="mono"] .legend-selected {
 .booking-step-title { align-self: flex-start; margin: 0 0 1rem; font-size: 1.6rem; color: var(--text-main); }
 .booking-step-title:focus { outline: none; }
 .booking-note { margin: 0 0 1rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.45; }
-.booking-keys { margin: 0 0 1rem; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.4; text-align: center; }
 .booking-sim-flag { margin: 0.75rem 0 0; }
 .booking-alert {
   width: 100%;

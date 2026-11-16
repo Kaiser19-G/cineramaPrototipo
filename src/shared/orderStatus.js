@@ -11,7 +11,13 @@ export const ORDER_STATUS = {
 export const statusInfo = (order) => ORDER_STATUS[order.displayStatus] ?? { label: 'Desconocido', icon: '?' };
 
 // Motivo corto por codigo fijo (el servidor nunca envia el motivo libre del personal).
-const REFUND_SHORT = { screening_cancelled: 'función cancelada' };
+const REFUND_SHORT = {
+  screening_cancelled: 'función cancelada',
+  customer_request: 'a solicitud del cliente',
+  duplicate_purchase: 'compra duplicada',
+  wrong_selection: 'función o butacas equivocadas',
+  technical_issue: 'problema técnico o de sala',
+};
 export const money = (n) => `S/ ${Number(n).toFixed(2)}`;
 
 // "Reembolsada (simulado): función cancelada"

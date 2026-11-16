@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { orders } from '../data/store';
 import { useAuth } from './AuthContext';
 import { PERMS } from '../shared/permissions';
 
@@ -123,17 +122,8 @@ export function CinemaProvider({ children }) {
     ? currentUser.branchId
     : (cinemaChoice.userId === userId ? cinemaChoice.id : 'all');
 
-  // Las funciones vienen siempre de la API. La venta simulada de Taquilla NO las modifica: solo agrega pedidos de
-  // ejemplo en memoria (así las butacas vendidas que muestran el panel y el sitio son las reales).
+  // Las funciones vienen siempre de la API.
   const allScreenings = sourceScreenings;
-  const [allOrders, setAllOrders] = useState(orders);
-
-  // Las ventas simuladas pertenecen a la sesión: se reinician al cambiar de usuario.
-  const [stateOwner, setStateOwner] = useState(userId);
-  if (stateOwner !== userId) {
-    setStateOwner(userId);
-    setAllOrders(orders);
-  }
 
   // El cine activo real (objeto branch o null = todos)
   const activeBranch = useMemo(() =>
@@ -169,12 +159,6 @@ export function CinemaProvider({ children }) {
     return allScreenings.filter(s => s.branchId === currentCinemaId);
   }, [currentCinemaId, allScreenings]);
 
-  // Ventas del cine activo
-  const activeOrders = useMemo(() => {
-    if (currentCinemaId === 'all') return allOrders;
-    return allOrders.filter(o => o.branchId === currentCinemaId);
-  }, [currentCinemaId, allOrders]);
-
   // Verificar permiso
   const can = (action) => (PERMS[currentUser?.role] || []).includes(action);
 
@@ -185,47 +169,6 @@ export function CinemaProvider({ children }) {
   const setCinema = (id) => {
     // Solo Admin Central puede cambiar
     if (isAdminCentral) setCinemaChoice({ userId, id });
-  };
-
-  // Función para registrar compras presenciales/locales
-  const processLocalSale = (screeningId, selectedSeats, customerName, customerEmail, paymentMethod) => {
-    const scr = allScreenings.find(s => s.id === screeningId);
-    if (!scr) return null;
-
-    const movie = movies.find(m => m.id === scr.movieId);
-    const branch = branches.find(b => b.id === scr.branchId);
-
-    // Calcular precio estándar
-    const amount = selectedSeats.reduce((sum, seat) => {
-      return sum + scr.price;
-    }, 0);
-
-    const newOrder = {
-      id: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
-      screeningId,
-      movieTitle: movie ? movie.title : 'Película',
-      branchId: scr.branchId,
-      branch: branch ? branch.name : 'Cine Local',
-      customer: customerName || 'Cliente Local',
-      email: customerEmail || 'venta_local@cinerama.com',
-      seats: selectedSeats,
-      amount,
-      method: paymentMethod,
-      status: 'approved',
-      date: new Date().toISOString().replace('T', ' ').slice(0, 16)
-    };
-
-    setAllOrders(prev => [newOrder, ...prev]);
-
-    return newOrder;
-  };
-
-  const refundOrder = (id) => {
-    setAllOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'refunded' } : o));
-  };
-
-  const cancelOrder = (id) => {
-    setAllOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' } : o));
   };
 
   return (
@@ -243,7 +186,6 @@ export function CinemaProvider({ children }) {
       activeMovieCinema,
       activeHalls,
       activeScreenings,
-      activeOrders,
       // Catálogo PÚBLICO: no depende de la sede elegida en el panel ni de la sede del personal.
       publicMovies: catalog.movies,
       publicScreenings: catalog.screenings,
@@ -262,9 +204,6 @@ export function CinemaProvider({ children }) {
       // Helpers
       can,
       isMovieInCinema,
-      processLocalSale,
-      refundOrder,
-      cancelOrder,
     }}>
       {children}
     </CinemaContext.Provider>

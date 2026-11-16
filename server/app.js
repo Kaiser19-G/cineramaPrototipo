@@ -7,6 +7,7 @@ import { createHalls } from './admin/halls.js';
 import { createUsers } from './admin/users.js';
 import { createOrders } from './orders/router.js';
 import { createSales } from './admin/sales.js';
+import { createCounter } from './admin/counter.js';
 import { todayInLima, nowInLima } from '../src/data/limaDate.js';
 import { screeningSpan } from '../src/shared/scheduling.js';
 import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
@@ -43,6 +44,7 @@ export function createApp(db, opts = {}) {
   const adminUsers = createUsers(db, auth, opts);
   const orders = createOrders(db, auth, opts);
   const sales = createSales(db, auth, opts);
+  const counter = createCounter(db, auth, opts);
   const clock = opts.clock ?? Date.now;
   const today = () => todayInLima(new Date(clock()));
   const app = express();
@@ -77,6 +79,8 @@ export function createApp(db, opts = {}) {
   app.use('/api/admin/screenings', ...staffOnly, adminScreenings.router);
   app.use('/api/admin/halls', ...staffOnly, adminHalls.router);
   app.use('/api/admin/orders', sales.orders);
+  app.use('/api/admin/orders', counter.refunds);
+  app.use('/api/admin/counter', counter.router);
   app.use('/api/admin/reports', sales.reports);
   app.use('/api/admin/dashboard', sales.dashboard);
   app.use('/api/admin', auth.adminRouter);

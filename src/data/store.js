@@ -19,8 +19,6 @@ export const movies = [
   { id: 10, title: 'La Ciudad Dormida', genre: 'Thriller', duration: 104, rating: '+14', status: 'upcoming', format: ['2D'], director: 'Tomás Rey', language: 'ES', poster: null, synopsis: 'Una noche sin luz deja a una ciudad entera en silencio. Película de ejemplo próxima a estrenarse.', featured: false, presale: false, releaseDate: addDays(today, 45), endDate: addDays(today, 100) },
 ];
 
-export const genres = ['Acción','Aventura','Comedia','Drama','Terror','Romance','Sci-Fi','Thriller','Animación','Documental'];
-export const formats = ['2D','3D'];
 
 export const branches = [
   { id: 1, name: 'Cinerama Pacífico',  city: 'Lima',     address: 'Av. José Pardo 121, Miraflores - Lima - Lima', status: 'active',      halls: 5, manager: 'Sarah Mitchell', formats: '2D, 3D, REGULAR', img: 'https://www.cinerama.com.pe/_admin/assets/images/cines/pacifico.jpg' },
@@ -91,6 +89,7 @@ export const screenings = [
   scr(10, 6, 8, 3, fmt(addDays(today,1)), '20:00', 'ES', '2D', 14, 'scheduled', 20,  130),
 ];
 
+// Solo como fixture de server/test/migration4.test.js (ordenes de ejemplo que la migracion 4 borra). Ya no se muestra en el panel.
 export const orders = [
   { id: 'TXN-001245', screeningId: 1, movieTitle: 'Duna: Parte Tres',           branchId: 1, branch: 'Cinerama Centro', customer: 'Carlos Méndez',  email: 'c.mendez@mail.com',  seats: ['A5','A6'],       amount: 70, method: 'credit_card', status: 'approved', date: '2026-05-13 14:30' },
   { id: 'TXN-001246', screeningId: 2, movieTitle: 'Batman: El Regreso',         branchId: 1, branch: 'Cinerama Centro', customer: 'Ana Torres',      email: 'a.torres@mail.com',  seats: ['C8'],            amount: 25, method: 'cash',        status: 'approved', date: '2026-05-13 14:45' },
@@ -111,52 +110,4 @@ export const users = [
   { id: 6, name: 'Lisa Brown',       email: 'lisa.brown@cinerama.com',        role: 'cashier',  branchId: 2,    status: 'active', lastLogin: '2026-05-13 07:00', avatar: 'LB' },
   { id: 7, name: 'James Wilson',     email: 'james.wilson@cinerama.com',      role: 'support',  branchId: 1,    status: 'active', lastLogin: '2026-05-12 22:15', avatar: 'JW' },
   { id: 8, name: 'Anna Martinez',    email: 'anna.martinez@cinerama.com',     role: 'operator', branchId: 2,    status: 'active', lastLogin: '2026-05-13 11:00', avatar: 'AM' },
-];
-
-// ── Chart data ────────────────────────────────────────────────────────────────
-export const revenueByDay = [
-  { day: 'Lun', revenue: 18200, centro: 12000, mall: 4200, suburbia: 2000 },
-  { day: 'Mar', revenue: 22400, centro: 14800, mall: 5600, suburbia: 2000 },
-  { day: 'Mié', revenue: 19800, centro: 13200, mall: 4600, suburbia: 2000 },
-  { day: 'Jue', revenue: 28600, centro: 18500, mall: 7100, suburbia: 3000 },
-  { day: 'Vie', revenue: 35200, centro: 22000, mall: 9200, suburbia: 4000 },
-  { day: 'Sáb', revenue: 44800, centro: 28000, mall: 12000,suburbia: 4800 },
-  { day: 'Dom', revenue: 38500, centro: 24000, mall: 10000,suburbia: 4500 },
-];
-
-export const genreData = [
-  { name: 'Sci-Fi',   value: 38, color: 'var(--electric-blue)' },
-  { name: 'Acción',   value: 28, color: 'var(--action-red)' },
-  { name: 'Drama',    value: 18, color: 'var(--cinema-gold)' },
-  { name: 'Comedia',  value: 10, color: 'var(--emerald)' },
-  { name: 'Terror',   value: 6,  color: 'var(--violet)' },
-];
-
-export const occupancyByHall = [
-  { hall: 'Sala 1', occupancy: 75, branchId: 1 },
-  { hall: 'Sala 2', occupancy: 44, branchId: 1 },
-  { hall: 'Sala 3', occupancy: 93, branchId: 1 },
-  { hall: 'Sala 4', occupancy: 0,  branchId: 1 },
-  { hall: 'Sala 5', occupancy: 25, branchId: 1 },
-  { hall: 'Sala 6', occupancy: 60, branchId: 2 },
-  { hall: 'Sala 7', occupancy: 35, branchId: 2 },
-  { hall: 'Sala 8', occupancy: 55, branchId: 3 },
-];
-
-export const recentActivity = [
-  { id: 1, message: 'Nueva función creada: Duna Pt3 — Sala 1, 14:00',       time: 'hace 2 min',   level: 'info',    branchId: 1 },
-  { id: 2, message: 'Avatar pasó a Preventa — habilitado en Cinerama Centro',time: 'hace 15 min',  level: 'success', branchId: 1 },
-  { id: 3, message: 'Pago rechazado: TXN-001251 — $70.00',                   time: 'hace 31 min',  level: 'error',   branchId: 1 },
-  { id: 4, message: 'Nuevo usuario registrado: Elena Ríos',                  time: 'hace 1 hora',  level: 'info',    branchId: null },
-  { id: 5, message: 'Reembolso procesado: TXN-001249 — $36.00',             time: 'hace 2 horas', level: 'warning', branchId: 1 },
-  { id: 6, message: 'Sala 4 puesta en modo Mantenimiento',                   time: 'hace 3 horas', level: 'warning', branchId: 1 },
-  { id: 7, message: 'Oppenheimer habilitado en Cine Suburbia',               time: 'hace 5 horas', level: 'success', branchId: null },
-];
-
-export const alerts = [
-  { id: 1, message: 'Conflicto: Sala 1 — 14:00 y 15:00 en riesgo de traslape',  level: 'error',   branchId: 1 },
-  { id: 2, message: 'Sala 4 en mantenimiento — 3 funciones afectadas',     level: 'warning', branchId: 1 },
-  { id: 3, message: '2 funciones por debajo del 20% de ocupación esta semana',   level: 'warning', branchId: 2 },
-  { id: 4, message: '3 pagos fallidos en la última hora',                         level: 'error',   branchId: 1 },
-  { id: 5, message: 'Inception Remasterizado deja cartelera en 12 días',          level: 'info',    branchId: 1 },
 ];
