@@ -107,7 +107,7 @@ describe('migracion 2', () => {
     old.close();
 
     const db = openDb(file);
-    assert.equal(db.pragma('user_version', { simple: true }), 4);
+    assert.equal(db.pragma('user_version', { simple: true }), MIGRATIONS.length);
     // Las migraciones posteriores agregan columnas: se comparan las columnas que ya existian.
     const project = (d) => Object.fromEntries(Object.entries(d).map(([t, rows]) => [t, rows.map((r) =>
       Object.fromEntries(Object.keys(before[t]?.[0] ?? r).filter((k) => k in r).map((k) => [k, r[k]])))]));
@@ -117,7 +117,7 @@ describe('migracion 2', () => {
     assert.equal(db.pragma('integrity_check', { simple: true }), 'ok');
     db.close();
     const again = openDb(file);
-    assert.equal(again.pragma('user_version', { simple: true }), 4);
+    assert.equal(again.pragma('user_version', { simple: true }), MIGRATIONS.length);
     assert.deepEqual(project(dump(again)), before);
     again.close();
     fs.rmSync(dir, { recursive: true, force: true });

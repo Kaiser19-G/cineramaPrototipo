@@ -174,6 +174,54 @@ export const MIGRATIONS = [
     db.prepare(`UPDATE screenings SET booked_seats = (SELECT COUNT(*) FROM order_seats os WHERE os.screening_id = screenings.id AND os.active = 1)`).run();
     db.prepare(`UPDATE screenings SET status = 'scheduled' WHERE status = 'sold_out'`).run();
   },
+  // 5: catalogo de confiteria (fase 5a). Solo tablas e indices nuevos: no toca ninguna fila existente.
+  // Los pedidos con confiteria (order_items, fulfillments) llegan con la migracion 6 (entrega 5b).
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT NOT NULL,
+        category    TEXT NOT NULL CHECK (category IN ('combo','popcorn','drink','snack')),
+        description TEXT NOT NULL DEFAULT '',
+        art_key     TEXT NOT NULL,                -- clave cerrada de la ilustracion SVG; nunca una URL
+        active      INTEGER NOT NULL DEFAULT 1,   -- sin borrado fisico: active = 0
+        sort        INTEGER NOT NULL DEFAULT 0,
+        version     INTEGER NOT NULL DEFAULT 1,   -- control optimista
+        created_at  INTEGER,
+        updated_at  INTEGER,
+        updated_by  INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS product_variants (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id    INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        label         TEXT NOT NULL,              -- Unico | Pequeno | Mediano | Grande
+        price         REAL NOT NULL CHECK (price > 0),   -- soles, 2 decimales; el mismo en todas las sedes
+        volume_ml     INTEGER,                    -- medidas reales del tamano (las usara el comparador, entrega 5e)
+        height_cm     REAL,
+        top_diam_cm   REAL,
+        bottom_diam_cm REAL,
+        serves        INTEGER NOT NULL DEFAULT 1 CHECK (serves BETWEEN 1 AND 6),   -- "ideal para N personas"
+        active        INTEGER NOT NULL DEFAULT 1,
+        sort          INTEGER NOT NULL DEFAULT 0,
+        UNIQUE (product_id, label)
+      );
+      CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id, sort);
+      CREATE TABLE IF NOT EXISTS combo_items (
+        combo_variant_id INTEGER NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+        item_variant_id  INTEGER NOT NULL REFERENCES product_variants(id),
+        qty              INTEGER NOT NULL CHECK (qty BETWEEN 1 AND 10),
+        PRIMARY KEY (combo_variant_id, item_variant_id)
+      );
+      CREATE TABLE IF NOT EXISTS branch_variants (
+        branch_id  INTEGER NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+        variant_id INTEGER NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+        status     TEXT NOT NULL CHECK (status IN ('available','sold_out')),   -- sin fila = disponible
+        updated_at INTEGER,
+        updated_by INTEGER,
+        PRIMARY KEY (branch_id, variant_id)
+      );
+    `);
+  },
 ];
 
 export function migrate(db) {

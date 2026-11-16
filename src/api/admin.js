@@ -40,6 +40,14 @@ export const adminApi = {
     checkIn: (code, seats) => request('POST', '/api/admin/counter/tickets/checkin', seats ? { code, seats } : { code }),
     refund: (code, reason) => request('POST', `/api/admin/orders/${encodeURIComponent(code)}/refund`, { reason }),
   },
+  // Confitería: catálogo (solo admin central escribe) y disponibilidad por sede (admin central y gerente de la sede).
+  products: {
+    list: () => request('GET', '/api/admin/products'),
+    get: (id) => request('GET', `/api/admin/products/${id}`),
+    create: (body) => request('POST', '/api/admin/products', body),
+    update: (id, body) => request('PATCH', `/api/admin/products/${id}`, body),
+    setStock: (id, branchId, body) => request('PUT', `/api/admin/products/${id}/branches/${branchId}`, body),
+  },
   halls: {
     setStatus: (id, status) => request('PATCH', `/api/admin/halls/${id}`, { status }),
   },

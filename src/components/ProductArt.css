@@ -1,0 +1,14 @@
+/* Ilustraciones de productos: solo tokens de color del tema (claro/oscuro y modos de visión). Los tokens locales
+   --art-* se resuelven en el propio SVG, así heredan los valores del contenedor donde se muestre (sitio o panel). */
+.product-art {
+  --art-line: var(--border-interactive);   /* contorno: >= 3:1 sobre la superficie (WCAG 1.4.11) */
+  --art-surface: var(--surface-3);
+  --art-red: var(--action-red);
+  --art-gold: var(--cinema-gold);
+  --art-brown: var(--label-accent);
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  flex: none;
+}

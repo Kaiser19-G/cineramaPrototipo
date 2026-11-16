@@ -96,6 +96,25 @@ Solo el administrador central entra a `/users`, `/cinema` y `/settings`. Las rut
   `orders` y sus `order_seats` existentes en ese momento), deja `booked_seats` en el conteo real y repone a `scheduled` las funciones
   guardadas como `sold_out`. El seed ya no crea órdenes ni contadores.
 
+## Confitería: catálogo (fase 5a)
+Solo el catálogo y su gestión; la compra con confitería, la cola de recojo y el comparador de tamaños llegan en 5b a 5e.
+- **Panel:** página **Confitería** (`/confiteria`, entrada en el menú lateral solo con permiso). El **administrador central** crea y edita
+  productos, tamaños, precios y combos y los activa o desactiva (`manage_products`; no hay borrado, solo `active`). El **administrador central
+  y el gerente** marcan cada tamaño como **disponible o agotado** en su sede (`manage_stock`; el gerente solo en la suya, otra sede responde
+  404). Cajero, operador y soporte no ven la página (403). Un cambio de precio sube la versión del producto (409 `stale` si otra persona
+  editó antes); `audit_log` guarda `product.create`, `product.update` y `product.stock` solo con ids y nombres de campos.
+- **Modelo (migración 5, tablas nuevas, no toca datos existentes):** `products`, `product_variants` (etiqueta, precio en soles con 2 decimales,
+  volumen en ml, alto, diámetros, "ideal para N personas"), `combo_items` (un combo tiene un tamaño y apunta a tamaños sueltos, sin anidar) y
+  `branch_variants` (agotado por sede; **sin fila = disponible**). Precio igual en todas las sedes; sin conteo de inventario. Un combo queda
+  agotado en una sede si lo está (o se desactivó) alguno de sus componentes.
+- **API pública de solo lectura:** `GET /api/menu?branchId=N` y `GET /api/screenings/:id/menu` (menú de la sede de la función; 404 si no existe
+  o no se ofrece). Sin sesión, `Cache-Control: no-store`. Solo productos y tamaños activos; los agotados salen con `available: false`.
+  Incluye `limits` (`MAX_ITEM_QTY` 10, `MAX_FOOD_UNITS_PER_ORDER` 20, `MAX_FOOD_LINES` 12, en `src/shared/purchase.js`).
+- **Ilustraciones:** dibujos SVG propios dentro del código (`src/components/ProductArt.jsx`), elegidos con una clave cerrada (`art_key`);
+  sin fotos ni recursos externos, con tokens de color del tema.
+- **Semilla** (`server/menuSeed.js`, solo si `products` está vacía): 11 productos (canchita salada y dulce en 3 tamaños, gaseosa, chicha,
+  agua, nachos, hot dog, confites y 3 combos) y 3 agotados de ejemplo por sede. `npm run seed` la carga también en una base ya migrada.
+
 ## Reclamos de DNI usado por otra persona (fase 2b)
 
 Si al registrarse alguien ve "Ya existe una cuenta con este documento", el enlace **"¿Este DNI es tuyo? Presenta un reclamo"**

@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Film, Building2, CalendarDays, Ticket,
-  CreditCard, Users, BarChart3, Settings, Lock, ShieldCheck,
+  CreditCard, Users, BarChart3, Settings, Lock, ShieldCheck, Popcorn,
 } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
 import { useAuth } from '../../context/AuthContext';
-import { SALES_PERMS, REPORT_PERMS, hasAnyPerm } from '../../shared/permissions';
+import { SALES_PERMS, REPORT_PERMS, MENU_PERMS, hasAnyPerm } from '../../shared/permissions';
 import './Sidebar.css';
 
 // Nav para Admin Central (acceso global)
@@ -15,6 +15,7 @@ const navAdmin = [
   { to: '/movies',      icon: Film,             label: 'Catálogo de Películas' },
   { to: '/scheduling',  icon: CalendarDays,     label: 'Programación Global' },
   { to: '/tickets',     icon: Ticket,           label: 'Taquilla' },
+  { to: '/confiteria',        icon: Popcorn,          label: 'Confitería', any: MENU_PERMS },
   { to: '/payments',    icon: CreditCard,       label: 'Pagos', any: SALES_PERMS },
   { to: '/users',       icon: Users,            label: 'Usuarios y Accesos' },
   { to: '/claims',      icon: ShieldCheck,      label: 'Reclamos de DNI' },
@@ -28,6 +29,7 @@ const navLocal = [
   { to: '/scheduling', icon: CalendarDays,    label: 'Mis Funciones' },
   { to: '/movies',     icon: Film,            label: 'Películas del Cine' },
   { to: '/tickets',    icon: Ticket,          label: 'Taquilla' },
+  { to: '/confiteria',       icon: Popcorn,         label: 'Confitería', any: MENU_PERMS },
   { to: '/payments',   icon: CreditCard,      label: 'Ventas Locales', any: SALES_PERMS },
   { to: '/reports',    icon: BarChart3,       label: 'Reportes Locales', any: REPORT_PERMS },
 ];
