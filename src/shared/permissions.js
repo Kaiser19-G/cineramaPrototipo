@@ -31,6 +31,11 @@ export function tierOf(role) {
   return null;
 }
 
+// Quien puede abrir Pagos (lista de órdenes) y Reportes: el servidor aplica lo mismo en /api/admin/orders y /reports.
+export const SALES_PERMS = ['view_all_sales', 'view_local_sales', 'view_orders'];
+export const REPORT_PERMS = ['view_global_reports', 'view_local_reports'];
+export const hasAnyPerm = (user, perms) => !!user?.perms?.some((p) => perms.includes(p));
+
 export const isStaffTier = (tier) => tier === 'central' || tier === 'branch';
 
 // Textos de cada permiso (la pantalla Roles y permisos se genera de PERMS + estos textos; no hay otra tabla).

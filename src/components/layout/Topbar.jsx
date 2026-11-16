@@ -1,22 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Search, Bell, ChevronDown, X, AlertTriangle, CheckCircle, Info, AlertCircle, Globe, MapPin, Lock, LogOut, Settings, User, KeyRound } from 'lucide-react';
+import { Menu, Search, ChevronDown, Globe, MapPin, Lock, LogOut, Settings, User, KeyRound } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../shared/permissions';
 import './Topbar.css';
 
-const levelIcon  = { error: AlertCircle, warning: AlertTriangle, success: CheckCircle, info: Info };
-const levelColor = { error: 'var(--action-red)', warning: 'var(--intense-orange)', success: 'var(--emerald)', info: 'var(--electric-blue)' };
-
-export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotifClose }) {
+export default function Topbar({ onMenuToggle }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const {
     currentCinemaId, setCinema, activeBranch, isGlobal,
     isAdminCentral, currentUser, branches,
-    activeAlerts, activeActivity,
   } = useCinema();
   const { logout } = useAuth();
   const userMenuRef = useRef(null);
@@ -37,8 +33,6 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
     await logout();
     navigate('/web/login', { replace: true, state: { loggedOut: true } });
   };
-
-  const unread = activeAlerts.filter(a => a.level === 'error').length;
 
   return (
     <header className="topbar">
@@ -87,52 +81,6 @@ export default function Topbar({ onMenuToggle, onNotifToggle, notifOpen, onNotif
       </div>
 
       <div className="topbar-right">
-        <div className="notif-wrap">
-          <button
-            className="btn btn-ghost btn-icon"
-            onClick={onNotifToggle}
-            id="notif-btn"
-            style={{ position: 'relative' }}
-          >
-            <Bell size={18} />
-            {unread > 0 && <span className="notif-badge">{unread}</span>}
-          </button>
-
-          {notifOpen && (
-            <div className="notif-panel">
-              <div className="notif-panel-header">
-                <span className="font-bold" style={{ fontSize: 14 }}>Notificaciones</span>
-                <button className="icon-btn" onClick={onNotifClose}><X size={14} /></button>
-              </div>
-              <div className="notif-section-label">
-                Alertas (ejemplo) {!isGlobal && `— ${activeBranch?.name}`}
-              </div>
-              {activeAlerts.map(a => {
-                const Icon = levelIcon[a.level] || Info;
-                return (
-                  <div key={a.id} className="notif-item">
-                    <Icon size={14} color={levelColor[a.level]} style={{ flexShrink: 0 }} />
-                    <p className="notif-msg">{a.message}</p>
-                  </div>
-                );
-              })}
-              <div className="notif-section-label" style={{ marginTop: 8 }}>Actividad reciente (ejemplo)</div>
-              {activeActivity.slice(0, 4).map(a => {
-                const Icon = levelIcon[a.level] || Info;
-                return (
-                  <div key={a.id} className="notif-item">
-                    <Icon size={14} color={levelColor[a.level]} style={{ flexShrink: 0 }} />
-                    <div>
-                      <p className="notif-msg">{a.message}</p>
-                      <p className="notif-time">{a.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
         <div className="topbar-user" ref={userMenuRef}>
           <button
             type="button" className="topbar-user-btn" ref={userBtnRef}

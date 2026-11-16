@@ -4,6 +4,8 @@ import {
   CreditCard, Users, BarChart3, Settings, Lock, ShieldCheck,
 } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
+import { useAuth } from '../../context/AuthContext';
+import { SALES_PERMS, REPORT_PERMS, hasAnyPerm } from '../../shared/permissions';
 import './Sidebar.css';
 
 // Nav para Admin Central (acceso global)
@@ -13,10 +15,10 @@ const navAdmin = [
   { to: '/movies',      icon: Film,             label: 'Catálogo de Películas' },
   { to: '/scheduling',  icon: CalendarDays,     label: 'Programación Global' },
   { to: '/tickets',     icon: Ticket,           label: 'Taquilla' },
-  { to: '/payments',    icon: CreditCard,       label: 'Pagos' },
+  { to: '/payments',    icon: CreditCard,       label: 'Pagos', any: SALES_PERMS },
   { to: '/users',       icon: Users,            label: 'Usuarios y Accesos' },
   { to: '/claims',      icon: ShieldCheck,      label: 'Reclamos de DNI' },
-  { to: '/reports',     icon: BarChart3,        label: 'Reportes Globales' },
+  { to: '/reports',     icon: BarChart3,        label: 'Reportes Globales', any: REPORT_PERMS },
   { to: '/settings',    icon: Settings,         label: 'Configuración' },
 ];
 
@@ -26,8 +28,8 @@ const navLocal = [
   { to: '/scheduling', icon: CalendarDays,    label: 'Mis Funciones' },
   { to: '/movies',     icon: Film,            label: 'Películas del Cine' },
   { to: '/tickets',    icon: Ticket,          label: 'Taquilla' },
-  { to: '/payments',   icon: CreditCard,      label: 'Ventas Locales' },
-  { to: '/reports',    icon: BarChart3,       label: 'Reportes Locales' },
+  { to: '/payments',   icon: CreditCard,      label: 'Ventas Locales', any: SALES_PERMS },
+  { to: '/reports',    icon: BarChart3,       label: 'Reportes Locales', any: REPORT_PERMS },
 ];
 
 // Items bloqueados para Admin Local (muestra el candado pero no navega)
@@ -39,7 +41,9 @@ const navBlocked = [
 
 export default function Sidebar({ open }) {
   const { isAdminCentral } = useCinema();
-  const nav = isAdminCentral ? navAdmin : navLocal;
+  const { user } = useAuth();
+  // Solo se listan las pantallas que el rol puede abrir (el servidor aplica los mismos permisos).
+  const nav = (isAdminCentral ? navAdmin : navLocal).filter((i) => !i.any || hasAnyPerm(user, i.any));
 
   return (
     <aside className={`sidebar ${open ? 'open' : 'collapsed'}`}>

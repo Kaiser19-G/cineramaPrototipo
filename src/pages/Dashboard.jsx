@@ -1,260 +1,164 @@
-import {
-  DollarSign, Ticket, Clapperboard, Building2,
-  Users, AlertCircle, TrendingUp, TrendingDown,
-  CheckCircle, AlertTriangle, Info, Plus, ArrowRight, Globe, MapPin,
-} from 'lucide-react';
-import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts';
+import { useEffect, useRef } from 'react';
+import { DollarSign, Ticket, Clapperboard, Users, AlertCircle, Plus, ArrowRight, Globe, MapPin, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { revenueByDay, genreData } from '../data/store';
 import { useCinema } from '../context/CinemaContext';
-import DemoNotice from '../components/DemoNotice';
+import { adminApi } from '../api/admin';
+import { useAdminQuery } from '../hooks/useAdminQuery';
+import { QueryGate } from '../components/SalesParts';
+import { pctText, dayLabel } from '../utils/salesFormat';
 import { money } from '../utils/money';
 import './Dashboard.css';
+import './MovieManagement.css';
+import './Sales.css';
 
-const levelColor = {
-  error:   'var(--action-red)',
-  warning: 'var(--intense-orange)',
-  success: 'var(--emerald)',
-  info:    'var(--electric-blue)',
+const ACTION_LABELS = {
+  'screening.create': 'Función programada', 'screening.update': 'Función editada', 'screening.cancel': 'Función cancelada',
+  'movie.create': 'Película creada', 'movie.update': 'Película editada', 'movie.disable': 'Película retirada',
+  'user.create': 'Usuario creado', 'user.update': 'Usuario editado', 'user.reset_password': 'Contraseña temporal emitida',
 };
-const levelIcon = { error: AlertCircle, warning: AlertTriangle, success: CheckCircle, info: Info };
+const when = (ms) => new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms));
 
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
+function ScreeningsTable({ id, caption, list, showDay }) {
   return (
-    <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-        {typeof payload[0].value === 'number' && payload[0].name !== 'Ocupación'
-          ? money(payload[0].value)
-          : `${payload[0].value}%`}
-      </p>
-    </div>
-  );
-};
-
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const {
-    isGlobal, activeBranch, isAdminCentral,
-    kpiRevenue, kpiTickets, kpiFailed, kpiScreenings, kpiOccupancy,
-    activeAlerts, activeActivity,
-    enabledMovies, branches, setCinema,
-  } = useCinema();
-
-  const kpis = [
-    { label: 'Ingresos del día (ejemplo)', value: money(kpiRevenue), icon: DollarSign,   color: 'var(--cinema-gold)',   bg: 'var(--cinema-gold-dim)',   change: null, pos: true  },
-    { label: 'Entradas vendidas (ejemplo)', value: kpiTickets,        icon: Ticket,       color: 'var(--action-red)',    bg: 'var(--action-red-dim)',    change: null, pos: true  },
-    { label: 'Funciones activas', value: kpiScreenings,           icon: Clapperboard, color: 'var(--electric-blue)', bg: 'var(--electric-blue-dim)', change: null, pos: true  },
-    { label: 'Películas en cartelera', value: enabledMovies.filter(m=>m.status==='active').length, icon: Film2, color: 'var(--violet)', bg: 'var(--violet-dim)', change: null, pos: true },
-    { label: 'Ocupación promedio (ejemplo)', value: `${kpiOccupancy}%`, icon: Users,        color: 'var(--emerald)',        bg: 'var(--emerald-dim)',       change: null,  pos: true  },
-    { label: 'Pagos fallidos (ejemplo)', value: kpiFailed,                          icon: AlertCircle,  color: 'var(--intense-orange)',bg: 'var(--intense-orange-dim)',change: null,   pos: false },
-  ];
-
-  // Revenue series key for chart
-  const revenueKey = isGlobal ? 'revenue'
-    : activeBranch?.name === 'Cinerama Centro' ? 'centro'
-    : activeBranch?.name === 'Complejo Mall'   ? 'mall'
-    : 'suburbia';
-
-  return (
-    <div className="dashboard">
-      <DemoNotice>
-        Ingresos, entradas, ocupación, pagos fallidos, gráficos, alertas y actividad son de ejemplo y no cambian con lo que hagas.
-        Solo las películas y las funciones programadas vienen de datos reales.
-      </DemoNotice>
-
-      {/* ── Contexto activo ─────────────────────────────────────────────── */}
-      <div className="context-banner">
-        <div className="context-banner-left">
-          {isGlobal
-            ? <><Globe size={16} color="var(--electric-blue)" /><span>Vista Global — Todos los Cines</span></>
-            : <><MapPin size={16} color="var(--action-red)" /><span>Cine Activo: <strong>{activeBranch?.name}</strong> — {activeBranch?.city}</span></>}
-        </div>
-        {isAdminCentral && !isGlobal && (
-          <button className="btn btn-ghost btn-sm" onClick={() => setCinema('all')}>
-            ← Ver todos los cines
-          </button>
-        )}
-      </div>
-
-      {/* ── KPIs ─────────────────────────────────────────────────────────── */}
-      <div className="kpi-grid">
-        {kpis.map((k, i) => {
-          const Icon = k.icon || AlertCircle;
-          return (
-            <div key={i} className="kpi-card card">
-              <div className="kpi-top">
-                <div className="kpi-icon" style={{ background: k.bg, color: k.color }}>
-                  <Icon size={18} />
-                </div>
-                {k.change && (
-                  <span className={`kpi-change ${k.pos ? 'pos' : 'neg'}`}>
-                    {k.pos ? <TrendingUp size={11} /> : <TrendingDown size={11} />} {k.change}
-                  </span>
-                )}
-              </div>
-              <div className="kpi-value">{k.value}</div>
-              <div className="kpi-label">{k.label}</div>
-              <div className="stat-bar" style={{ background: k.bg }}>
-                <div style={{ width: '60%', height: '100%', background: k.color, borderRadius: 99 }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ── Admin Central: Cards de cada Cine ─────────────────────────── */}
-      {isGlobal && isAdminCentral && (
-        <div>
-          <div className="flex-between mb-4">
-            <div className="section-title">Cines & Sucursales</div>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/cinema')}>
-              Gestionar Cines <ArrowRight size={13} />
-            </button>
-          </div>
-          <div className="grid-4">
-            {branches.map(b => (
-              <div key={b.id} className="card branch-card" onClick={() => setCinema(b.id)} style={{ cursor: 'pointer' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <div style={{ width: 40, height: 40, background: b.status === 'maintenance' ? 'var(--intense-orange-dim)' : 'var(--action-red-dim)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Building2 size={18} color={b.status === 'maintenance' ? 'var(--intense-orange)' : 'var(--action-red)'} />
-                  </div>
-                  <span className={`badge ${b.status === 'active' ? 'badge-green' : 'badge-orange'}`}>
-                    {b.status === 'active' ? 'Activo' : 'Mantenimiento'}
-                  </span>
-                </div>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{b.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>{b.city}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{b.halls} salas</div>
-                <div className="branch-card-arrow"><ArrowRight size={14} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Gráficos ──────────────────────────────────────────────────── */}
-      <div className="charts-row">
-        <div className="card chart-main">
-          <div className="flex-between mb-4">
-            <div>
-              <div className="section-title" style={{ marginBottom: 2 }}>Ingresos Semanales</div>
-              <div className="text-muted">{isGlobal ? 'Todos los cines' : activeBranch?.name}</div>
-            </div>
-            <span className="badge badge-green">+18% vs semana anterior</span>
-          </div>
-          <ResponsiveContainer width="100%" height={190}>
-            <LineChart data={revenueByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `S/ ${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<ChartTooltip />} />
-              <Line type="monotone" dataKey={revenueKey} name="Ingresos"
-                stroke="var(--action-red)" strokeWidth={2.5}
-                dot={{ fill: 'var(--action-red)', r: 4, strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: 'var(--action-red)', stroke: 'var(--action-red-dim)', strokeWidth: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="card chart-side">
-          <div className="section-title mb-4">Películas por Género</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={genreData} cx="50%" cy="50%" innerRadius={48} outerRadius={78} dataKey="value" paddingAngle={3}>
-                {genreData.map((g, i) => <Cell key={i} fill={g.color} />)}
-              </Pie>
-              <Tooltip formatter={v => `${v}%`} contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="genre-legend">
-            {genreData.map((g, i) => (
-              <div key={i} className="genre-legend-item">
-                <span className="genre-dot" style={{ background: g.color }} />
-                <span>{g.name}</span>
-                <span>{g.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Fila inferior ────────────────────────────────────────────────── */}
-      <div className="bottom-row">
-        {/* Actividad */}
-        <div className="card activity-card">
-          <div className="flex-between mb-4">
-            <div className="section-title" style={{ marginBottom: 0 }}>Actividad reciente (ejemplo)</div>
-            <button className="btn btn-ghost btn-sm">Ver todo</button>
-          </div>
-          <div className="activity-list">
-            {activeActivity.map(a => {
-              const Icon = levelIcon[a.level] || Info;
-              return (
-                <div key={a.id} className="activity-item">
-                  <div className="activity-icon" style={{ background: `${levelColor[a.level]}22`, color: levelColor[a.level] }}>
-                    <Icon size={13} />
-                  </div>
-                  <div className="activity-content">
-                    <p className="activity-msg">{a.message}</p>
-                    <p className="activity-time">{a.time}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Alertas + Accesos */}
-        <div className="card alerts-card">
-          <div className="flex-between mb-4">
-            <div className="section-title" style={{ marginBottom: 0 }}>
-              Alertas (ejemplo)
-              <span className="badge badge-red" style={{ marginLeft: 8 }}>{activeAlerts.length}</span>
-            </div>
-          </div>
-          <div className="alerts-list">
-            {activeAlerts.map(a => {
-              const Icon = levelIcon[a.level] || Info;
-              return (
-                <div key={a.id} className={`alert-item alert-${a.level}`}>
-                  <Icon size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                  <p>{a.message}</p>
-                </div>
-              );
-            })}
-          </div>
-          <div className="divider" />
-          <div className="quick-actions">
-            <p className="section-title" style={{ fontSize: 13, marginBottom: 10 }}>Accesos Rápidos</p>
-            {isAdminCentral && (
-              <button className="btn btn-primary btn-sm" style={{ width: '100%', marginBottom: 8 }} onClick={() => navigate('/movies')}>
-                <Plus size={14} /> Agregar Película
-              </button>
-            )}
-            <button className="btn btn-secondary btn-sm" style={{ width: '100%', marginBottom: 8 }} onClick={() => navigate('/scheduling')}>
-              <Plus size={14} /> Programar Función
-            </button>
-            <button className="btn btn-secondary btn-sm" style={{ width: '100%' }} onClick={() => navigate('/reports')}>
-              <ArrowRight size={14} /> Ver Reportes
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="table-wrapper card" style={{ padding: 0, overflowX: 'auto' }}>
+      <table className="table mv-table" id={id}>
+        <caption className="sr-only">{caption}</caption>
+        <thead><tr>{showDay && <th scope="col">Día</th>}<th scope="col">Hora</th><th scope="col">Película</th><th scope="col">Sala</th><th scope="col">Butacas vendidas</th></tr></thead>
+        <tbody>
+          {list.map((s) => (
+            <tr key={s.id}>
+              {showDay && <td>{s.date}</td>}
+              <td>{s.startTime}–{s.endTime}</td>
+              <td><span className="mv-title">{s.movieTitle}</span></td>
+              <td>{s.branchName} · {s.hallName}</td>
+              <td>{s.sold} de {s.capacity} ({pctText(s.occupancy)})</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-// Helper interno (evita import)
-function Film2({ size, ...props }) {
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const { isGlobal, activeBranch, isAdminCentral, currentCinemaId, branches, setCinema, can, enabledMovies } = useCinema();
+  const headingRef = useRef(null);
+  useEffect(() => { document.title = 'Resumen · Cinerama'; headingRef.current?.focus(); }, []);
+
+  // El servidor fija la sede del personal de sede; el admin central ve todas (el selector del panel solo cambia la sede de las listas).
+  const branchId = isAdminCentral && currentCinemaId !== 'all' ? currentCinemaId : '';
+  const query = useAdminQuery(() => adminApi.sales.dashboard({ branchId }), `dash-${branchId}`);
+  const mine = query.data;
+  const d = mine;
+
+  const kpis = [];
+  if (mine) {
+    if (mine.money) {
+      kpis.push({ label: 'Ingresos de hoy', value: money(mine.money.revenue), icon: DollarSign });
+      kpis.push({ label: 'Entradas vendidas hoy', value: mine.money.tickets, icon: Ticket });
+    }
+    kpis.push({ label: 'Funciones de hoy', value: mine.screenings.list.length, icon: Clapperboard });
+    kpis.push({ label: 'Ocupación de hoy', value: pctText(mine.occupancy.rate), note: `${mine.occupancy.sold} de ${mine.occupancy.capacity} butacas`, icon: Users });
+    if (mine.money) kpis.push({ label: 'Pagos rechazados hoy', value: mine.money.rejected, icon: AlertCircle });
+  }
+
   return (
-    <svg {...props} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>
-    </svg>
+    <div className="dashboard dash-real mv-page">
+      <div className="page-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h1 className="page-title" tabIndex={-1} ref={headingRef}>{isAdminCentral ? 'Resumen global' : 'Resumen de la sede'}</h1>
+          <p className="page-subtitle">Indicadores de hoy{d ? `, ${dayLabel(d.today).toLowerCase()}` : ''} (hora de Lima), calculados con datos reales.</p>
+        </div>
+      </div>
+
+      <div className="context-banner">
+        <div className="context-banner-left">
+          {isGlobal
+            ? <><Globe size={16} aria-hidden="true" color="var(--electric-blue)" /><span>Vista global — todos los cines</span></>
+            : <><MapPin size={16} aria-hidden="true" color="var(--action-red)" /><span>Cine activo: <strong>{activeBranch?.name}</strong> — {activeBranch?.city}</span></>}
+        </div>
+        {isAdminCentral && !isGlobal && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCinema('all')}>← Ver todos los cines</button>}
+      </div>
+
+      <QueryGate query={query} what="el resumen" />
+
+      {mine && (
+        <>
+          <p className="sr-only" role="status">Resumen actualizado.</p>
+          <ul className="sl-kpis" aria-label="Indicadores de hoy">
+            {kpis.map((k) => {
+              const Icon = k.icon;
+              return (
+                <li key={k.label} className="card sl-kpi">
+                  <div className="kpi-icon" style={{ background: 'var(--surface-3)', color: 'var(--text-main)', margin: '0 auto 8px' }}><Icon size={18} aria-hidden="true" /></div>
+                  <div className="sl-kpi-value">{k.value}</div>
+                  <div className="sl-kpi-label">{k.label}</div>
+                  {k.note && <div className="sl-kpi-note">{k.note}</div>}
+                </li>
+              );
+            })}
+            <li className="card sl-kpi">
+              <div className="sl-kpi-value">{enabledMovies.filter((m) => m.status === 'active').length}</div>
+              <div className="sl-kpi-label">Películas en cartelera</div>
+            </li>
+          </ul>
+
+          <section aria-labelledby="dash-today">
+            <h2 id="dash-today">Funciones de hoy</h2>
+            {mine.screenings.list.length === 0
+              ? <div className="sl-empty"><p><strong>No hay funciones programadas para hoy.</strong></p></div>
+              : <ScreeningsTable caption="Funciones de hoy, con butacas vendidas" list={mine.screenings.list} />}
+          </section>
+
+          <section aria-labelledby="dash-next">
+            <h2 id="dash-next">Próximas funciones</h2>
+            {mine.screenings.upcoming.length === 0
+              ? <div className="sl-empty"><p><strong>No hay funciones programadas de mañana en adelante (próximos 7 días).</strong></p></div>
+              : <ScreeningsTable caption="Próximas funciones, de mañana en adelante (hasta 7 días)" list={mine.screenings.upcoming} showDay />}
+          </section>
+
+          {mine.activity && (
+            <section aria-labelledby="dash-act" className="card">
+              <h2 id="dash-act">Últimas acciones del panel</h2>
+              {mine.activity.length === 0 ? <p className="sl-note">Todavía no hay acciones registradas.</p> : (
+                <ul className="sl-activity">
+                  {mine.activity.map((a) => (
+                    <li key={a.id}>{ACTION_LABELS[a.action] ?? a.action}{a.actorName ? ` · ${a.actorName}` : ''}<time dateTime={new Date(a.at).toISOString()}>{when(a.at)}</time></li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {isAdminCentral && isGlobal && (
+            <section aria-labelledby="dash-branches">
+              <div className="flex-between mb-4">
+                <h2 id="dash-branches" style={{ margin: 0 }}>Cines y sucursales</h2>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => navigate('/cinema')}>Gestionar cines <ArrowRight size={13} aria-hidden="true" /></button>
+              </div>
+              <ul className="sl-kpis" style={{ marginBottom: 0 }}>
+                {branches.map((b) => (
+                  <li key={b.id} className="card sl-kpi" style={{ textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><Building2 size={16} aria-hidden="true" /><strong>{b.name}</strong></div>
+                    <div className="sl-kpi-note">{b.city} · {b.status === 'active' ? 'Activo' : 'En mantenimiento'}</div>
+                    <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={() => setCinema(b.id)}>Ver {b.name}</button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section aria-labelledby="dash-quick" className="card">
+            <h2 id="dash-quick">Accesos rápidos</h2>
+            <div className="mv-actions">
+              {can('create_movie') && <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate('/movies')}><Plus size={14} aria-hidden="true" /> Agregar película</button>}
+              {can('create_screening') && <button type="button" className="btn btn-secondary btn-sm" onClick={() => navigate('/scheduling')}><Plus size={14} aria-hidden="true" /> Programar función</button>}
+              {(can('view_global_reports') || can('view_local_reports')) && <button type="button" className="btn btn-secondary btn-sm" onClick={() => navigate('/reports')}><ArrowRight size={14} aria-hidden="true" /> Ver reportes</button>}
+            </div>
+          </section>
+        </>
+      )}
+    </div>
   );
 }
