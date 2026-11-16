@@ -11,13 +11,14 @@ import CinemaManagement from './pages/CinemaManagement';
 import Scheduling from './pages/Scheduling';
 import TicketOperations from './pages/TicketOperations';
 import Payments from './pages/Payments';
+import MenuManagement from './pages/MenuManagement';
 import UsersAccess from './pages/UsersAccess';
 import Claims, { ClaimDetail } from './pages/Claims';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
-import { SALES_PERMS, REPORT_PERMS } from './shared/permissions';
+import { SALES_PERMS, REPORT_PERMS, MENU_PERMS } from './shared/permissions';
 import WebHome from './pages/WebHome';
 import WebLayout from './components/layout/WebLayout';
 import WebAuth from './pages/WebAuth';
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="/movies/*"     element={<MovieManagement />} />
               <Route path="/scheduling/*" element={<Scheduling />} />
               <Route path="/tickets/*"    element={<TicketOperations />} />
+              <Route path="/confiteria/*"        element={<RequirePerm any={MENU_PERMS}><MenuManagement /></RequirePerm>} />
               <Route path="/payments/*"   element={<RequirePerm any={SALES_PERMS}><Payments /></RequirePerm>} />
               <Route path="/reports/*"    element={<RequirePerm any={REPORT_PERMS}><Reports /></RequirePerm>} />
               {/* Solo Admin Central */}

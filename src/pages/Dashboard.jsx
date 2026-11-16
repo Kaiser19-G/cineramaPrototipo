@@ -15,6 +15,9 @@ const ACTION_LABELS = {
   'screening.create': 'Función programada', 'screening.update': 'Función editada', 'screening.cancel': 'Función cancelada',
   'movie.create': 'Película creada', 'movie.update': 'Película editada', 'movie.disable': 'Película retirada',
   'user.create': 'Usuario creado', 'user.update': 'Usuario editado', 'user.reset_password': 'Contraseña temporal emitida',
+  'counter.sale': 'Venta en taquilla', 'ticket.checkin': 'Ingreso a sala registrado', 'order.refund': 'Reembolso procesado',
+  'product.create': 'Producto de confitería creado', 'product.update': 'Producto de confitería editado',
+  'product.stock': 'Disponibilidad de confitería cambiada',
 };
 const when = (ms) => new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms));
 

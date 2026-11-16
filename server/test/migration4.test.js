@@ -50,7 +50,7 @@ test('migracion 4 sobre una base de la fase 3: borra solo las ordenes de ejemplo
   old.close();
 
   const db = openDb(file);
-  assert.equal(db.pragma('user_version', { simple: true }), 4);
+  assert.equal(db.pragma('user_version', { simple: true }), MIGRATIONS.length);
   const after = dump(db);
   // 1. Se borran todas las ordenes y butacas heredadas y nada mas.
   assert.equal(after.orders.length, 0); assert.equal(after.order_seats.length, 0);
@@ -81,7 +81,7 @@ test('migracion 4 sobre una base de la fase 3: borra solo las ordenes de ejemplo
   mid.prepare('UPDATE screenings SET booked_seats = 1 WHERE id = 1').run();
   mid.close();
   const again = openDb(file);
-  assert.equal(again.pragma('user_version', { simple: true }), 4);
+  assert.equal(again.pragma('user_version', { simple: true }), MIGRATIONS.length);
   assert.equal(count(again, 'orders'), 1); assert.equal(count(again, 'order_seats'), 1);
   assert.equal(again.prepare('SELECT booked_seats b FROM screenings WHERE id = 1').get().b, 1);
   again.close();
@@ -91,7 +91,7 @@ test('migracion 4 sobre una base de la fase 3: borra solo las ordenes de ejemplo
 test('migracion 4 sobre base nueva: la semilla no crea ordenes ni contadores y no hay funciones agotadas guardadas', () => {
   const dir = tmp();
   const db = openDb(path.join(dir, 'new.db'));
-  assert.equal(db.pragma('user_version', { simple: true }), 4);
+  assert.equal(db.pragma('user_version', { simple: true }), MIGRATIONS.length);
   seed(db);
   assert.equal(count(db, 'orders'), 0); assert.equal(count(db, 'order_seats'), 0);
   assert.equal(db.prepare('SELECT COUNT(*) c FROM screenings WHERE booked_seats != 0 OR status = ?').get('sold_out').c, 0);

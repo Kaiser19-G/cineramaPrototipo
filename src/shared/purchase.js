@@ -34,3 +34,9 @@ export const COUNTER_PAY_METHODS = { cash: 'Efectivo', card: 'Tarjeta' };
 // Datos guardados de una venta sin nombre: ningun dato personal inventado. El correo queda vacio y nunca se muestra.
 export const COUNTER_ANON_NAME = 'Venta en mostrador';
 export const COUNTER_NAME_MAX = 60;
+
+// ── Confitería (fase 5) ──
+// Topes de un pedido de confitería. Los aplicará el servidor al comprar (entrega 5b); el menú público los anuncia.
+export const MAX_ITEM_QTY = 10;              // unidades de un mismo producto y tamaño
+export const MAX_FOOD_UNITS_PER_ORDER = 20;  // unidades en total por pedido
+export const MAX_FOOD_LINES = 12;            // líneas distintas por pedido

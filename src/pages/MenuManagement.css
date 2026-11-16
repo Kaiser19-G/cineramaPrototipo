@@ -1,0 +1,44 @@
+/* ══ Fase 5a: página Confitería del panel. Solo tokens existentes; reutiliza las clases .mv-* del panel de películas. ══ */
+.mn-page .mn-count { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; }
+.mn-group { margin-bottom: 28px; }
+.mn-group-title { margin: 0 0 12px; font-size: 18px; color: var(--text-main); }
+.mn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.mn-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; min-width: 0; }
+.mn-card.mn-inactive { border-style: dashed; border-color: var(--border-interactive); }
+.mn-card-head { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.mn-card-head .product-art { width: 72px; max-width: 72px; }
+.mn-card-title { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.mn-card-title h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.mn-badge { display: inline-flex; align-items: center; gap: 4px; }
+.mn-desc { margin: 0; font-size: 13.5px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.mn-variants { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mn-variant-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border-subtle, var(--border)); }
+.mn-variant-info { min-width: 0; flex: 1 1 160px; overflow-wrap: anywhere; }
+.mn-price { color: var(--text-main); font-weight: 700; }
+.mn-variant-state { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+/* Estado con icono y texto (no solo color). */
+.mn-stock { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; border: 1px solid var(--border-interactive); color: var(--text-primary); background: var(--surface-2); white-space: nowrap; }
+.mn-stock-out { border-color: var(--error); color: var(--error-text); }
+.mn-card-actions { margin-top: auto; }
+.mn-page .btn:focus-visible, .mn-dialog .btn:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+
+/* Diálogo */
+.mn-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.mn-summary-wrap:focus { outline: none; }
+.mn-block-hint { margin-bottom: 10px; }
+.mn-variant { border: 1px solid var(--border-interactive); border-radius: var(--radius); padding: 12px 14px 4px; margin: 0 0 12px; min-width: 0; }
+.mn-variant > legend { padding: 0 6px; font-weight: 700; font-size: 14px; color: var(--text-main); }
+.mn-measures { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 12px; }
+.mn-variant-tools { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; justify-content: flex-end; padding-bottom: 12px; }
+.mn-art-preview { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mn-art-preview .product-art { width: 64px; max-width: 64px; }
+.mn-include-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; }
+.mn-include-row .mv-field { flex: 1 1 200px; }
+.mn-include-row .mn-qty { flex: 0 1 110px; }
+.mn-include-row .mn-include-remove { margin-bottom: 12px; }
+.mn-dialog [aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+.mn-dialog .field-error { align-items: flex-start; margin: 0; }
+.mn-dialog .field-error svg { flex: none; margin-top: 2px; }
+
+.mn-page .page-header { flex-wrap: wrap; gap: 12px; }
+.mn-page .page-header > div { min-width: 0; }

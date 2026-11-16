@@ -8,6 +8,8 @@ import { createUsers } from './admin/users.js';
 import { createOrders } from './orders/router.js';
 import { createSales } from './admin/sales.js';
 import { createCounter } from './admin/counter.js';
+import { createProducts } from './admin/products.js';
+import { createMenu } from './menu.js';
 import { todayInLima, nowInLima } from '../src/data/limaDate.js';
 import { screeningSpan } from '../src/shared/scheduling.js';
 import { mapMovie, mapBranch, mapHall, mapScreening, mapMovieBranch } from './mappers.js';
@@ -45,6 +47,8 @@ export function createApp(db, opts = {}) {
   const orders = createOrders(db, auth, opts);
   const sales = createSales(db, auth, opts);
   const counter = createCounter(db, auth, opts);
+  const adminProducts = createProducts(db, opts);
+  const menu = createMenu(db);
   const clock = opts.clock ?? Date.now;
   const today = () => todayInLima(new Date(clock()));
   const app = express();
@@ -77,6 +81,7 @@ export function createApp(db, opts = {}) {
   const staffOnly = [auth.loadSession, auth.requireAuth, auth.requireTier('central', 'branch')];
   app.use('/api/admin/movies', ...staffOnly, adminMovies.router);
   app.use('/api/admin/screenings', ...staffOnly, adminScreenings.router);
+  app.use('/api/admin/products', ...staffOnly, adminProducts.router);
   app.use('/api/admin/halls', ...staffOnly, adminHalls.router);
   app.use('/api/admin/orders', sales.orders);
   app.use('/api/admin/orders', counter.refunds);
@@ -102,6 +107,7 @@ export function createApp(db, opts = {}) {
   };
   // Compras (mapa de butacas publico; comprar exige cuenta de cliente).
   app.use('/api', orders.router);
+  app.use('/api', menu.router);
   app.get('/api/screenings', (req, res) => {
     const b = branchParam(req, res);
     if (b === false) return;

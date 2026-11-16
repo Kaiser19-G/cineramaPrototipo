@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { openDb, prepareData, DB_FILE } from './db.js';
 import { seedDemoCredentials } from './seedAuth.js';
 import { ensureSampleHalls } from './sampleHalls.js';
+import { seedMenu } from './menuSeed.js';
 import { movies, branches, halls, movieCinema, screenings, users } from '../src/data/store.js';
 
 const run = (db, { refreshScreenings = false } = {}) => {
@@ -86,6 +87,9 @@ const run = (db, { refreshScreenings = false } = {}) => {
     // Sedes que declaran salas y no tienen ninguna (solo si las salas se cargaron en esta pasada).
     if (!skip.has('halls')) ensureSampleHalls(db);
 
+    // Confiteria: solo si products esta vacia (y existe: una base antigua sin migrar no la tiene).
+    seedMenu(db);
+
   })();
 };
 
@@ -114,6 +118,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (!nonEmpty) await seedDemoCredentials(db);
   const n = (t) => db.prepare(`SELECT COUNT(*) c FROM ${t}`).get().c;
   console.log('Seed listo:', Object.fromEntries(
-    ['movies','branches','halls','movie_branch','screenings','users','orders','order_seats'].map((t) => [t, n(t)])));
+    ['movies','branches','halls','movie_branch','screenings','users','orders','order_seats','products','product_variants','branch_variants'].map((t) => [t, n(t)])));
   db.close();
 }

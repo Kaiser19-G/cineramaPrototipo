@@ -5,9 +5,9 @@
 export const PERMS = {
   admin:    ['create_movie','edit_movie','delete_movie','assign_cinema','create_cinema','edit_cinema',
              'create_hall','edit_hall','schedule_any','view_global_reports','manage_users','manage_settings',
-             'view_all_sales','create_screening','cancel_screening','process_refund'],
+             'view_all_sales','create_screening','cancel_screening','process_refund','manage_products','manage_stock'],
   manager:  ['schedule_any','create_screening','cancel_screening','edit_hall','view_local_reports',
-             'view_local_sales','block_hall','process_refund','validate_ticket'],
+             'view_local_sales','block_hall','process_refund','validate_ticket','manage_stock'],
   cashier:  ['view_local_screenings','process_sale','validate_ticket'],
   support:  ['view_orders','process_refund'],
   operator: ['view_local_screenings','validate_ticket'],
@@ -34,6 +34,8 @@ export function tierOf(role) {
 // Quien puede abrir Pagos (lista de órdenes) y Reportes: el servidor aplica lo mismo en /api/admin/orders y /reports.
 export const SALES_PERMS = ['view_all_sales', 'view_local_sales', 'view_orders'];
 export const REPORT_PERMS = ['view_global_reports', 'view_local_reports'];
+// Quien puede abrir Confitería (catálogo y disponibilidad): el servidor aplica lo mismo en /api/admin/products.
+export const MENU_PERMS = ['manage_products', 'manage_stock'];
 export const hasAnyPerm = (user, perms) => !!user?.perms?.some((p) => perms.includes(p));
 
 export const isStaffTier = (tier) => tier === 'central' || tier === 'branch';
@@ -49,4 +51,6 @@ export const PERM_LABELS = {
   manage_users: 'Gestionar usuarios', manage_settings: 'Cambiar la configuración del sistema',
   view_local_screenings: 'Ver las funciones de su sede', process_sale: 'Procesar ventas en taquilla', validate_ticket: 'Validar boletos',
   view_orders: 'Ver pedidos', process_refund: 'Procesar reembolsos',
+  manage_products: 'Gestionar productos de confitería (crear, editar, precios, activar)',
+  manage_stock: 'Marcar productos agotados o disponibles en su sede',
 };
