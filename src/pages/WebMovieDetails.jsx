@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
+import { useAuth } from '../context/AuthContext';
+import { ordersApi } from '../api/orders';
 import CustomDropdown from '../components/CustomDropdown';
 import StepIndicator from '../components/StepIndicator';
 import { getNextDays, formatDateLong } from '../data/dateHelpers';
@@ -33,6 +35,17 @@ function MovieDetailsView({ movie }) {
   const showtimesRef = useRef(null);
   const { branches, publicScreenings: activeScreenings } = useCinema();
   const upcoming = movie.status === 'upcoming';
+  const { user } = useAuth();
+  // Cupo de preventa de la cuenta (solo clientes con sesion; sin sesion queda el aviso general).
+  const [fetched, setFetched] = useState(null);
+  const isCustomer = user?.tier === 'customer';
+  useEffect(() => {
+    if (!isCustomer || !movie.presale) return undefined;
+    let off = false;
+    ordersApi.presaleQuota(movie.id).then((res) => { if (!off) setFetched({ movieId: movie.id, quota: res.ok ? res.data.presale : null }); });
+    return () => { off = true; };
+  }, [isCustomer, movie.id, movie.presale]);
+  const quota = isCustomer && movie.presale && fetched?.movieId === movie.id ? fetched.quota : null;
   // Las próximas con preventa también se venden (el servidor solo permite programarlas si tienen preventa).
   const sellable = !upcoming || movie.presale;
 
@@ -111,6 +124,13 @@ function MovieDetailsView({ movie }) {
             {movie.presale && (
               <p className="movie-notice" role="note">
                 <strong>Preventa:</strong> máximo {PRESALE_MAX_TICKETS} entradas por cuenta. Estreno el {formatDateLong(movie.releaseDate)}.
+              </p>
+            )}
+            {quota && (
+              <p className="movie-notice" role="status">
+                {quota.remaining === 0
+                  ? `Ya compraste tus ${quota.limit} entradas de preventa de esta película: no puedes comprar más.`
+                  : `Ya compraste ${quota.bought} de ${quota.limit} entradas de preventa. Te ${quota.remaining === 1 ? 'queda 1 entrada' : `quedan ${quota.remaining} entradas`}.`}
               </p>
             )}
             {upcoming && !movie.presale && (

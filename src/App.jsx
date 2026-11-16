@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CinemaProvider } from './context/CinemaContext';
-import { RequireStaff, RequireCentral } from './components/RequireAuth';
+import { RequireStaff, RequireCentral, RequireCustomer } from './components/RequireAuth';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import Dashboard from './pages/Dashboard';
@@ -28,6 +28,8 @@ import WebNotFound from './pages/WebNotFound';
 import WebCinemas from './pages/WebCinemas';
 import WebMovies from './pages/WebMovies';
 import WebBooking from './pages/WebBooking';
+import WebMyOrders from './pages/WebMyOrders';
+import WebOrderDetail from './pages/WebOrderDetail';
 import WebMovieDetails from './pages/WebMovieDetails';
 import WebCinemaDetails from './pages/WebCinemaDetails';
 
@@ -76,6 +78,8 @@ export default function App() {
               <Route path="/web/reclamo-dni" element={<WebClaim />} />
               <Route path="/web/reclamo-dni/estado" element={<WebClaimStatus />} />
               <Route path="/web/compra/:screeningId" element={<WebBooking />} />
+              <Route path="/web/mis-entradas" element={<RequireCustomer><WebMyOrders /></RequireCustomer>} />
+              <Route path="/web/mis-entradas/:code" element={<RequireCustomer><WebOrderDetail /></RequireCustomer>} />
               {/* La ruta anterior no tenía función: ahora la compra siempre es de una función concreta. */}
               <Route path="/web/compra" element={<Navigate to="/web/peliculas" replace state={{ notice: 'Elige una película y una función para comprar tus entradas.' }} />} />
               <Route path="*" element={<WebNotFound />} />

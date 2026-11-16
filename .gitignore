@@ -31,3 +31,6 @@ server/data/
 *.key
 .env
 .env.*
+
+# Copias de trabajo aisladas de los agentes
+.claude/worktrees/

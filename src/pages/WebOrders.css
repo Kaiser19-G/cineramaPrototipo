@@ -1,0 +1,101 @@
+/* Mis entradas y detalle de entrada (sitio publico). Solo tokens existentes; todo acotado a .orders-page. */
+.orders-page {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.orders-title { margin: 0 0 0.5rem; color: var(--text-main); font-size: 2rem; }
+.orders-title:focus { outline: none; }
+.orders-lead { margin: 0 0 1.5rem; }
+.orders-page a:not(.btn-solid):not(.btn-outline) { color: var(--text-main); text-decoration: underline; font-weight: 600; }
+.orders-page a:focus-visible, .orders-page button:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; border-radius: 4px; }
+.orders-link-btn { display: inline-block; text-align: center; text-decoration: none; box-sizing: border-box; }
+
+/* Pestanas */
+.orders-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--border-interactive); }
+.orders-tab {
+  background: none; border: 1px solid transparent; border-bottom: 3px solid transparent;
+  color: var(--text-secondary); font: inherit; font-size: 1.05rem; font-weight: 600; padding: 0.6rem 1rem; cursor: pointer;
+}
+.orders-tab:hover { color: var(--text-main); }
+.orders-tab.active { color: var(--text-main); border-bottom-color: var(--accent-solid); }
+.orders-panel { margin-top: 1.5rem; }
+
+.orders-state, .orders-empty {
+  padding: 1.5rem; border: 1px solid var(--border-interactive); border-radius: 10px; background: var(--surface-2); color: var(--text-primary);
+}
+.orders-empty p, .orders-state p { margin: 0 0 0.75rem; }
+.orders-empty .orders-title { font-size: 1.5rem; }
+
+/* Lista */
+.orders-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.25rem; }
+.order-card {
+  display: grid; gap: 1rem; padding: 1.25rem; border: 1px solid var(--border-interactive); border-radius: 12px;
+  background: var(--surface-2); color: var(--text-primary); min-width: 0;
+}
+.order-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+.order-card-head h3 { margin: 0; color: var(--text-main); font-size: 1.25rem; overflow-wrap: anywhere; }
+.order-status {
+  display: inline-block; padding: 0.25rem 0.7rem; border: 1px solid var(--border-interactive); border-radius: 999px;
+  background: var(--surface-3); color: var(--text-primary); font-size: 0.9rem; font-weight: 700;
+}
+.order-facts { margin: 0; display: grid; gap: 0.35rem; }
+.order-facts div { display: flex; gap: 0.75rem; justify-content: space-between; flex-wrap: wrap; font-size: 0.95rem; }
+.order-facts dt { color: var(--text-secondary); }
+.order-facts dd { margin: 0; color: var(--text-primary); text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+
+/* Codigo */
+.order-code-caption { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--text-secondary); }
+.order-code-row { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.order-code-text {
+  padding: 0.4rem 0.8rem; border: 2px solid var(--border-interactive); border-radius: 8px; background: var(--surface-3);
+  color: var(--text-main); font-size: 1.3rem; font-weight: 800; letter-spacing: 0.05em; user-select: all; overflow-wrap: anywhere;
+}
+.order-copy-btn { padding: 0.5rem 1rem; font-size: 1rem; }
+.order-copy-status { display: block; min-height: 1.3em; margin-top: 0.35rem; font-size: 0.9rem; color: var(--text-secondary); }
+
+.orders-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; color: var(--text-primary); }
+
+/* Detalle (puerta del cine) */
+.ticket-back { margin: 0 0 1rem; }
+.ticket {
+  display: grid; gap: 1rem; padding: 1.5rem; border: 2px solid var(--border-interactive); border-radius: 14px;
+  background: var(--surface-2); color: var(--text-primary); min-width: 0;
+}
+.ticket-heading { font-size: 1rem; color: var(--text-secondary); font-weight: 600; margin: 0; }
+.ticket-movie { margin: 0; color: var(--text-main); font-size: 1.8rem; line-height: 1.2; overflow-wrap: anywhere; }
+.ticket-state, .ticket-note, .ticket-sim { margin: 0; }
+.ticket-note { font-size: 1.1rem; color: var(--text-primary); }
+.ticket-sim { font-size: 0.9rem; }
+.order-code-block.is-large .order-code-text { font-size: clamp(1.6rem, 7vw, 2.6rem); padding: 0.6rem 1rem; }
+.order-code-block.is-large .order-code-caption { font-size: 1rem; }
+.ticket-seats-label { margin: 0; font-size: 0.85rem; color: var(--text-secondary); }
+.ticket-seats { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ticket-seats li {
+  min-width: 3.5rem; padding: 0.4rem 0.8rem; border: 2px solid var(--border-interactive); border-radius: 8px;
+  background: var(--surface-3); color: var(--text-main); font-size: 1.5rem; font-weight: 800; text-align: center;
+}
+.ticket-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+@media (max-width: 600px) {
+  .orders-page { padding: 1.5rem 1rem; }
+  .orders-title { font-size: 1.6rem; }
+  .order-facts dd { text-align: left; }
+  .ticket { padding: 1rem; }
+}
+
+/* Impresion: solo la entrada, en negro sobre blanco, sin depender de colores de fondo. */
+@media print {
+  .web-navbar, .web-footer, .a11y-fab, .a11y-overlay, .ticket-back, .ticket-actions, .order-copy-btn, .order-copy-status { display: none !important; }
+  html, body, .web-container, .web-content-area { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; }
+  .web-container { filter: none !important; }
+  .orders-page, .ticket, .ticket * { color: #000 !important; background: transparent !important; box-shadow: none !important; }
+  .orders-page { max-width: none; padding: 0; }
+  .ticket { border: 2px solid #000; break-inside: avoid; }
+  .order-code-text, .ticket-seats li, .order-status { border: 2px solid #000 !important; }
+  .order-code-block.is-large .order-code-text { font-size: 2.4rem; }
+}

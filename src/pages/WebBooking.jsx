@@ -707,7 +707,8 @@ function SuccessDialog({ order, onHome }) {
         </div>
         <h2 id="success-title" tabIndex={-1} ref={titleRef}>¡Compra simulada exitosa!</h2>
         <p id="success-desc">
-          No se cobró nada y no enviamos ningún correo. Guarda este código: es el comprobante de tu compra.
+          No se cobró nada y no enviamos ningún correo. Guarda este código: es el comprobante de tu compra. Podrás volver a verlo
+          cuando quieras en «Mis entradas».
         </p>
         <p className="order-code-label">Código de tu orden</p>
         <p><code className="order-code" id="order-code">{order.code}</code></p>
@@ -720,7 +721,8 @@ function SuccessDialog({ order, onHome }) {
           <div><dt>Butacas</dt><dd>{order.seats.map((x) => x.seat).join(', ')}</dd></div>
           <div><dt>Total</dt><dd>{money(order.amount)} (simulado)</dd></div>
         </dl>
-        <button className="btn-solid" onClick={onHome} style={{ width: '100%' }}>
+        <Link className="btn-solid booking-success-link" to="/web/mis-entradas">Ver mis entradas</Link>
+        <button className="btn-outline" onClick={onHome} style={{ width: '100%', marginTop: '0.75rem' }}>
           Volver al inicio
         </button>
       </div>

@@ -68,6 +68,7 @@ export default function WebLayout() {
           {!authLoading && user && (
             <>
               <span className="nav-user">Hola, {user.name.split(' ')[0]}</span>
+              {user.tier === 'customer' && <button className="nav-link" onClick={() => navigate('/web/mis-entradas')}>Mis entradas</button>}
               {isStaff && <button className="nav-link" onClick={() => navigate('/dashboard')}>Panel de administración</button>}
               <button className="nav-link highlight" onClick={handleLogout}>Cerrar sesión</button>
             </>
