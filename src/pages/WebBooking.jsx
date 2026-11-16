@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ordersApi } from '../api/orders';
 import FieldError from '../components/FieldError';
 import StepIndicator from '../components/StepIndicator';
+import SeatMap from '../components/SeatMap';
 import { handlePosterError } from '../utils/posterFallback';
 import { formatDateLong } from '../data/dateHelpers';
 import { compareSeats } from '../shared/seatLayout';
@@ -39,7 +40,7 @@ export default function WebBooking() {
       <div className="web-booking-layout">
         <div className="booking-main">
           <h2 className="booking-step-title">Las cuentas del personal no compran en el sitio</h2>
-          <p className="booking-note">Entraste con una cuenta del personal. Las ventas en mostrador se harán desde Taquilla en el panel (todavía no disponible); para comprar en el sitio usa una cuenta de cliente.</p>
+          <p className="booking-note">Entraste con una cuenta del personal. Las ventas en mostrador se hacen desde Taquilla en el panel; para comprar en el sitio usa una cuenta de cliente.</p>
           <div className="booking-actions"><Link className="btn-outline" to="/web/peliculas">Volver a la cartelera</Link></div>
         </div>
       </div>
@@ -66,10 +67,10 @@ function BookingFlow({ screeningId }) {
   const headingRef = useRef(null);
   const alertRef = useRef(null);
   const loadRef = useRef(null);
-  const seatRefs = useRef({});
+  const seatMapRef = useRef(null);
+  const [lastSeat, setLastSeat] = useState('A1'); // la butaca con foco sobrevive al paso de pago (el mapa se desmonta)
   const selectedRef = useRef([]);
   const attemptRef = useRef({ sig: '', key: null });
-  const [focusedSeat, setFocusedSeat] = useState('A1');
 
   // Cambia la selección y la deja disponible de inmediato para el siguiente evento (sin esperar al render).
   const setSel = useCallback((next) => { selectedRef.current = next; setSelected(next); }, []);
@@ -205,33 +206,7 @@ function BookingFlow({ screeningId }) {
     if (!best) { setLive(`No hay ${plural(n, 'butaca', 'butacas')} juntas disponibles. Elige las butacas una por una.`); return; }
     setSel(best.ids); writeStored(screeningId, best.ids);
     setLive(`Elegimos ${plural(n, 'butaca', 'butacas')} juntas: ${best.ids.join(', ')}. Total ${money(n * price)}.`);
-    setFocusedSeat(best.ids[0]);
-    seatRefs.current[best.ids[0]]?.focus();
-  };
-
-  // ── navegación del mapa (patrón ARIA grid, roving tabindex) ──
-  // Lee la posición del elemento con foco REAL en el DOM (e.target), no del estado de React.
-  const handleSeatGridKeyDown = (e) => {
-    if (!layout) return;
-    let r = parseInt(e.target.dataset.row, 10);
-    let c = parseInt(e.target.dataset.col, 10);
-    if (Number.isNaN(r) || Number.isNaN(c)) return;
-    const lastRow = layout.rows.length - 1;
-    const rowLen = (i) => layout.rows[i].seats;
-    if (e.key === 'ArrowRight') c = Math.min(c + 1, rowLen(r) - 1);
-    else if (e.key === 'ArrowLeft') c = Math.max(c - 1, 0);
-    else if (e.key === 'ArrowDown') r = Math.min(r + 1, lastRow);
-    else if (e.key === 'ArrowUp') r = Math.max(r - 1, 0);
-    else if (e.key === 'PageDown') r = Math.min(r + 5, lastRow);
-    else if (e.key === 'PageUp') r = Math.max(r - 5, 0);
-    else if (e.key === 'Home') { if (e.ctrlKey) r = 0; c = 0; }
-    else if (e.key === 'End') { if (e.ctrlKey) r = lastRow; c = e.ctrlKey ? rowLen(lastRow) - 1 : rowLen(r) - 1; }
-    else return; // Enter/Espacio los maneja el <button>; Tab sale de la grilla
-    c = Math.min(c, rowLen(r) - 1);
-    e.preventDefault();
-    const seat = `${layout.rows[r].label}${c + 1}`;
-    setFocusedSeat(seat);
-    seatRefs.current[seat]?.focus();
+    seatMapRef.current?.focusSeat(best.ids[0]);
   };
 
   // ── formulario de pago simulado (nada de esto sale del navegador) ──
@@ -451,67 +426,7 @@ function BookingFlow({ screeningId }) {
               </div>
             )}
 
-            <div className="screen-indicator">
-              <div className="screen-bar" />
-              <p className="screen-label">Pantalla</p>
-            </div>
-
-            <div className="seats-map-scroll" tabIndex={0} role="region" aria-label="Mapa de butacas (se desplaza horizontalmente)">
-              <div
-                className="seats-map"
-                role="grid"
-                aria-label="Mapa de butacas"
-                aria-describedby="limit-note"
-                aria-rowcount={layout.rows.length}
-                aria-colcount={layout.cols + 1}
-                onKeyDown={handleSeatGridKeyDown}
-              >
-                {layout.rows.map((row, r) => (
-                  <div className="seats-row" role="row" aria-rowindex={r + 1} key={row.label}>
-                    <span className="seat-rowlabel" role="rowheader" aria-colindex={1}>
-                      <span aria-hidden="true">{row.label}</span>
-                      <span className="sr-only">Fila {row.label}</span>
-                    </span>
-                    {Array.from({ length: row.seats }, (_, c) => {
-                      const seatName = `${row.label}${c + 1}`;
-                      const isOccupied = taken.has(seatName);
-                      const isSelected = selected.includes(seatName);
-                      const seatState = isOccupied ? 'occupied' : isSelected ? 'selected' : 'available';
-                      const stateLabel = seatState === 'occupied' ? 'ocupada' : seatState === 'selected' ? 'seleccionada' : 'disponible';
-                      return (
-                        <button
-                          key={seatName}
-                          ref={(el) => { seatRefs.current[seatName] = el; }}
-                          type="button"
-                          role="gridcell"
-                          className={`seat-btn seat-${seatState}`}
-                          tabIndex={seatName === focusedSeat ? 0 : -1}
-                          data-row={r}
-                          data-col={c}
-                          aria-disabled={isOccupied || undefined}
-                          aria-pressed={isSelected}
-                          aria-colindex={c + 2}
-                          aria-label={`Butaca ${seatName}, fila ${row.label}, ${stateLabel}`}
-                          onClick={() => toggleSeat(seatName)}
-                          onFocus={() => setFocusedSeat(seatName)}
-                        >
-                          {seatName}
-                          {seatState === 'selected' && <span className="seat-icon" aria-hidden="true">✓</span>}
-                          {seatState === 'occupied' && <span className="seat-icon" aria-hidden="true">✕</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <p className="booking-keys">Con el teclado: flechas para moverte, Re Pág y Av Pág para saltar 5 filas, Ctrl+Inicio y Ctrl+Fin para ir a la primera o la última butaca, Enter o Espacio para elegir. Si el mapa es más ancho que la pantalla, desplázalo horizontalmente.</p>
-
-            <ul className="seats-legend">
-              <li><span className="legend-swatch legend-available" aria-hidden="true"></span>Disponible</li>
-              <li><span className="legend-swatch legend-selected" aria-hidden="true">✓</span>Seleccionada</li>
-              <li><span className="legend-swatch legend-occupied" aria-hidden="true">✕</span>Ocupada</li>
-            </ul>
+            <SeatMap ref={seatMapRef} initialFocus={lastSeat} onFocusChange={setLastSeat} layout={layout} taken={taken} selected={selected} onToggle={toggleSeat} describedBy="limit-note" />
 
             <div className="booking-actions booking-actions-split">
               <button className="btn-outline" onClick={handleChangeFunction}>⟨ Cambiar función</button>

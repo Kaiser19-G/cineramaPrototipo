@@ -35,7 +35,7 @@ const csvCell = (v) => {
 function downloadCsv(orders) {
   const head = ['Código', 'Fecha (Lima)', 'Sede', 'Película', 'Función', 'Butacas', 'Cliente', 'Correo (enmascarado)', 'Canal', 'Monto (S/)', 'Estado'];
   const rows = orders.map((o) => [o.code, o.createdLima, o.branch.name, o.screening.movieTitle, `${o.screening.date} ${o.screening.startTime}`,
-    o.seats.join(' '), o.customerName, o.emailMasked, CHANNEL_LABELS[o.channel] ?? o.channel, o.amount.toFixed(2), STATUS[o.status]?.label ?? o.status]);
+    o.seats.join(' '), o.customerName, o.emailMasked ?? '', CHANNEL_LABELS[o.channel] ?? o.channel, o.amount.toFixed(2), STATUS[o.status]?.label ?? o.status]);
   const text = `${BOM}${[head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n')}\r\n`;
   const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
@@ -52,7 +52,7 @@ function OrderDialog({ order, onClose }) {
       <h2 id="pay-dlg-title">Orden {order.code}</h2>
       <dl className="sl-dl">
         <dt>Estado</dt><dd><StatusTag status={order.status} /></dd>
-        <dt>Cliente</dt><dd>{order.customerName} · {order.emailMasked}</dd>
+        <dt>Cliente</dt><dd>{order.customerName}{order.emailMasked ? ` · ${order.emailMasked}` : ' · sin correo (venta en mostrador)'}</dd>
         <dt>Película</dt><dd>{sc.movieTitle}</dd>
         <dt>Función</dt><dd>{dayLabel(sc.date)}, {sc.startTime} · {sc.format} · {sc.language === 'ES' ? 'Doblada' : 'Subtitulada'}</dd>
         <dt>Sede y sala</dt><dd>{order.branch.name} · {sc.hallName}</dd>
@@ -60,7 +60,7 @@ function OrderDialog({ order, onClose }) {
         <dt>Monto</dt><dd>{money(order.amount)}</dd>
         <dt>Canal</dt><dd>{CHANNEL_LABELS[order.channel] ?? order.channel}{order.presale && ' · Preventa'}</dd>
         <dt>Compra</dt><dd>{order.createdLima} (hora de Lima)</dd>
-        <dt>Pago</dt><dd>Tarjeta, simulado · referencia {order.payment.ref || 'sin referencia'}</dd>
+        <dt>Pago</dt><dd>{order.payment.method === 'cash' ? 'Efectivo' : 'Tarjeta'}, simulado · referencia {order.payment.ref || 'sin referencia'}</dd>
         {order.refund && (
           <>
             <dt>Reembolso</dt>
