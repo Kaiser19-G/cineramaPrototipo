@@ -170,6 +170,7 @@ export function createOrderService(db, clock = Date.now) {
   // Mis entradas. Las rechazadas (pago fallido, sin butacas ni entrada) y las canceladas no se listan nunca; si se
   // conoce el codigo, el detalle si las devuelve. upcoming = vigentes; past = usadas, terminadas y reembolsadas.
   function listOrders(userId, { scope = null, page = 1, pageSize = 10 } = {}) {
+    expirePickups();
     const all = q.userOrders.all(userId).filter((o) => o.status !== 'rejected' && o.status !== 'cancelled').map(mapOrder);
     const isUp = (o) => o.displayStatus === 'valid';
     const counts = { upcoming: all.filter(isUp).length, past: all.filter((o) => !isUp(o)).length };
@@ -184,6 +185,7 @@ export function createOrderService(db, clock = Date.now) {
 
   // Una orden de la cuenta; null si no existe o es de otra cuenta (el llamador responde 404 igual en ambos casos).
   function getOrder(userId, code) {
+    expirePickups();
     if (typeof code !== 'string' || !ORDER_CODE_RE.test(code)) return null;
     const o = q.userOrder.get(userId, code);
     return o ? mapOrder(o) : null;
@@ -544,5 +546,140 @@ export function createOrderService(db, clock = Date.now) {
     }).immediate();
   }
 
-  return { counterScreenings, counterSeatMap, counterSale, evaluateTicket, checkIn, refundOrder, seatMap, listOrders, getOrder, presaleQuota, purchase, refundScreening, syncBooked, mapOrder, limitsFor };
+  // ───────────────────────── Preparacion y entrega de confiteria (fase 5d) ─────────────────────────
+  // Las transiciones de `fulfillments` se escriben aqui (y la cancelacion por reembolso, arriba). Maquina de estados:
+  //   ordered -> preparing (empezar) ; ordered|preparing -> ready (listo) ; ready -> preparing (deshacer, unico retroceso)
+  //   ordered|preparing|ready -> delivered (entregar con el codigo completo). delivered, not_collected y cancelled son finales.
+  // not_collected: barrido PEREZOSO e idempotente (expirePickups) que corre al leer la cola, una orden o los reportes.
+  const pk = {
+    open: db.prepare(`SELECT f.order_id, s.starts_on, s.start_time, s.end_time FROM fulfillments f JOIN orders o ON o.id = f.order_id
+      JOIN screenings s ON s.id = o.screening_id WHERE f.status IN ('ordered','preparing','ready')`),
+    expire: db.prepare(`UPDATE fulfillments SET status = 'not_collected' WHERE order_id = ? AND status IN ('ordered','preparing','ready')`),
+    queue: db.prepare(`SELECT f.rowid AS pid, f.*, o.id AS code, o.status AS order_status, s.starts_on, s.start_time, s.end_time, m.title AS movie_title, h.name AS hall_name
+      FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
+        JOIN movies m ON m.id = s.movie_id JOIN halls h ON h.id = s.hall_id
+      WHERE (? IS NULL OR f.branch_id = ?) AND f.status IN ('ordered','preparing','ready') AND o.status = 'approved' AND s.starts_on = ?`),
+    one: db.prepare(`SELECT f.rowid AS pid, f.*, o.id AS code, s.id AS screening_id, o.status AS order_status, s.starts_on, s.start_time, s.end_time, m.title AS movie_title, h.name AS hall_name
+      FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
+        JOIN movies m ON m.id = s.movie_id JOIN halls h ON h.id = s.hall_id WHERE f.order_id = ?`),
+    oneByPid: db.prepare(`SELECT f.rowid AS pid, f.*, o.id AS code, s.id AS screening_id, o.status AS order_status, s.starts_on, s.start_time, s.end_time, m.title AS movie_title, h.name AS hall_name
+      FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
+        JOIN movies m ON m.id = s.movie_id JOIN halls h ON h.id = s.hall_id WHERE f.rowid = ?`),
+    start: db.prepare(`UPDATE fulfillments SET status = 'preparing', arrived_at = CASE WHEN timing = 'on_arrival' THEN COALESCE(arrived_at, @now) ELSE arrived_at END
+      WHERE order_id = @id AND status = 'ordered'`),
+    ready: db.prepare(`UPDATE fulfillments SET status = 'ready', ready_at = @now, ready_by = @by,
+        arrived_at = CASE WHEN timing = 'on_arrival' THEN COALESCE(arrived_at, @now) ELSE arrived_at END
+      WHERE order_id = @id AND status IN ('ordered','preparing')`),
+    revert: db.prepare(`UPDATE fulfillments SET status = 'preparing', ready_at = NULL, ready_by = NULL WHERE order_id = @id AND status = 'ready'`),
+    deliver: db.prepare(`UPDATE fulfillments SET status = 'delivered', delivered_at = @now, delivered_by = @by,
+        arrived_at = CASE WHEN timing = 'on_arrival' THEN COALESCE(arrived_at, @now) ELSE arrived_at END
+      WHERE order_id = @id AND status IN ('ordered','preparing','ready')`),
+  };
+  const PICKUP_ACTIONS = { start: pk.start, ready: pk.ready, revert: pk.revert, deliver: pk.deliver };
+  const PICKUP_AUDIT = { start: 'pickup.start', ready: 'pickup.ready', revert: 'pickup.revert', deliver: 'pickup.deliver' };
+
+  // Pasa a 'not_collected' los pedidos abiertos cuya funcion ya termino. Sin reembolso. Idempotente.
+  function expirePickups() {
+    const now = nowAbs();
+    const due = pk.open.all().filter((r) => screeningSpan(r.starts_on, r.start_time, r.end_time).end <= now);
+    if (!due.length) return 0;
+    return db.transaction(() => due.reduce((n, r) => n + pk.expire.run(r.order_id).changes, 0)).immediate();
+  }
+
+  // Que se puede hacer HOY con un pedido (lo decide el servidor; la interfaz solo lo pinta). `blocked` explica por que no.
+  function pickupRules(f) {
+    const open = ['ordered', 'preparing', 'ready'].includes(f.status);
+    if (!open) return { actions: [], blocked: f.status };
+    if (f.order_status !== 'approved') return { actions: [], blocked: 'not_approved' };
+    const today = nowInLima(new Date(clock())).date;
+    if (f.starts_on !== today) return { actions: [], blocked: 'wrong_day' };
+    if (f.status === 'ordered' && f.timing === 'at_showtime' && f.prepare_from_ms !== null && clock() < f.prepare_from_ms) return { actions: [], blocked: 'too_early' };
+    const actions = f.status === 'ordered' ? ['start', 'ready', 'deliver'] : f.status === 'preparing' ? ['ready', 'deliver'] : ['revert', 'deliver'];
+    return { actions, blocked: null };
+  }
+
+  // Un pedido para el personal: SIN nombre, correo ni codigo completo (solo la referencia: los ultimos 5 caracteres).
+  function mapPickup(f) {
+    const rules = pickupRules(f);
+    return {
+      id: f.pid, ref: f.code.slice(-5), status: f.status, statusLabel: FULFILLMENT_STATUS_LABELS[f.status],
+      timing: f.timing, timingLabel: PICKUP_TIMINGS[f.timing],
+      prepareAt: f.prepare_from_ms === null ? null : limaStamp(f.prepare_from_ms).slice(11),
+      arrivedAt: f.arrived_at === null ? null : limaStamp(f.arrived_at).slice(11),
+      screening: { date: f.starts_on, startTime: f.start_time, endTime: f.end_time, movieTitle: f.movie_title, hallName: f.hall_name },
+      items: q.orderItems.all(f.code).map((i) => ({ name: i.product_name, variantLabel: i.variant_label, includes: i.includes_text, qty: i.qty })),
+      actions: rules.actions, blocked: rules.blocked,
+    };
+  }
+
+  // Cola de la sede para HOY: esperando llegada, por preparar (ya es la hora), en preparacion y listos.
+  // Los de "a la hora de la funcion" que aun no llegan a su hora solo se cuentan (counts.later).
+  function pickupQueue(scope) {
+    expirePickups();
+    const now = clock();
+    const date = nowInLima(new Date(now)).date;
+    const sections = { waitingArrival: [], toPrepare: [], preparing: [], ready: [] };
+    let later = 0;
+    if (scope !== 'none') {
+      const rows = pk.queue.all(scope, scope, date);
+      const key = (f) => f.arrived_at ?? f.prepare_from_ms ?? f.created_ms;
+      rows.sort((a, b) => (a.status === 'ordered' && a.timing === 'on_arrival' ? 0 : 1) - (b.status === 'ordered' && b.timing === 'on_arrival' ? 0 : 1)
+        || key(a) - key(b) || a.pid - b.pid);
+      for (const f of rows) {
+        if (f.status === 'ordered' && f.timing === 'on_arrival') sections.waitingArrival.push(mapPickup(f));
+        else if (f.status === 'ordered') { if (f.prepare_from_ms !== null && now < f.prepare_from_ms) later++; else sections.toPrepare.push(mapPickup(f)); }
+        else if (f.status === 'preparing') sections.preparing.push(mapPickup(f));
+        else sections.ready.push(mapPickup(f));
+      }
+      sections.waitingArrival.sort((a, b) => `${a.screening.startTime}`.localeCompare(b.screening.startTime) || a.id - b.id);
+    }
+    const counts = { waitingArrival: sections.waitingArrival.length, toPrepare: sections.toPrepare.length, preparing: sections.preparing.length, ready: sections.ready.length, later };
+    return { now, date, sections, counts };
+  }
+
+  // Busqueda por el codigo completo (el cliente llega y lo muestra). not_found = inexistente, mal formado u de OTRA sede
+  // (misma respuesta); no_food = orden de la sede sin pedido de confiteria.
+  function pickupLookup(rawCode, scope) {
+    expirePickups();
+    const code = normalizeOrderCode(rawCode);
+    const f = code ? pk.one.get(code) : null;
+    if (!f || !inBranch(scope, f.branch_id)) {
+      const o = code ? t.order.get(code) : null;
+      if (o && inBranch(scope, o.branch_id)) return { result: 'no_food' };
+      return { result: 'not_found' };
+    }
+    return { result: 'found', pickup: mapPickup(f) };
+  }
+
+  // Transicion de un pedido (action: start | ready | revert | deliver). `pid` identifica el pedido en la cola sin
+  // exponer el codigo. Entregar exige el codigo COMPLETO y lo valida contra ESE pedido. Una sola transaccion immediate:
+  // si otro empleado ya cambio el estado, 409 con el estado actual.
+  function pickupTransition(action, pid, { code, scope, by }, audit) {
+    return db.transaction(() => {
+      expirePickups();
+      const f = Number.isInteger(pid) ? pk.oneByPid.get(pid) : null;
+      if (!f || !inBranch(scope, f.branch_id)) return fail(404, 'not_found');
+      if (action === 'deliver' && normalizeOrderCode(code) !== f.code) return fail(422, 'code_mismatch');
+      const rules = pickupRules(f);
+      if (!rules.actions.includes(action)) return fail(409, 'invalid_transition', { status: f.status, statusLabel: FULFILLMENT_STATUS_LABELS[f.status], blocked: rules.blocked, pickup: mapPickup(f) });
+      const changes = PICKUP_ACTIONS[action].run({ id: f.code, now: clock(), by }).changes;
+      const after = pk.oneByPid.get(pid);
+      if (!changes) return fail(409, 'invalid_transition', { status: after.status, statusLabel: FULFILLMENT_STATUS_LABELS[after.status], blocked: after.status, pickup: mapPickup(after) });
+      audit?.(PICKUP_AUDIT[action], 'screening', after.screening_id, f.branch_id, { from: f.status, to: after.status });
+      return { status: 200, body: { pickup: mapPickup(after) } };
+    }).immediate();
+  }
+
+  // Totales de preparacion de un rango de fechas de FUNCION (para Reportes y Resumen). Ejecuta el barrido antes de contar.
+  function pickupTotals(scope, fromDate, toDate) {
+    expirePickups();
+    const r = db.prepare(`SELECT COALESCE(SUM(f.status IN ('ordered','preparing','ready')),0) toDeliver, COALESCE(SUM(f.status = 'delivered'),0) delivered,
+        COALESCE(SUM(f.status = 'not_collected'),0) notCollected
+      FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
+      WHERE (? IS NULL OR f.branch_id = ?) AND s.starts_on >= ? AND s.starts_on <= ?`).get(scope, scope, fromDate, toDate);
+    return { toDeliver: r.toDeliver, delivered: r.delivered, notCollected: r.notCollected };
+  }
+
+  return { counterScreenings, counterSeatMap, counterSale, evaluateTicket, checkIn, refundOrder, seatMap, listOrders, getOrder, presaleQuota, purchase, refundScreening, syncBooked, mapOrder, limitsFor,
+    expirePickups, pickupQueue, pickupLookup, pickupTransition, pickupTotals };
 }

@@ -8,6 +8,7 @@ import { createUsers } from './admin/users.js';
 import { createOrders } from './orders/router.js';
 import { createSales } from './admin/sales.js';
 import { createCounter } from './admin/counter.js';
+import { createPickups } from './admin/pickups.js';
 import { createProducts } from './admin/products.js';
 import { createMenu } from './menu.js';
 import { todayInLima, nowInLima } from '../src/data/limaDate.js';
@@ -47,6 +48,7 @@ export function createApp(db, opts = {}) {
   const orders = createOrders(db, auth, opts);
   const sales = createSales(db, auth, opts);
   const counter = createCounter(db, auth, opts);
+  const pickups = createPickups(db, auth, opts);
   const adminProducts = createProducts(db, opts);
   const menu = createMenu(db);
   const clock = opts.clock ?? Date.now;
@@ -86,6 +88,7 @@ export function createApp(db, opts = {}) {
   app.use('/api/admin/orders', sales.orders);
   app.use('/api/admin/orders', counter.refunds);
   app.use('/api/admin/counter', counter.router);
+  app.use('/api/admin/pickups', pickups.router);
   app.use('/api/admin/reports', sales.reports);
   app.use('/api/admin/dashboard', sales.dashboard);
   app.use('/api/admin', auth.adminRouter);

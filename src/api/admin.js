@@ -40,6 +40,12 @@ export const adminApi = {
     checkIn: (code, seats) => request('POST', '/api/admin/counter/tickets/checkin', seats ? { code, seats } : { code }),
     refund: (code, reason) => request('POST', `/api/admin/orders/${encodeURIComponent(code)}/refund`, { reason }),
   },
+  // Cola de pedidos de confitería de la sede (permiso fulfill_orders). El código completo solo viaja en el cuerpo.
+  pickups: {
+    queue: () => request('GET', '/api/admin/pickups'),
+    lookup: (code) => request('POST', '/api/admin/pickups/lookup', { code }),
+    act: (id, action, code) => request('POST', `/api/admin/pickups/${id}/${action}`, code === undefined ? {} : { code }),
+  },
   // Confitería: catálogo (solo admin central escribe) y disponibilidad por sede (admin central y gerente de la sede).
   products: {
     list: () => request('GET', '/api/admin/products'),

@@ -5,6 +5,7 @@ import { SALES_PERMS, hasAnyPerm } from '../shared/permissions';
 import SellTab from './taquilla/SellTab';
 import ValidateTab from './taquilla/ValidateTab';
 import OrdersTab from './taquilla/OrdersTab';
+import PickupsTab from './taquilla/PickupsTab';
 import './MovieManagement.css';
 import './Taquilla.css';
 
@@ -17,6 +18,7 @@ export default function TicketOperations() {
   const tabs = [
     can('process_sale') && { id: 'sell', label: 'Vender' },
     can('validate_ticket') && { id: 'validate', label: 'Validar' },
+    can('fulfill_orders') && { id: 'pickups', label: 'Pedidos de confitería' },
     (hasAnyPerm(user, SALES_PERMS) || can('process_refund')) && { id: 'orders', label: can('process_refund') ? 'Órdenes y reembolsos' : 'Órdenes' },
   ].filter(Boolean);
   const [chosen, setChosen] = useState(null);
@@ -44,7 +46,7 @@ export default function TicketOperations() {
         <div>
           <h1 className="page-title" tabIndex={-1} ref={headingRef}>Taquilla</h1>
           <p className="page-subtitle">
-            Ventas en mostrador, validación de entradas y reembolsos{isAdminCentral ? (activeBranch ? ` · ${activeBranch.name}` : ' · toda la red') : ''}. Los pagos son simulados.
+            Ventas en mostrador, validación de entradas, pedidos de confitería y reembolsos{isAdminCentral ? (activeBranch ? ` · ${activeBranch.name}` : ' · toda la red') : ''}. Los pagos son simulados.
           </p>
         </div>
       </div>
@@ -66,6 +68,7 @@ export default function TicketOperations() {
             <div key={t.id} role="tabpanel" id={`tq-panel-${t.id}`} aria-labelledby={`tq-tab-${t.id}`} hidden={current !== t.id} className="tq-tabpanel">
               {t.id === 'sell' && <SellTab active={current === 'sell'} headingRef={headingRef} />}
               {t.id === 'validate' && <ValidateTab active={current === 'validate'} />}
+              {t.id === 'pickups' && <PickupsTab active={current === 'pickups'} />}
               {t.id === 'orders' && <OrdersTab canRefund={can('process_refund')} />}
             </div>
           ))}

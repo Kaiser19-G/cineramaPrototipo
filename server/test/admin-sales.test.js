@@ -165,7 +165,7 @@ describe('reportes', () => {
       { date: '2026-11-13', revenue: 77, ticketRevenue: 77, foodRevenue: 0, orders: 3, tickets: 5 },                   // B 20 + C 45 + F 12
       { date: '2026-11-14', revenue: 0, ticketRevenue: 0, foodRevenue: 0, orders: 0, tickets: 0 },
     ]);
-    assert.deepEqual(r.json.totals, { revenue: 117, ticketRevenue: 117, foodRevenue: 0, ordersWithFood: 0, foodAttachRate: 0, refundedFoodAmount: 0, tickets: 7, transactions: 6, approved: 4, rejected: 1, refunded: 1, refundedAmount: 20, cancelled: 0, pending: 0, approvalRate: 83.3 });
+    assert.deepEqual(r.json.totals, { revenue: 117, ticketRevenue: 117, foodRevenue: 0, ordersWithFood: 0, foodAttachRate: 0, refundedFoodAmount: 0, pickups: { toDeliver: 0, delivered: 0, notCollected: 0 }, tickets: 7, transactions: 6, approved: 4, rejected: 1, refunded: 1, refundedAmount: 20, cancelled: 0, pending: 0, approvalRate: 83.3 });
     assert.deepEqual(r.json.byBranch.map((b) => [b.id, b.revenue, b.tickets]), [[1, 72, 4], [3, 45, 3]]);
     assert.deepEqual(r.json.byMovie.map((m) => [m.title, m.revenue, m.tickets]), [['Pelicula Ventas 4C', 117, 7]]);
     assert.deepEqual(r.json.byChannel, [{ channel: 'web', orders: 4, revenue: 117, ticketRevenue: 117, foodRevenue: 0, tickets: 7 }]);

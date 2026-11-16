@@ -40,7 +40,8 @@ function AdminLayout() {
   const { user } = useAuth();
   // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
   const forced = !!user?.mustChangePassword;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // En pantallas angostas el menú lateral empieza plegado: abierto dejaba ~100 px al contenido a 375 px (se abre con el botón de menú).
+  const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window === 'undefined' || !window.matchMedia ? true : !window.matchMedia('(max-width: 768px)').matches));
   return (
     <div className="app-layout">
       <Sidebar open={sidebarOpen} />

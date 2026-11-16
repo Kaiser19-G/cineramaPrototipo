@@ -71,6 +71,7 @@ function Revenue({ d }) {
         { label: 'Ingresos de entradas', value: money(totals.ticketRevenue) },
         { label: 'Ingresos de confitería', value: money(totals.foodRevenue), note: `${totals.ordersWithFood} ${totals.ordersWithFood === 1 ? 'orden la incluye' : 'órdenes la incluyen'} (${pctText(totals.foodAttachRate)})` },
         { label: 'Entradas vendidas', value: totals.tickets },
+        { label: 'Pedidos de confitería no recogidos', value: totals.pickups?.notCollected ?? 0, note: `${totals.pickups?.delivered ?? 0} entregados · ${totals.pickups?.toDeliver ?? 0} por entregar (funciones del rango)` },
         { label: 'Promedio diario', value: money(totals.revenue / range.days), note: `en ${range.days} ${range.days === 1 ? 'día' : 'días'}` },
         { label: 'Reembolsado', value: money(totals.refundedAmount) },
       ]} />

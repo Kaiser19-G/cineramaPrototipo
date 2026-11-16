@@ -18,6 +18,8 @@ const ACTION_LABELS = {
   'counter.sale': 'Venta en taquilla', 'ticket.checkin': 'Ingreso a sala registrado', 'order.refund': 'Reembolso procesado',
   'product.create': 'Producto de confitería creado', 'product.update': 'Producto de confitería editado',
   'product.stock': 'Disponibilidad de confitería cambiada',
+  'pickup.start': 'Pedido de confitería: preparación iniciada', 'pickup.ready': 'Pedido de confitería: marcado como listo',
+  'pickup.revert': 'Pedido de confitería: vuelto a preparación', 'pickup.deliver': 'Pedido de confitería entregado',
 };
 const when = (ms) => new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms));
 
@@ -62,6 +64,9 @@ export default function Dashboard() {
       kpis.push({ label: 'Ingresos de entradas hoy', value: money(mine.money.ticketRevenue), icon: Ticket });
       kpis.push({ label: 'Ingresos de confitería hoy', value: money(mine.money.foodRevenue), icon: Popcorn });
       kpis.push({ label: 'Entradas vendidas hoy', value: mine.money.tickets, icon: Ticket });
+      if (mine.pickups) {
+        kpis.push({ label: 'Pedidos de confitería por entregar hoy', value: mine.pickups.toDeliver, note: `${mine.pickups.delivered} entregados · ${mine.pickups.notCollected} no recogidos`, icon: Popcorn });
+      }
     }
     kpis.push({ label: 'Funciones de hoy', value: mine.screenings.list.length, icon: Clapperboard });
     kpis.push({ label: 'Ocupación de hoy', value: pctText(mine.occupancy.rate), note: `${mine.occupancy.sold} de ${mine.occupancy.capacity} butacas`, icon: Users });
