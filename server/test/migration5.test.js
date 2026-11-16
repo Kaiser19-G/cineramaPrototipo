@@ -44,8 +44,11 @@ test('migracion 5 sobre una base de la fase 4: solo agrega tablas, no cambia nin
   assert.equal(db.pragma('user_version', { simple: true }), MIGRATIONS.length);
   assert.equal(MIGRATIONS.length >= 5, true);
   // Ninguna fila ni columna de las tablas existentes cambia.
-  assert.deepEqual(dump(db), before);
-  for (const t of tables) assert.deepEqual(cols(db, t), colsBefore[t], `${t}: mismas columnas`);
+  // (La migracion 6 posterior agrega a orders food_amount y pickup_timing; se prueba en migration6.test.js.)
+  const strip = (rows) => rows.map(({ food_amount: _f, pickup_timing: _p, ...r }) => r);
+  const after = dump(db);
+  for (const t of tables) assert.deepEqual(t === 'orders' ? strip(after[t]) : after[t], before[t], `${t}: mismas filas`);
+  for (const t of tables) assert.deepEqual(cols(db, t).filter((c) => !(t === 'orders' && ['food_amount', 'pickup_timing'].includes(c))), colsBefore[t], `${t}: mismas columnas`);
   // Tablas nuevas, vacias, con sus columnas.
   for (const t of NEW_TABLES) assert.equal(count(db, t), 0, t);
   for (const c of ['name', 'category', 'description', 'art_key', 'active', 'sort', 'version', 'created_at', 'updated_at', 'updated_by']) assert.ok(cols(db, 'products').includes(c), c);

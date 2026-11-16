@@ -222,6 +222,45 @@ export const MIGRATIONS = [
       );
     `);
   },
+  // 6: pedidos con confiteria (fase 5b). Columnas nuevas en orders con DEFAULT (NO se reconstruye la tabla: las butacas
+  // dependen de ella por clave foranea) y tablas nuevas. Las ordenes existentes quedan con food_amount = 0 y sin items,
+  // asi que sus totales no cambian. `fulfillments` queda lista para la preparacion y entrega (entrega 5d).
+  (db) => {
+    addColumns(db, 'orders', [
+      ['food_amount', 'REAL NOT NULL DEFAULT 0'],  // parte de `amount` que es confiteria; amount = entradas + food_amount
+      ['pickup_timing', 'TEXT'],                   // on_arrival | at_showtime; NULL si no hay confiteria
+    ]);
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id      TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        variant_id    INTEGER NOT NULL REFERENCES product_variants(id),
+        product_name  TEXT NOT NULL,              -- FOTO al comprar: editar el catalogo no cambia ordenes pasadas
+        variant_label TEXT NOT NULL,
+        includes_text TEXT NOT NULL DEFAULT '',   -- composicion de un combo, congelada
+        qty           INTEGER NOT NULL CHECK (qty BETWEEN 1 AND 10),
+        unit_price    REAL NOT NULL,
+        line_total    REAL NOT NULL,
+        UNIQUE (order_id, variant_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_order_items_variant ON order_items(variant_id);
+      CREATE TABLE IF NOT EXISTS fulfillments (
+        order_id        TEXT PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
+        branch_id       INTEGER NOT NULL REFERENCES branches(id),
+        timing          TEXT NOT NULL CHECK (timing IN ('on_arrival','at_showtime')),
+        prepare_from_ms INTEGER,                  -- at_showtime: max(inicio - 15 min, compra); on_arrival: NULL
+        status          TEXT NOT NULL DEFAULT 'ordered'
+          CHECK (status IN ('ordered','preparing','ready','delivered','not_collected','cancelled')),
+        ready_at        INTEGER,
+        ready_by        INTEGER,
+        delivered_at    INTEGER,
+        delivered_by    INTEGER,
+        arrived_at      INTEGER,
+        created_ms      INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_fulfillments_queue ON fulfillments(branch_id, status, prepare_from_ms);
+    `);
+  },
 ];
 
 export function migrate(db) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { DollarSign, Ticket, Clapperboard, Users, AlertCircle, Plus, ArrowRight, Globe, MapPin, Building2 } from 'lucide-react';
+import { DollarSign, Popcorn, Ticket, Clapperboard, Users, AlertCircle, Plus, ArrowRight, Globe, MapPin, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import { adminApi } from '../api/admin';
@@ -58,7 +58,9 @@ export default function Dashboard() {
   const kpis = [];
   if (mine) {
     if (mine.money) {
-      kpis.push({ label: 'Ingresos de hoy', value: money(mine.money.revenue), icon: DollarSign });
+      kpis.push({ label: 'Ingresos de hoy', value: money(mine.money.revenue), note: 'Entradas y confitería', icon: DollarSign });
+      kpis.push({ label: 'Ingresos de entradas hoy', value: money(mine.money.ticketRevenue), icon: Ticket });
+      kpis.push({ label: 'Ingresos de confitería hoy', value: money(mine.money.foodRevenue), icon: Popcorn });
       kpis.push({ label: 'Entradas vendidas hoy', value: mine.money.tickets, icon: Ticket });
     }
     kpis.push({ label: 'Funciones de hoy', value: mine.screenings.list.length, icon: Clapperboard });

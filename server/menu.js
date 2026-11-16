@@ -97,7 +97,32 @@ export function createMenuModel(db) {
     };
   }
 
-  return { publicMenu, adminProducts, adminProduct, categories: PRODUCT_CATEGORIES };
+  // Para la compra: resuelve variantes por id contra la base (precio y disponibilidad en la sede de la funcion).
+  // Devuelve un Map id -> null (no existe) o { variantId, price, productName, label, includesText, state }, con state
+  // 'ok' | 'sold_out' | 'inactive' (producto o tamano retirado, o un componente de un combo retirado).
+  function resolveVariants(branchId, ids) {
+    const cat = load();
+    const productById = new Map(cat.products.map((p) => [p.id, p]));
+    const byId = new Map();
+    for (const list of cat.variantsByProduct.values()) for (const v of list) byId.set(v.id, v);
+    const out = new Map();
+    for (const id of ids) {
+      const v = byId.get(id);
+      if (!v) { out.set(id, null); continue; }
+      const p = productById.get(v.product_id);
+      const inc = cat.includesByVariant.get(v.id) ?? [];
+      let state = 'ok';
+      if (!p.active || !v.active || inc.some((c) => !c.active)) state = 'inactive';
+      else if (!isAvailable(cat, branchId, v)) state = 'sold_out';
+      out.set(id, {
+        variantId: v.id, price: v.price, productName: p.name, label: v.label, state,
+        includesText: inc.map((c) => `${c.qty} × ${c.name} ${c.label}`).join(', '),
+      });
+    }
+    return out;
+  }
+
+  return { publicMenu, adminProducts, adminProduct, resolveVariants, categories: PRODUCT_CATEGORIES };
 }
 
 // API publica de solo lectura. Sin sesion; `no-store` porque la disponibilidad cambia.

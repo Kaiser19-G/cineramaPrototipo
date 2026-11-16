@@ -18,6 +18,7 @@ const STATUS = {
 const REFUND_ERRORS = {
   not_refundable: 'Esa orden ya no se puede reembolsar (no está aprobada).',
   screening_finished: 'La función ya terminó: no se puede reembolsar.',
+  already_delivered: 'La confitería de esta orden ya se entregó: no se puede reembolsar.',
   already_checked_in: 'La orden ya tiene butacas con ingreso registrado: no se puede reembolsar. Si entró una parte, la orden se mantiene completa.',
   not_found: 'No se encontró la orden en tu alcance.',
   demo_password: 'Reembolsar está bloqueado mientras el administrador central conserve la contraseña de demostración.',
@@ -55,7 +56,14 @@ function RefundDialog({ order, onClose, onDone }) {
         <dt>Función</dt><dd>{dayLabel(sc.date)}, {sc.startTime} · {sc.hallName}</dd>
         <dt>Butacas</dt><dd>{order.seats.join(', ')}</dd>
         <dt>Monto</dt><dd>{formatSol(order.amount)}</dd>
+        {order.foodAmount > 0 && <><dt>Confitería</dt><dd>{formatSol(order.foodAmount)} (incluida en el monto)</dd></>}
       </dl>
+      {order.foodAmount > 0 && (
+        <p role="note">
+          <strong>Esta orden incluye confitería.</strong> El reembolso es por todo junto (entradas y confitería): el pedido se cancela. No hay reembolso solo de la comida,
+          y si la confitería ya se entregó, la orden no se puede reembolsar.
+        </p>
+      )}
       <p>
         <strong>Qué pasa al confirmar:</strong> las butacas quedan libres y se pueden vender de nuevo, la orden pasa a «Reembolsada (simulado)»,
         el cliente la verá así en Mis entradas con el motivo que elijas y el código deja de servir en la puerta. El reembolso es simulado: no se devuelve dinero real.

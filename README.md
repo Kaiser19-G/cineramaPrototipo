@@ -96,6 +96,35 @@ Solo el administrador central entra a `/users`, `/cinema` y `/settings`. Las rut
   `orders` y sus `order_seats` existentes en ese momento), deja `booked_seats` en el conteo real y repone a `scheduled` las funciones
   guardadas como `sold_out`. El seed ya no crea órdenes ni contadores.
 
+## Confitería: compra en el servidor, reembolsos y reportes (fase 5b)
+Solo servidor y paneles de administración; el paso de confitería en la interfaz pública de compra llega en 5c, la cola de recojo en 5d y el
+comparador de tamaños en 5e. La compra sin confitería funciona exactamente igual que antes.
+- **Petición** `POST /api/orders`: además de lo de siempre acepta `items: [{ variantId, qty, expectedUnitPrice? }]`, `pickup: { timing }`
+  (`on_arrival` "Al llegar" o `at_showtime` "A la hora de la función"; obligatorio si hay ítems, se ignora si no los hay) y `expectedAmount?`
+  (el total que vio el cliente). El servidor **calcula siempre el precio desde la base**; cualquier precio, nombre o total enviado se ignora
+  salvo para detectar cambios. Límites aplicados por el servidor (`src/shared/purchase.js`, `parseFoodRequest`): 10 unidades por producto y
+  tamaño, 20 por pedido, 12 líneas, sin variantes repetidas (400 `validation`: `items` = `invalid`, `invalid_qty`, `qty_too_high`,
+  `too_many_units`, `too_many_lines`, `duplicated`, `unknown_variant`; `pickup` = `required` o `invalid`; `expectedAmount` = `invalid`).
+- **Conflictos (409, no se cobra, no se crea orden ni se toman butacas):** `item_unavailable` `{ variantIds, items: [{ variantId, name,
+  variantLabel, reason: 'sold_out' | 'inactive' }] }` (agotado en la sede de la función, o tamaño/producto/componente de combo retirado) y
+  `price_changed` `{ amount, ticketAmount, foodAmount, changedVariantIds, items: [{ variantId, name, variantLabel, qty, unitPrice,
+  previousUnitPrice }] }` (el total o algún precio unitario enviado no coincide con el actual). `idempotency_conflict` ahora también salta si
+  cambian los ítems o el momento de preparación con la misma clave; con la misma petición se devuelve la orden original (200, `replayed`).
+- **Respuesta:** la orden trae `ticketAmount`, `foodAmount` (`amount` = suma), `items` (foto de nombre, tamaño, composición del combo y precio
+  unitario al comprar; editar el catálogo después no cambia órdenes pasadas) y `pickup` (`point`, `timing`, `timingLabel`, `prepareFrom`, `status`,
+  `statusLabel`) o `null`. El código de recojo es el mismo código de la orden.
+- **Migración 6** (no reconstruye `orders`): columnas `orders.food_amount REAL NOT NULL DEFAULT 0` y `orders.pickup_timing TEXT`; tablas
+  `order_items` (foto de la línea) y `fulfillments` (estado de preparación `ordered | preparing | ready | delivered | not_collected |
+  cancelled`, `timing`, `prepare_from_ms`, marcas y autores; la usará la entrega 5d). Las órdenes existentes quedan con confitería 0.
+  Una orden aprobada con ítems crea su fila `ordered`; una rechazada guarda los ítems sin fila de preparación.
+- **Reembolsos:** se devuelve todo junto (entradas y confitería) y el pedido pasa a `cancelled`. Se bloquea con 409 `already_delivered` si la
+  confitería ya se entregó (el estado `delivered` aún no se puede poner desde la interfaz: llega con 5d). Cancelar una función reembolsa y
+  cancela todos sus pedidos. No hay reembolso solo de comida. La venta en mostrador de Taquilla no vende confitería.
+- **Reportes, Pagos y Resumen:** `revenue` sigue siendo el total cobrado; se añaden `ticketRevenue` y `foodRevenue` (totales, por día, sede,
+  canal y preventa), `ordersWithFood`, `foodAttachRate`, `refundedFoodAmount` y `byProduct` (unidades e ingresos por producto y tamaño).
+  `byMovie.revenue` es solo de entradas: la confitería nunca se atribuye a una película.
+- **Privacidad:** `POLICY_VERSION` pasa a `borrador-2026-11f` y la política describe los datos del pedido.
+
 ## Confitería: catálogo (fase 5a)
 Solo el catálogo y su gestión; la compra con confitería, la cola de recojo y el comparador de tamaños llegan en 5b a 5e.
 - **Panel:** página **Confitería** (`/confiteria`, entrada en el menú lateral solo con permiso). El **administrador central** crea y edita

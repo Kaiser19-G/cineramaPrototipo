@@ -1,6 +1,8 @@
 // Ventas reales para el panel: lista de ordenes (Pagos), resumen de reportes y tablero de hoy (Dashboard).
 // Todo se calcula en SQL/servidor; los dias son de America/Lima (UTC-5 fijo). Nunca se devuelve correo completo, celular,
 // DNI, user_id ni la clave de idempotencia, y nunca se escribe el codigo de orden en consola ni en audit_log.
+// Ingresos: `revenue` es el TOTAL cobrado (entradas + confiteria); `ticketRevenue` y `foodRevenue` lo separan. La confiteria
+// nunca se atribuye a una pelicula: byMovie.revenue es solo de entradas.
 import express from 'express';
 import { createDemoGate } from '../auth/demoGate.js';
 import { addDaysToDate, nowInLima, todayInLima } from '../../src/data/limaDate.js';
@@ -43,6 +45,7 @@ export function createSales(db, auth, opts = {}) {
   };
 
   const seatsOf = db.prepare('SELECT seat, checked_in_at FROM order_seats WHERE order_id = ?');
+  const itemsOf = db.prepare('SELECT product_name, variant_label, qty, line_total FROM order_items WHERE order_id = ? ORDER BY id');
 
   // ───────────────────────── Ordenes ─────────────────────────
   const orders = express.Router();
@@ -78,10 +81,12 @@ export function createSales(db, auth, opts = {}) {
     const W = where.join(' AND ');
     const t = db.prepare(`SELECT COUNT(*) n,
         COALESCE(SUM(CASE WHEN o.status='approved' THEN o.amount END),0) revenue,
+        COALESCE(SUM(CASE WHEN o.status='approved' THEN o.food_amount END),0) foodRevenue,
         COALESCE(SUM(CASE WHEN o.status='refunded' THEN o.amount END),0) refunded,
+        COALESCE(SUM(CASE WHEN o.status='refunded' THEN o.food_amount END),0) refundedFood,
         COALESCE(SUM(o.status='rejected'),0) rejected
       FROM orders o WHERE ${W}`).get(...args);
-    const rows = db.prepare(`SELECT o.id, o.customer_name, o.email, o.amount, o.method, o.status, o.channel, o.presale, o.payment_ref,
+    const rows = db.prepare(`SELECT o.id, o.customer_name, o.email, o.amount, o.food_amount, o.method, o.status, o.channel, o.presale, o.payment_ref,
         o.created_ms, o.created_at, o.refunded_at, o.refund_reason, o.branch_id, b.name branch_name, s.id screening_id, s.starts_on,
         s.start_time, s.format, s.language, m.title movie_title, h.name hall_name
       FROM orders o JOIN screenings s ON s.id = o.screening_id JOIN movies m ON m.id = s.movie_id
@@ -89,7 +94,9 @@ export function createSales(db, auth, opts = {}) {
       WHERE ${W} ORDER BY o.created_ms DESC, o.id LIMIT ? OFFSET ?`).all(...args, pageSize, (page - 1) * pageSize);
     res.json({
       orders: rows.map((o) => ({
-        code: o.id, customerName: o.customer_name, emailMasked: maskEmail(o.email), amount: o.amount, status: o.status,
+        code: o.id, customerName: o.customer_name, emailMasked: maskEmail(o.email), amount: o.amount,
+        foodAmount: o.food_amount, ticketAmount: round2(o.amount - o.food_amount), status: o.status,
+        items: itemsOf.all(o.id).map((i) => ({ name: i.product_name, variantLabel: i.variant_label, qty: i.qty, lineTotal: i.line_total })),
         channel: o.channel, presale: !!o.presale, createdAt: o.created_ms, createdLima: o.created_at,
         branch: { id: o.branch_id, name: o.branch_name },
         screening: { id: o.screening_id, date: o.starts_on, startTime: o.start_time, format: o.format, language: o.language, movieTitle: o.movie_title, hallName: o.hall_name },
@@ -98,7 +105,10 @@ export function createSales(db, auth, opts = {}) {
         payment: { method: o.method, simulated: true, ref: (o.payment_ref || '').split('|')[0] },
         refund: o.status === 'refunded' ? { at: o.refunded_at ?? null, reasonCode: o.refund_reason, reason: REFUND_REASONS[o.refund_reason] ?? null } : null,
       })),
-      totals: { revenue: round2(t.revenue), refunded: round2(t.refunded), rejected: t.rejected, transactions: t.n },
+      totals: {
+        revenue: round2(t.revenue), ticketRevenue: round2(t.revenue - t.foodRevenue), foodRevenue: round2(t.foodRevenue),
+        refunded: round2(t.refunded), refundedFood: round2(t.refundedFood), rejected: t.rejected, transactions: t.n,
+      },
       page, pageSize, total: t.n, pages: Math.max(1, Math.ceil(t.n / pageSize)),
       scope: { branchId: branch === null ? null : branch },
     });
@@ -130,31 +140,43 @@ export function createSales(db, auth, opts = {}) {
     const st = db.prepare(`SELECT COUNT(*) n, COALESCE(SUM(o.status='approved'),0) approved, COALESCE(SUM(o.status='rejected'),0) rejected,
         COALESCE(SUM(o.status='refunded'),0) refunded, COALESCE(SUM(o.status='cancelled'),0) cancelled, COALESCE(SUM(o.status='pending'),0) pending,
         COALESCE(SUM(CASE WHEN o.status='approved' THEN o.amount END),0) revenue,
-        COALESCE(SUM(CASE WHEN o.status='refunded' THEN o.amount END),0) refundedAmount
+        COALESCE(SUM(CASE WHEN o.status='approved' THEN o.food_amount END),0) foodRevenue,
+        COALESCE(SUM(CASE WHEN o.status='approved' AND o.food_amount > 0 THEN 1 END),0) ordersWithFood,
+        COALESCE(SUM(CASE WHEN o.status='refunded' THEN o.amount END),0) refundedAmount,
+        COALESCE(SUM(CASE WHEN o.status='refunded' THEN o.food_amount END),0) refundedFood
       FROM orders o WHERE ${RANGE}`).get(...base);
     const tickets = db.prepare(`SELECT COUNT(*) c FROM order_seats os JOIN orders o ON o.id = os.order_id WHERE o.status = 'approved' AND ${RANGE}`).get(...base).c;
 
-    const dayRows = db.prepare(`SELECT ${DAY_SQL} d, COALESCE(SUM(o.amount),0) revenue, COUNT(*) orders,
+    const dayRows = db.prepare(`SELECT ${DAY_SQL} d, COALESCE(SUM(o.amount),0) revenue, COALESCE(SUM(o.food_amount),0) food, COUNT(*) orders,
         COALESCE(SUM((SELECT COUNT(*) FROM order_seats os WHERE os.order_id = o.id)),0) tickets
       FROM orders o WHERE o.status = 'approved' AND ${RANGE} GROUP BY d`).all(...base);
     const dayMap = new Map(dayRows.map((r) => [r.d, r]));
     const byDay = [];
     for (let i = 0; i < days; i++) {
       const date = addDaysToDate(from, i); const r = dayMap.get(date);
-      byDay.push({ date, revenue: round2(r?.revenue), orders: r?.orders ?? 0, tickets: r?.tickets ?? 0 });
+      byDay.push({ date, revenue: round2(r?.revenue), ticketRevenue: round2((r?.revenue ?? 0) - (r?.food ?? 0)), foodRevenue: round2(r?.food), orders: r?.orders ?? 0, tickets: r?.tickets ?? 0 });
     }
 
-    const approvedGroup = (select, join, groupBy, order) => db.prepare(`SELECT ${select}, COUNT(*) orders, COALESCE(SUM(o.amount),0) revenue,
+    const approvedGroup = (select, join, groupBy, order) => db.prepare(`SELECT ${select}, COUNT(*) orders, COALESCE(SUM(o.amount),0) revenue, COALESCE(SUM(o.food_amount),0) food,
         COALESCE(SUM((SELECT COUNT(*) FROM order_seats os WHERE os.order_id = o.id)),0) tickets
       FROM orders o ${join} WHERE o.status = 'approved' AND ${RANGE} GROUP BY ${groupBy} ORDER BY ${order}`).all(...base);
+    // Cada grupo trae el total (revenue) y su desglose en entradas y confiteria.
+    const split = (r) => ({ revenue: round2(r.revenue), ticketRevenue: round2(r.revenue - r.food), foodRevenue: round2(r.food) });
     const byBranch = approvedGroup('b.id id, b.name name', 'JOIN branches b ON b.id = o.branch_id', 'b.id', 'revenue DESC, b.id')
-      .map((r) => ({ id: r.id, name: r.name, orders: r.orders, revenue: round2(r.revenue), tickets: r.tickets }));
-    const byMovie = approvedGroup('m.id id, m.title title', 'JOIN screenings s ON s.id = o.screening_id JOIN movies m ON m.id = s.movie_id', 'm.id', 'tickets DESC, revenue DESC, m.id')
-      .map((r) => ({ id: r.id, title: r.title, orders: r.orders, revenue: round2(r.revenue), tickets: r.tickets }));
+      .map((r) => ({ id: r.id, name: r.name, orders: r.orders, ...split(r), tickets: r.tickets }));
+    // Por pelicula SOLO ingresos de entradas: la confiteria no pertenece a ninguna pelicula.
+    const byMovie = approvedGroup('m.id id, m.title title', 'JOIN screenings s ON s.id = o.screening_id JOIN movies m ON m.id = s.movie_id', 'm.id', 'tickets DESC, (revenue - food) DESC, m.id')
+      .map((r) => ({ id: r.id, title: r.title, orders: r.orders, revenue: round2(r.revenue - r.food), ticketRevenue: round2(r.revenue - r.food), tickets: r.tickets }));
     const byChannel = approvedGroup('o.channel channel', '', 'o.channel', 'o.channel')
-      .map((r) => ({ channel: r.channel, orders: r.orders, revenue: round2(r.revenue), tickets: r.tickets }));
+      .map((r) => ({ channel: r.channel, orders: r.orders, ...split(r), tickets: r.tickets }));
     const byPresale = approvedGroup('o.presale presale', '', 'o.presale', 'o.presale')
-      .map((r) => ({ presale: !!r.presale, orders: r.orders, revenue: round2(r.revenue), tickets: r.tickets }));
+      .map((r) => ({ presale: !!r.presale, orders: r.orders, ...split(r), tickets: r.tickets }));
+    // Confiteria por producto y tamano (solo ordenes aprobadas); usa la foto del nombre guardada en cada orden.
+    const byProduct = db.prepare(`SELECT oi.variant_id id, MAX(oi.product_name) name, MAX(oi.variant_label) label,
+        SUM(oi.qty) units, COALESCE(SUM(oi.line_total),0) revenue
+      FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.status = 'approved' AND ${RANGE}
+      GROUP BY oi.variant_id ORDER BY units DESC, revenue DESC, oi.variant_id LIMIT 50`).all(...base)
+      .map((r) => ({ variantId: r.id, name: r.name, variantLabel: r.label, units: r.units, revenue: round2(r.revenue) }));
 
     // Ocupacion: funciones (no borrador ni cancelada) cuya fecha cae en el rango, butacas activas sobre capacidad.
     const sBranch = branch === null ? '' : ' AND s.branch_id = ?';
@@ -183,13 +205,15 @@ export function createSales(db, auth, opts = {}) {
       range: { from, to, days, maxDays: MAX_RANGE_DAYS },
       scope: { branchId: branch },
       totals: {
-        revenue: round2(st.revenue), tickets, transactions: st.n, approved: st.approved, rejected: st.rejected, refunded: st.refunded,
+        revenue: round2(st.revenue), ticketRevenue: round2(st.revenue - st.foodRevenue), foodRevenue: round2(st.foodRevenue),
+        ordersWithFood: st.ordersWithFood, foodAttachRate: pct(st.ordersWithFood, st.approved),
+        refundedFoodAmount: round2(st.refundedFood), tickets, transactions: st.n, approved: st.approved, rejected: st.rejected, refunded: st.refunded,
         refundedAmount: round2(st.refundedAmount), cancelled: st.cancelled, pending: st.pending,
         // Pagos intentados que fueron aceptados (aprobados o luego reembolsados) sobre los intentados (sin cancelados/pendientes).
         approvalRate: pct(st.approved + st.refunded, attempts),
       },
       occupancy: { sold, capacity, screenings: scrRows.length, rate: pct(sold, capacity) },
-      byDay, byBranch, byMovie, byHall, byScreening, screeningsTruncated: scrRows.length > MAX_SCREENINGS, byChannel, byPresale,
+      byDay, byBranch, byMovie, byHall, byScreening, screeningsTruncated: scrRows.length > MAX_SCREENINGS, byChannel, byPresale, byProduct,
     });
   });
 
@@ -225,11 +249,12 @@ export function createSales(db, auth, opts = {}) {
       money: null, activity: null,
     };
     if (hasAny(req, 'view_all_sales', 'view_local_sales')) {
-      const r = db.prepare(`SELECT COALESCE(SUM(CASE WHEN o.status='approved' THEN o.amount END),0) revenue, COALESCE(SUM(o.status='rejected'),0) rejected
+      const r = db.prepare(`SELECT COALESCE(SUM(CASE WHEN o.status='approved' THEN o.amount END),0) revenue,
+        COALESCE(SUM(CASE WHEN o.status='approved' THEN o.food_amount END),0) food, COALESCE(SUM(o.status='rejected'),0) rejected
         FROM orders o WHERE o.created_ms >= ? AND o.created_ms < ?${bSql}`).get(lo, hi, ...bArg);
       const tickets = db.prepare(`SELECT COUNT(*) c FROM order_seats os JOIN orders o ON o.id = os.order_id
         WHERE o.status = 'approved' AND o.created_ms >= ? AND o.created_ms < ?${bSql}`).get(lo, hi, ...bArg).c;
-      body.money = { revenue: round2(r.revenue), tickets, rejected: r.rejected };
+      body.money = { revenue: round2(r.revenue), ticketRevenue: round2(r.revenue - r.food), foodRevenue: round2(r.food), tickets, rejected: r.rejected };
     }
     // Ultimas acciones (audit_log: solo ids y codigos). Admin central: todas; gerente: las de su sede.
     if (hasAny(req, 'view_global_reports', 'view_local_reports')) {

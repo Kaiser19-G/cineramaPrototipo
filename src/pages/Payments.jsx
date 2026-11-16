@@ -33,9 +33,9 @@ const csvCell = (v) => {
   return `"${t.replace(/"/g, '""')}"`;
 };
 function downloadCsv(orders) {
-  const head = ['Código', 'Fecha (Lima)', 'Sede', 'Película', 'Función', 'Butacas', 'Cliente', 'Correo (enmascarado)', 'Canal', 'Monto (S/)', 'Estado'];
+  const head = ['Código', 'Fecha (Lima)', 'Sede', 'Película', 'Función', 'Butacas', 'Cliente', 'Correo (enmascarado)', 'Canal', 'Entradas (S/)', 'Confitería (S/)', 'Monto total (S/)', 'Estado'];
   const rows = orders.map((o) => [o.code, o.createdLima, o.branch.name, o.screening.movieTitle, `${o.screening.date} ${o.screening.startTime}`,
-    o.seats.join(' '), o.customerName, o.emailMasked ?? '', CHANNEL_LABELS[o.channel] ?? o.channel, o.amount.toFixed(2), STATUS[o.status]?.label ?? o.status]);
+    o.seats.join(' '), o.customerName, o.emailMasked ?? '', CHANNEL_LABELS[o.channel] ?? o.channel, o.ticketAmount.toFixed(2), o.foodAmount.toFixed(2), o.amount.toFixed(2), STATUS[o.status]?.label ?? o.status]);
   const text = `${BOM}${[head, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n')}\r\n`;
   const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
@@ -57,7 +57,19 @@ function OrderDialog({ order, onClose }) {
         <dt>Función</dt><dd>{dayLabel(sc.date)}, {sc.startTime} · {sc.format} · {sc.language === 'ES' ? 'Doblada' : 'Subtitulada'}</dd>
         <dt>Sede y sala</dt><dd>{order.branch.name} · {sc.hallName}</dd>
         <dt>Butacas</dt><dd>{order.seats.length ? order.seats.join(', ') : 'Ninguna'}{order.status === 'rejected' && ' (no se reservaron: el pago fue rechazado)'}</dd>
-        <dt>Monto</dt><dd>{money(order.amount)}</dd>
+        <dt>Entradas</dt><dd>{money(order.ticketAmount)}</dd>
+        <dt>Confitería</dt>
+        <dd>
+          {order.items.length === 0 ? money(0) : (
+            <>
+              {money(order.foodAmount)}
+              <ul className="sl-items" aria-label="Productos de confitería de la orden">
+                {order.items.map((i) => <li key={`${i.name}-${i.variantLabel}`}>{i.qty} × {i.name} ({i.variantLabel}) · {money(i.lineTotal)}</li>)}
+              </ul>
+            </>
+          )}
+        </dd>
+        <dt>Monto total</dt><dd><strong>{money(order.amount)}</strong></dd>
         <dt>Canal</dt><dd>{CHANNEL_LABELS[order.channel] ?? order.channel}{order.presale && ' · Preventa'}</dd>
         <dt>Compra</dt><dd>{order.createdLima} (hora de Lima)</dd>
         <dt>Pago</dt><dd>{order.payment.method === 'cash' ? 'Efectivo' : 'Tarjeta'}, simulado · referencia {order.payment.ref || 'sin referencia'}</dd>
@@ -98,7 +110,9 @@ export default function Payments() {
   const dateError = draft.from && draft.to && draft.from > draft.to;
 
   const kpis = data && [
-    { label: 'Ingresos aprobados', value: money(data.totals.revenue) },
+    { label: 'Ingresos aprobados', value: money(data.totals.revenue), note: 'Entradas y confitería' },
+    { label: 'Ingresos de entradas', value: money(data.totals.ticketRevenue) },
+    { label: 'Ingresos de confitería', value: money(data.totals.foodRevenue) },
     { label: 'Reembolsado', value: money(data.totals.refunded) },
     { label: 'Pagos rechazados', value: data.totals.rejected },
     { label: 'Transacciones', value: data.totals.transactions },
@@ -161,7 +175,7 @@ export default function Payments() {
           <p className="sl-note">Los totales corresponden a todas las órdenes que cumplen los filtros, no solo a esta página. Las fechas son de Lima.</p>
           <ul className="sl-kpis" aria-label="Totales de la consulta">
             {kpis.map((k) => (
-              <li key={k.label} className="card sl-kpi"><div className="sl-kpi-value">{k.value}</div><div className="sl-kpi-label">{k.label}</div></li>
+              <li key={k.label} className="card sl-kpi"><div className="sl-kpi-value">{k.value}</div><div className="sl-kpi-label">{k.label}</div>{k.note && <div className="sl-kpi-note">{k.note}</div>}</li>
             ))}
           </ul>
 
@@ -180,7 +194,7 @@ export default function Payments() {
                   <thead>
                     <tr>
                       <th scope="col">Código</th><th scope="col">Función</th><th scope="col">Cliente</th><th scope="col">Sede</th>
-                      <th scope="col">Monto</th><th scope="col">Estado</th><th scope="col">Compra (Lima)</th><th scope="col">Detalle</th>
+                      <th scope="col">Entradas</th><th scope="col">Confitería</th><th scope="col">Monto total</th><th scope="col">Estado</th><th scope="col">Compra (Lima)</th><th scope="col">Detalle</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -190,6 +204,8 @@ export default function Payments() {
                         <td><span className="mv-title">{o.screening.movieTitle}</span><div className="mv-sub">{o.screening.date} · {o.screening.startTime} · {o.seats.length} {o.seats.length === 1 ? 'butaca' : 'butacas'}</div></td>
                         <td>{o.customerName}<div className="mv-sub">{o.emailMasked}</div></td>
                         <td>{o.branch.name}</td>
+                        <td><span className="sl-money">{money(o.ticketAmount)}</span></td>
+                        <td><span className="sl-money">{money(o.foodAmount)}</span></td>
                         <td><span className="sl-money">{money(o.amount)}</span></td>
                         <td><StatusTag status={o.status} /></td>
                         <td>{o.createdLima}</td>
