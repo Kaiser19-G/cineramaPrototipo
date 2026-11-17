@@ -1,8 +1,8 @@
 /* Taquilla (venta en mostrador, validacion y reembolsos). Selectores acotados a .tq-page y a los bloques .tq-*;
    solo tokens existentes de src/index.css. */
 .tq-page .tabs { margin-bottom: 20px; }
-.tq-page .tab:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-.tq-tabpanel:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.tq-page .tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.tq-tabpanel:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .tq-lead { margin: 0 0 14px; color: var(--text-primary); max-width: 70ch; line-height: 1.5; }
 .tq-caption { text-align: left; padding: 0 0 8px; font-weight: 700; color: var(--text-main); caption-side: top; }
 .tq-table { min-width: 820px; }
@@ -17,7 +17,7 @@
 .tq-alert { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 14px; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--error); background: var(--surface-2); color: var(--text-primary); font-weight: 600; }
 .tq-alert p { margin: 0; }
 .tq-alert svg { flex: none; margin-top: 3px; }
-.tq-alert:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.tq-alert:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .tq-sell-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .tq-map { min-width: 0; }
 .tq-map .booking-note { margin: 0 0 12px; color: var(--text-secondary); font-size: 14px; }
@@ -42,7 +42,7 @@
 .tq-receipt h2 { margin: 0 0 10px; font-size: 20px; color: var(--text-main); }
 .tq-receipt h2:focus { outline: none; }
 .tq-ok { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-weight: 700; color: var(--text-main); }
-.tq-ok svg { color: var(--emerald); }
+.tq-ok svg { color: var(--success-text); }
 .tq-code-label { margin: 0 0 4px; font-size: 13px; color: var(--text-secondary); }
 .tq-code { margin: 0 0 16px; }
 .tq-code code { display: inline-block; padding: 8px 16px; border: 2px solid var(--border-interactive); border-radius: var(--radius); background: var(--surface-3); color: var(--text-main); font-size: 30px; font-weight: 800; letter-spacing: 0.06em; overflow-wrap: anywhere; user-select: all; }
@@ -55,11 +55,11 @@
 .tq-code-input { font-size: 22px; font-weight: 700; letter-spacing: 0.06em; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; }
 .tq-result { margin: 0 0 16px; padding: 18px 20px; border: 3px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface-2); color: var(--text-primary); }
 .tq-tone-good { border-color: var(--emerald); }
-.tq-tone-warn { border-color: var(--cinema-gold); }
+.tq-tone-warn { border-color: var(--gold-border); }
 .tq-tone-bad { border-color: var(--error); }
 .tq-result-title { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; font-size: 26px; font-weight: 900; color: var(--text-main); line-height: 1.2; }
 .tq-result-title svg { flex: none; }
-.tq-tone-good .tq-result-title svg { color: var(--emerald); }
+.tq-tone-good .tq-result-title svg { color: var(--success-text); }
 .tq-result-text { margin: 0 0 12px; font-size: 16px; }
 .tq-flash { margin: 0 0 12px; font-weight: 700; color: var(--text-main); }
 .tq-result-dl { margin-bottom: 8px; }
@@ -91,12 +91,12 @@
 .tq-pk-section-title:focus { outline: none; }
 .tq-pk-count { font-weight: 600; color: var(--text-secondary); }
 .tq-pk-empty { margin: 0; padding: 12px 14px; border: 1px dashed var(--border-interactive); border-radius: var(--radius); color: var(--text-primary); }
-.tq-pk-found { margin: 0 0 20px; padding: 14px; border: 2px solid var(--electric-blue); border-radius: var(--radius-lg); background: var(--surface-2); }
+.tq-pk-found { margin: 0 0 20px; padding: 14px; border: 2px solid var(--info); border-radius: var(--radius-lg); background: var(--surface-2); }
 .tq-pickup-list { display: grid; gap: 12px; margin: 0 0 8px; padding: 0; list-style: none; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); }
 .tq-pickup { min-width: 0; padding: 14px; border: 1px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface-2); color: var(--text-primary); }
 .tq-pickup-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .tq-pickup-title { margin: 0; font-size: 17px; color: var(--text-main); }
-.tq-pickup-title:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 3px; }
+.tq-pickup-title:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 .tq-pickup-title code { font-size: 20px; font-weight: 800; letter-spacing: 0.05em; }
 .tq-pickup-lines { margin: 0 0 10px; padding: 0; list-style: none; display: grid; gap: 4px; }
 .tq-pickup-includes { display: block; font-size: 13px; color: var(--text-secondary); }
@@ -107,10 +107,10 @@
 .tq-pickup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .tq-pickup-actions .btn { min-height: 44px; }
 .tq-pickup-actions .btn[aria-disabled="true"] { opacity: 0.6; cursor: progress; }
-.tq-pk-preparing { border-color: var(--cinema-gold); }
+.tq-pk-preparing { border-color: var(--gold-border); }
 .tq-pk-ready, .tq-pk-delivered { border-color: var(--emerald); }
 .tq-pk-cancelled, .tq-pk-not_collected { border-color: var(--error); }
-.tq-pickup .btn:focus-visible, .tq-pk-found .btn:focus-visible, .tq-pk-bar .btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+.tq-pickup .btn:focus-visible, .tq-pk-found .btn:focus-visible, .tq-pk-bar .btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* Las tablas de Taquilla (Vender, Ordenes) se desplazan dentro de su contenedor. Sin position: relative, el texto
    .sr-only (position: absolute) de sus celdas no queda recortado por el contenedor y ensancha toda la pagina a 375 px. */

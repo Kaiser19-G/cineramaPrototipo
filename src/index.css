@@ -113,6 +113,22 @@
   --violet:       #8B5CF6;
   --violet-dim:   rgba(139,92,246,0.12);
 
+  /* ── Semánticos del PANEL (texto, borde y relleno de badges, alertas, KPI y
+     gráficos). Versión oscura aquí; versión clara en html[data-theme="light"].
+     Los --electric-blue, --cinema-gold... de arriba NO cambian (los usa el
+     sitio público). Contraste medido sobre su propio tinte y sobre las
+     superficies del panel (ver la entrega 6b). ── */
+  --info:         #6CA0FF;
+  --info-dim:     rgba(59,130,246,0.14);
+  --info-solid:   #2563EB;   /* relleno con texto blanco (5.2:1) */
+  --success-text: var(--emerald);   /* texto/icono de éxito (en claro, un verde algo más oscuro) */
+  --warning:      #E67E22;
+  --warning-dim:  rgba(230,126,34,0.12);
+  --gold-text:    #F5C518;   /* texto/icono dorado */
+  --gold-border:  #F5C518;   /* borde / elemento gráfico dorado */
+  --gold-dim:     rgba(245,197,24,0.13);
+  --violet-text:  #A78BFA;
+
   /* Text */
   --text-main:    #FFFFFF;
   --text-primary: #F0F0F0;
@@ -152,10 +168,9 @@
 /* ══════════════════════════════════════════
    TEMA CLARO — SISTEMA DE TOKENS COMPARTIDO (sitio público y panel)
    Los bloques de tema y de visión cuelgan de <html> (un solo sistema de
-   tokens para el sitio y el panel de administración). Mientras el panel no
-   tenga listas sus páginas en modo claro (entrega 6b), AdminLayout fija
-   data-theme="dark" y data-vision="default" en <html> al montarse (ver
-   FIJAR_OSCURO_EN_PANEL en App.jsx); quitar ese efecto activa el claro.
+   tokens para el sitio y el panel de administración). El panel sigue el tema
+   guardado; hasta la entrega 6c AdminLayout fija data-vision="default" y
+   data-font-scale="100" (ver FIJAR_VISION_Y_LETRA_EN_PANEL en App.jsx).
    Valores verificados con la fórmula de luminancia relativa WCAG
    (contraste ≥4.5:1 texto normal, ≥3:1 texto grande / bordes interactivos).
    ══════════════════════════════════════════ */
@@ -213,6 +228,20 @@ html[data-theme="light"] {
   --accent-on-white:   var(--accent-solid);
 
   --label-accent: #7A5C16; /* #8A6A1F daba 3.97:1 con el hover --surface-hover (#E4E4E4) */
+
+  /* Semánticos del panel en claro (medidos sobre blanco y sobre su tinte). */
+  --dark-grey:    #F7F7F7;   /* hover de .card (en oscuro #1C1C1C) */
+  --success-text: color-mix(in srgb, var(--emerald) 85%, #000);
+  --info:         #1D4ED8;
+  --info-dim:     rgba(29,78,216,0.10);
+  --info-solid:   #1D4ED8;
+  --warning:      #8A5A00;
+  --warning-dim:  rgba(138,90,0,0.12);
+  --gold-text:    #7A5C16;
+  --gold-border:  #A67C00;
+  --gold-dim:     rgba(166,124,0,0.13);
+  --violet-text:  #5B2FC0;
+  --violet-dim:   rgba(91,47,192,0.10);
 
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
@@ -409,6 +438,12 @@ html, body, #root {
 h1, h2, .heading { font-family: 'Montserrat', 'Poppins', sans-serif; font-weight: 900; }
 h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-weight: 700; }
 
+/* Foco por defecto del PANEL: el anillo propio (--focus-ring: 6.1:1 en oscuro, 6.7:1
+   en claro) en vez del azul #005FCC del navegador (2.8:1 sobre las superficies
+   oscuras). Especificidad 0,1,0 y declarado antes que los componentes: cualquier
+   regla propia de un control (p. ej. .input, .cinema-select) tiene prioridad. */
+:where(.app-layout) :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
 /* ══════════════════════════════════════════
    BUTTONS
    ══════════════════════════════════════════ */
@@ -423,13 +458,13 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 
 /* Action Red — solid */
 .btn-primary {
-  background: var(--action-red);
-  color: #fff;
+  background: var(--accent-solid);
+  color: var(--on-accent);
   box-shadow: var(--shadow-red);
 }
 .btn-primary:hover {
-  background: var(--action-red-light);
-  box-shadow: 0 6px 36px rgba(229,9,20,0.45);
+  background: var(--accent-solid-light);
+  box-shadow: 0 6px 36px var(--action-red-glow);
   transform: translateY(-2px);
 }
 .btn-primary:active { transform: translateY(0); }
@@ -443,7 +478,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 .btn-glow:hover {
   box-shadow: 0 0 18px var(--action-red-glow), inset 0 0 18px var(--action-red-dim);
-  color: #fff;
+  color: var(--text-main);
   background: var(--action-red-dim);
 }
 
@@ -487,17 +522,17 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 
 /* Emerald Green — Reserved / Active */
-.badge-green  { background: var(--emerald-dim); color: var(--emerald); }
+.badge-green  { background: var(--emerald-dim); color: var(--success-text); }
 /* Action Red — Error / Sold Out */
 .badge-red    { background: var(--action-red-dim); color: var(--action-red); }
 /* Cinema Gold — VIP / Featured */
-.badge-gold   { background: var(--cinema-gold-dim); color: var(--cinema-gold); }
+.badge-gold   { background: var(--gold-dim); color: var(--gold-text); }
 /* Intense Orange — Alert / Warning */
-.badge-orange { background: var(--intense-orange-dim); color: var(--intense-orange); }
+.badge-orange { background: var(--warning-dim); color: var(--warning); }
 /* Electric Blue — Info / Format */
-.badge-blue   { background: var(--electric-blue-dim); color: var(--electric-blue); }
+.badge-blue   { background: var(--info-dim); color: var(--info); }
 /* Violet — Premium / Special */
-.badge-purple { background: var(--violet-dim); color: var(--violet); }
+.badge-purple { background: var(--violet-dim); color: var(--violet-text); }
 /* Muted — Inactive / Archived */
 .badge-muted  { background: var(--surface-3); color: var(--text-secondary); }
 
@@ -571,14 +606,14 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 .pill:hover { border-color: var(--text-dim); color: var(--text-primary); }
 .pill.active {
-  background: var(--action-red);
-  border-color: var(--action-red);
-  color: #fff;
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: var(--on-accent);
   box-shadow: 0 0 12px var(--action-red-glow);
 }
 .pill.gold.active { background: var(--cinema-gold); border-color: var(--cinema-gold); color: var(--deep-night); box-shadow: var(--shadow-gold); }
-.pill.green.active { background: var(--emerald); border-color: var(--emerald); color: var(--deep-night); }
-.pill.blue.active { background: var(--electric-blue); border-color: var(--electric-blue); color: #fff; }
+.pill.green.active { background: var(--accent-solid-success); border-color: var(--accent-solid-success); color: var(--on-accent-success); }
+.pill.blue.active { background: var(--info-solid); border-color: var(--info-solid); color: #fff; }
 
 /* ══════════════════════════════════════════
    LAYOUT
@@ -647,7 +682,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
    TABS
    ══════════════════════════════════════════ */
 .tabs {
-  display: flex; gap: 4px;
+  display: flex; flex-wrap: wrap; gap: 4px;
   background: var(--surface-2);
   padding: 4px; border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -801,3 +836,13 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 /* Glow utility */
 .glow-red  { box-shadow: 0 0 24px var(--action-red-glow); }
 .glow-gold { box-shadow: 0 0 24px var(--cinema-gold-glow); }
+
+/* Pestañas de Configuración (nav vertical del panel): el activo lleva un borde
+   de 3:1 como mínimo (el relleno tenue solo daba ~1.1:1, WCAG 1.4.11). */
+.settings-nav .nav-item.active { border-color: var(--action-red); }
+
+/* Configuración: navegación + contenido; en pantallas angostas se apilan. */
+.settings-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; }
+@media (max-width: 768px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } }
+
+@media (max-width: 640px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }

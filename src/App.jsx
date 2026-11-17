@@ -36,30 +36,31 @@ import WebMovieDetails from './pages/WebMovieDetails';
 import WebCinemaDetails from './pages/WebCinemaDetails';
 
 // Marco del panel de administración (solo se monta con sesión de personal).
-// TEMPORAL (entrega 6a): el panel aún solo está listo en oscuro. Con los tokens
-// de tema y de visión colgando de <html>, el panel reaccionaría al tema claro o
-// a los modos de visión guardados por el sitio público. Mientras esté montado,
-// se fijan data-theme="dark" y data-vision="default" y al salir se restauran
-// los valores del usuario. En la entrega 6b: poner esto en false (o borrar el
-// efecto y la constante) para que el panel siga el tema guardado.
-const FIJAR_OSCURO_EN_PANEL = true;
+// TEMPORAL (entrega 6b): el panel ya sigue el TEMA guardado (claro u oscuro,
+// clave cinerama-a11y, el mismo del sitio público). Los MODOS DE VISIÓN y el
+// TAMAÑO DE LETRA aún no están listos en el panel (entrega 6c), así que
+// mientras esté montado se fijan data-vision="default" y data-font-scale="100"
+// en <html> y al salir se restauran los valores del usuario. En la entrega 6c:
+// poner FIJAR_VISION_Y_LETRA_EN_PANEL en false (o borrar la constante y el
+// hook) cuando el widget y los modos estén listos en el panel.
+const FIJAR_VISION_Y_LETRA_EN_PANEL = true;
 
-function useFijarOscuroEnPanel() {
+function useFijarVisionYLetraEnPanel() {
   useLayoutEffect(() => {
-    if (!FIJAR_OSCURO_EN_PANEL) return undefined;
+    if (!FIJAR_VISION_Y_LETRA_EN_PANEL) return undefined;
     const html = document.documentElement;
-    const previo = { theme: html.getAttribute('data-theme'), vision: html.getAttribute('data-vision') };
-    html.setAttribute('data-theme', 'dark');
+    const previo = { vision: html.getAttribute('data-vision'), escala: html.getAttribute('data-font-scale') };
     html.setAttribute('data-vision', 'default');
+    html.setAttribute('data-font-scale', '100');
     return () => {
-      if (previo.theme) html.setAttribute('data-theme', previo.theme);
       if (previo.vision) html.setAttribute('data-vision', previo.vision);
+      if (previo.escala) html.setAttribute('data-font-scale', previo.escala);
     };
   }, []);
 }
 
 function AdminLayout() {
-  useFijarOscuroEnPanel();
+  useFijarVisionYLetraEnPanel();
   const { user } = useAuth();
   // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
   const forced = !!user?.mustChangePassword;

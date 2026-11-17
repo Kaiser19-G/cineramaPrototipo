@@ -85,7 +85,7 @@ export default function Dashboard() {
       <div className="context-banner">
         <div className="context-banner-left">
           {isGlobal
-            ? <><Globe size={16} aria-hidden="true" color="var(--electric-blue)" /><span>Vista global — todos los cines</span></>
+            ? <><Globe size={16} aria-hidden="true" color="var(--info)" /><span>Vista global — todos los cines</span></>
             : <><MapPin size={16} aria-hidden="true" color="var(--action-red)" /><span>Cine activo: <strong>{activeBranch?.name}</strong> — {activeBranch?.city}</span></>}
         </div>
         {isAdminCentral && !isGlobal && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCinema('all')}>← Ver todos los cines</button>}
