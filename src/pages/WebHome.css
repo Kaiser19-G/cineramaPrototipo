@@ -207,9 +207,9 @@
 .btn-catalogo {
   background-color: var(--accent-solid);
   color: var(--on-accent);
-  border: none;
+  border: 2px solid var(--text-main);
   border-radius: 20px;
-  padding: 6px 16px;
+  padding: 4px 14px;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
