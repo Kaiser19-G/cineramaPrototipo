@@ -17,7 +17,7 @@
 .kpi-card::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--text-main) 2%, transparent) 0%, transparent 100%);
   pointer-events: none;
 }
 .kpi-card:hover {
@@ -34,7 +34,7 @@
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px;
 }
-.kpi-change.pos { background: var(--emerald-dim); color: var(--emerald); }
+.kpi-change.pos { background: var(--emerald-dim); color: var(--success-text); }
 .kpi-change.neg { background: var(--action-red-dim); color: var(--action-red); }
 
 .kpi-value {
@@ -77,10 +77,10 @@
   padding: 10px 12px; border-radius: 8px;
   font-size: 12px; line-height: 1.45;
 }
-.alert-error   { background: var(--action-red-dim); color: var(--action-red); }
-.alert-warning { background: var(--intense-orange-dim); color: var(--intense-orange); }
-.alert-info    { background: var(--electric-blue-dim); color: var(--electric-blue); }
-.alert-success { background: var(--emerald-dim); color: var(--emerald); }
+.alert-error   { background: var(--error-dim); color: var(--error-text); }
+.alert-warning { background: var(--warning-dim); color: var(--warning); }
+.alert-info    { background: var(--info-dim); color: var(--info); }
+.alert-success { background: var(--emerald-dim); color: var(--success-text); }
 
 /* Recharts tooltip */
 .chart-tooltip {
@@ -125,7 +125,7 @@
   width: 24px; height: 24px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
 }
-.cinema-select-icon.global { background: var(--electric-blue-dim); color: var(--electric-blue); }
+.cinema-select-icon.global { background: var(--info-dim); color: var(--info); }
 .cinema-select-icon.local  { background: var(--action-red-dim); color: var(--action-red); }
 .cinema-select {
   background: transparent; border: none; outline: none;

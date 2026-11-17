@@ -1,9 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId, cloneElement } from 'react';
 import { Save, Bell, Lock, Globe, CreditCard, Plug } from 'lucide-react';
 import DemoNotice from '../components/DemoNotice';
 
 const tabs = ['General', 'Precios', 'Impuestos', 'Notificaciones', 'Seguridad', 'Integraciones'];
 const tabIcons = { General: Globe, Precios: CreditCard, Impuestos: CreditCard, Notificaciones: Bell, Seguridad: Lock, Integraciones: Plug };
+
+// Fuera del componente: definidos dentro se recreaban en cada pulsación y el campo perdía el foco.
+// La etiqueta se asocia al control con un id propio (WCAG 1.3.1 / 4.1.2).
+function Field({ label, children }) {
+  const id = useId();
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      {cloneElement(children, { id })}
+    </div>
+  );
+}
+
+// Interruptor: role="switch" con nombre accesible; el estado no depende solo del color
+// (la perilla cambia de lado y el borde del apagado es un gris de 3:1).
+function Toggle({ checked, onChange, label }) {
+  const id = useId();
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+      <span id={id} style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
+      <button
+        type="button" role="switch" aria-checked={checked} aria-labelledby={id}
+        onClick={() => onChange(!checked)}
+        style={{
+          width: 44, height: 24, borderRadius: 12, cursor: 'pointer', flexShrink: 0,
+          border: `1px solid ${checked ? 'var(--accent-solid)' : 'var(--border-interactive)'}`,
+          background: checked ? 'var(--accent-solid)' : 'var(--surface-3)',
+          position: 'relative', transition: 'background 0.2s',
+        }}
+      >
+        <div style={{ width: 16, height: 16, borderRadius: '50%', background: checked ? 'var(--on-accent)' : 'var(--text-secondary)', position: 'absolute', top: 3, left: checked ? 23 : 3, transition: 'left 0.2s' }} />
+      </button>
+    </div>
+  );
+}
 
 export default function Settings() {
   useEffect(() => { document.title = 'Configuración · Cinerama'; }, []);
@@ -13,28 +48,6 @@ export default function Settings() {
   const [taxes, setTaxes] = useState({ vatRate: 18, includeVAT: true, taxLabel: 'IGV' });
   const [notif, setNotif] = useState({ emailAlerts: true, paymentFailures: true, lowOccupancy: true, systemErrors: true, dailyReport: false });
   const [security, setSecurity] = useState({ sessionTimeout: 30, twoFactor: false, loginAttempts: 5 });
-
-  const Field = ({ label, children }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      {children}
-    </div>
-  );
-  const Toggle = ({ checked, onChange, label }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-      <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
-      <button
-        onClick={() => onChange(!checked)}
-        style={{
-          width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: checked ? 'var(--action-red)' : 'var(--surface-2)',
-          position: 'relative', transition: 'background 0.2s',
-        }}
-      >
-        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: checked ? 23 : 3, transition: 'left 0.2s' }} />
-      </button>
-    </div>
-  );
 
   return (
     <div>
@@ -50,15 +63,15 @@ export default function Settings() {
 
       <DemoNotice>Estos ajustes son de ejemplo: no se guardan ni cambian el comportamiento del sistema. Los precios reales se definen al programar funciones.</DemoNotice>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 24 }}>
+      <div className="settings-grid">
         {/* Nav vertical */}
-        <div className="card" style={{ padding: 8, alignSelf: 'start' }}>
+        <div className="card settings-nav" style={{ padding: 8, alignSelf: 'start' }}>
           {tabs.map(t => {
             const Icon = tabIcons[t];
             return (
-              <button key={t} className={`nav-item ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}
+              <button key={t} type="button" className={`nav-item ${activeTab === t ? 'active' : ''}`} aria-current={activeTab === t ? 'true' : undefined} onClick={() => setActiveTab(t)}
                 style={{ width: '100%', justifyContent: 'flex-start', borderRadius: 8, marginBottom: 2 }}>
-                <Icon size={15} /> {t}
+                <Icon size={15} aria-hidden="true" /> {t}
               </button>
             );
           })}
@@ -152,7 +165,7 @@ export default function Settings() {
                 { name: 'Analíticas en Firebase', status: 'Desconectado', cls: 'badge-orange', desc: 'Sigue analíticas de comportamiento de usuarios' },
                 { name: 'Google Calendar', status: 'No configurado', cls: 'badge-muted', desc: 'Sincroniza programaciones de salas' },
               ].map((intg, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '14px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{intg.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{intg.desc}</div>

@@ -15,7 +15,7 @@ import './Sales.css';
 const TABS = ['Ingresos', 'Ocupación', 'Películas', 'Pagos'];
 const AXIS = { fill: 'var(--text-secondary)', fontSize: 12 };
 const TIP = { contentStyle: { background: 'var(--surface-2)', border: '1px solid var(--border-interactive)', borderRadius: 8, color: 'var(--text-primary)' }, labelStyle: { color: 'var(--text-main)', fontWeight: 700 }, itemStyle: { color: 'var(--text-primary)' } };
-const INK = 'var(--electric-blue)';
+const INK = 'var(--info)';
 
 // Tabla de datos (alternativa accesible a un gráfico). columns: [{ key, label, num, fmt }]
 function DataTable({ caption, columns, rows }) {
