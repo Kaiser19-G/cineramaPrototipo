@@ -168,9 +168,8 @@
 /* ══════════════════════════════════════════
    TEMA CLARO — SISTEMA DE TOKENS COMPARTIDO (sitio público y panel)
    Los bloques de tema y de visión cuelgan de <html> (un solo sistema de
-   tokens para el sitio y el panel de administración). El panel sigue el tema
-   guardado; hasta la entrega 6c AdminLayout fija data-vision="default" y
-   data-font-scale="100" (ver FIJAR_VISION_Y_LETRA_EN_PANEL en App.jsx).
+   tokens para el sitio y el panel de administración). El panel sigue el tema,
+   el modo de visión y el tamaño de letra guardados (los cambia PanelAccessibility).
    Valores verificados con la fórmula de luminancia relativa WCAG
    (contraste ≥4.5:1 texto normal, ≥3:1 texto grande / bordes interactivos).
    ══════════════════════════════════════════ */
@@ -409,16 +408,57 @@ html[data-theme="dark"][data-vision="mono"] {
   --on-accent-success: #FFFFFF;
 }
 
+/* PANEL en mono: los tokens semánticos del panel (info, aviso, dorado, violeta) y los
+   colores fijos de marca que usan el panel y sus componentes compartidos (dorado de
+   ProductArt y de las píldoras, azul de los anillos de foco de FileField/FoodStep, sombras
+   rojas/doradas) NO deben dejar color en una pantalla "monocromática". Se declaran solo con
+   data-shell="panel" para no tocar el sitio público. Los estados siguen distinguiéndose por su
+   texto e ícono (y por el borde/tinte de superficie), nunca por el matiz. */
+html[data-shell="panel"][data-vision="mono"] {
+  --info:         var(--text-main);
+  --info-dim:     var(--surface-3);
+  --info-solid:   var(--accent-solid);
+  --on-info-solid: var(--on-accent);
+  --warning:      var(--text-main);
+  --warning-dim:  var(--surface-3);
+  --gold-text:    var(--text-main);
+  --gold-border:  var(--text-main);
+  --gold-dim:     var(--surface-3);
+  --violet-text:  var(--text-main);
+  --violet-dim:   var(--surface-3);
+  --cinema-gold:  var(--accent-solid);
+  --on-gold:      var(--on-accent);
+  --cinema-gold-dim: var(--surface-3);
+  --cinema-gold-glow: transparent;
+  --electric-blue: var(--text-main);
+  --electric-blue-dim: var(--surface-3);
+  --intense-orange: var(--text-main);
+  --intense-orange-dim: var(--surface-3);
+  --violet:       var(--text-main);
+  --shadow-red:   0 4px 28px rgba(0,0,0,0.3);
+  --shadow-gold:  0 4px 20px rgba(0,0,0,0.25);
+}
+
 /* ══════════════════════════════════════════
    ESCALA DE LETRA (4 niveles)
-   Se aplica al <html> globalmente: el CSS propio del panel usa px (el tamaño
-   de letra en el panel es de la entrega 6c), así que hoy solo reescala el
-   texto de las páginas Web* y los componentes compartidos que usan rem.
+   Sitio público: se aplica al <html> (font-size) y todo lo que usa rem escala.
+   PANEL (html[data-shell="panel"], ver AdminLayout): su CSS usa px, así que la
+   escala se aplica con zoom sobre .app-layout (variable --panel-zoom) y el
+   font-size de <html> se fija en 100 % para que lo que ya usa rem (mapa de
+   butacas, confitería) no se escale dos veces. Por debajo de 768 px el panel
+   no pasa de 130 % (la preferencia guardada no cambia: solo cambia lo aplicado).
    ══════════════════════════════════════════ */
 html[data-font-scale="100"] { font-size: 100%; }
 html[data-font-scale="115"] { font-size: 115%; }
 html[data-font-scale="130"] { font-size: 130%; }
 html[data-font-scale="150"] { font-size: 150%; }
+html[data-shell="panel"][data-font-scale] { font-size: 100%; }
+html[data-shell="panel"][data-font-scale="115"] { --panel-zoom: 1.15; }
+html[data-shell="panel"][data-font-scale="130"] { --panel-zoom: 1.3; }
+html[data-shell="panel"][data-font-scale="150"] { --panel-zoom: 1.5; }
+@media (max-width: 768px) {
+  html[data-shell="panel"][data-font-scale="150"] { --panel-zoom: 1.3; }
+}
 
 html, body, #root {
   height: 100%;
@@ -611,14 +651,14 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
   color: var(--on-accent);
   box-shadow: 0 0 12px var(--action-red-glow);
 }
-.pill.gold.active { background: var(--cinema-gold); border-color: var(--cinema-gold); color: var(--deep-night); box-shadow: var(--shadow-gold); }
+.pill.gold.active { background: var(--cinema-gold); border-color: var(--cinema-gold); color: var(--on-gold, var(--deep-night)); box-shadow: var(--shadow-gold); }
 .pill.green.active { background: var(--accent-solid-success); border-color: var(--accent-solid-success); color: var(--on-accent-success); }
-.pill.blue.active { background: var(--info-solid); border-color: var(--info-solid); color: #fff; }
+.pill.blue.active { background: var(--info-solid); border-color: var(--info-solid); color: var(--on-info-solid, #fff); }
 
 /* ══════════════════════════════════════════
    LAYOUT
    ══════════════════════════════════════════ */
-.app-layout { display: flex; height: 100vh; overflow: hidden; }
+.app-layout { display: flex; height: calc(100vh / var(--panel-zoom, 1)); overflow: hidden; zoom: var(--panel-zoom, 1); }
 .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .page-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
 .page-content:focus { outline: none; } /* destino del enlace "Saltar al contenido" */

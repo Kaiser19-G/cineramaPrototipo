@@ -12,9 +12,14 @@
   position: relative; z-index: 100;
 }
 .topbar-left  { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
-/* Sitio reservado a la derecha para más controles (p. ej. accesibilidad, entrega 6c). */
+/* Derecha: control de accesibilidad (PanelAccessibility) y menú de usuario. */
 .topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .cinema-selector { min-width: 0; }
+/* El selector de cine se encoge (con elipsis) en vez de pasar por debajo de los controles de la derecha: con letra grande (zoom) ya no cabe entero. */
+.topbar .cinema-select-wrap { min-width: 0; max-width: 100%; }
+.topbar .cinema-select { min-width: 0; width: 100%; text-overflow: ellipsis; }
+.topbar .cinema-select-locked { min-width: 0; }
+.topbar .cinema-select-locked span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar #menu-toggle { flex-shrink: 0; }
 .topbar #menu-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
@@ -36,7 +41,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 220px; max-width: calc(100vw - 16px);
+  width: 220px; max-width: calc((100vw - 16px) / var(--panel-zoom, 1));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -85,8 +90,5 @@ button.user-dropdown-item:focus-visible { outline: 2px solid var(--focus-ring); 
   .topbar-user-btn .topbar-user-info { display: none; }
   .topbar .cinema-select-wrap { padding-left: 6px; padding-right: 8px; gap: 6px; }
   .topbar .cinema-select-icon { display: none; }
-  .topbar .cinema-select { min-width: 0; width: 100%; text-overflow: ellipsis; }
-  .topbar .cinema-select-wrap { min-width: 0; }
-  .topbar .cinema-select-locked { min-width: 0; padding: 5px 8px; }
-  .topbar .cinema-select-locked span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .cinema-select-locked { padding: 5px 8px; }
 }

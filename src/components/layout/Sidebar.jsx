@@ -41,14 +41,23 @@ const navBlocked = [
   { icon: Settings,  label: 'Configuración Global' },
 ];
 
-export default function Sidebar({ open, sidebarId }) {
+export default function Sidebar({ open, phone = false, sidebarId, onNavigate }) {
   const { isAdminCentral } = useCinema();
   const { user } = useAuth();
   // Solo se listan las pantallas que el rol puede abrir (el servidor aplica los mismos permisos).
   const nav = (isAdminCentral ? navAdmin : navLocal).filter((i) => !i.any || hasAnyPerm(user, i.any));
 
+  // Teléfono (capa superpuesta abierta): Tab y Mayús+Tab no salen del menú.
+  const atraparTab = (e) => {
+    if (e.key !== 'Tab') return;
+    const f = [...e.currentTarget.querySelectorAll('a[href]')];
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  };
+
   return (
-    <aside id={sidebarId} className={`sidebar ${open ? 'open' : 'collapsed'}`} aria-label="Menú lateral">
+    <aside id={sidebarId} className={`sidebar ${open ? 'open' : 'collapsed'}${phone ? ' phone' : ''}`} aria-label="Menú lateral" onKeyDown={phone && open ? atraparTab : undefined}>
       <div className="sidebar-brand">
         <div className="brand-logo">C</div>
         {open && (
@@ -73,6 +82,7 @@ export default function Sidebar({ open, sidebarId }) {
             key={to}
             to={to}
             aria-label={label}
+            onClick={onNavigate}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Icon size={18} />

@@ -4,7 +4,8 @@
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   transition: width var(--transition-slow);
-  flex-shrink: 0; overflow: hidden; height: 100vh;
+  flex-shrink: 0; overflow: hidden;
+  /* Sin height:100vh: dentro de .app-layout con zoom (tamaño de letra) se saldría de la pantalla; estira con el contenedor. */
 }
 .sidebar.collapsed { width: 64px; }
 
@@ -80,3 +81,11 @@
 
 /* Foco visible con el anillo propio (T7), dentro del borde para que el aside (overflow:hidden) no lo recorte. */
 .nav-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+/* Teléfono: el menú abierto es una capa superpuesta con fondo (no empuja ni desborda el contenido) y
+   cerrado no ocupa sitio. Se cierra con Esc, tocando el fondo o al elegir una opción (ver AdminLayout). */
+@media (max-width: 768px) {
+  .sidebar.phone { position: fixed; top: 0; bottom: 0; left: 0; z-index: 300; width: min(280px, calc((100vw - 48px) / var(--panel-zoom, 1))); box-shadow: var(--shadow-lg); transition: none; }
+  .sidebar.phone.collapsed { display: none; }
+  .sidebar-backdrop { position: fixed; inset: 0; z-index: 290; background: rgba(0, 0, 0, 0.55); }
+}

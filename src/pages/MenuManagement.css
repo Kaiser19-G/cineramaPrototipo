@@ -23,7 +23,7 @@
 .mn-page .btn:focus-visible, .mn-dialog .btn:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 
 /* Diálogo */
-.mn-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.mn-dialog { width: min(720px, calc((100vw - 32px) / var(--panel-zoom, 1))); max-height: calc((100vh - 32px) / var(--panel-zoom, 1)); overflow-y: auto; }
 .mn-summary-wrap:focus { outline: none; }
 .mn-block-hint { margin-bottom: 10px; }
 .mn-variant { border: 1px solid var(--border-interactive); border-radius: var(--radius); padding: 12px 14px 4px; margin: 0 0 12px; min-width: 0; }

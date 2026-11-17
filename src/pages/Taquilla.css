@@ -51,7 +51,7 @@
 /* Validar */
 .tq-validate { max-width: 760px; }
 .tq-code-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 18px; }
-.tq-code-form .mv-field { flex: 1; min-width: 260px; margin-bottom: 0; }
+.tq-code-form .mv-field { flex: 1; min-width: min(260px, 100%); margin-bottom: 0; } /* 100 %: con letra grande y 375 px el contenido mide menos de 260 px */
 .tq-code-input { font-size: 22px; font-weight: 700; letter-spacing: 0.06em; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; }
 .tq-result { margin: 0 0 16px; padding: 18px 20px; border: 3px solid var(--border-interactive); border-radius: var(--radius-lg); background: var(--surface-2); color: var(--text-primary); }
 .tq-tone-good { border-color: var(--emerald); }
