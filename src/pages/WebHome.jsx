@@ -188,7 +188,7 @@ export default function WebHome() {
               </button>
             ))}
           </div>
-          <button className="btn-catalogo" onClick={() => navigate('/web/peliculas')}>Ver catalogo</button>
+          <button className="btn-catalogo" onClick={() => navigate('/web/peliculas')}>Ver catálogo</button>
         </div>
         <div className="movies-divider"></div>
 
