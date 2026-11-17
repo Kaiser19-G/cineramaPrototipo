@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CinemaProvider } from './context/CinemaContext';
@@ -36,7 +36,30 @@ import WebMovieDetails from './pages/WebMovieDetails';
 import WebCinemaDetails from './pages/WebCinemaDetails';
 
 // Marco del panel de administración (solo se monta con sesión de personal).
+// TEMPORAL (entrega 6a): el panel aún solo está listo en oscuro. Con los tokens
+// de tema y de visión colgando de <html>, el panel reaccionaría al tema claro o
+// a los modos de visión guardados por el sitio público. Mientras esté montado,
+// se fijan data-theme="dark" y data-vision="default" y al salir se restauran
+// los valores del usuario. En la entrega 6b: poner esto en false (o borrar el
+// efecto y la constante) para que el panel siga el tema guardado.
+const FIJAR_OSCURO_EN_PANEL = true;
+
+function useFijarOscuroEnPanel() {
+  useLayoutEffect(() => {
+    if (!FIJAR_OSCURO_EN_PANEL) return undefined;
+    const html = document.documentElement;
+    const previo = { theme: html.getAttribute('data-theme'), vision: html.getAttribute('data-vision') };
+    html.setAttribute('data-theme', 'dark');
+    html.setAttribute('data-vision', 'default');
+    return () => {
+      if (previo.theme) html.setAttribute('data-theme', previo.theme);
+      if (previo.vision) html.setAttribute('data-vision', previo.vision);
+    };
+  }, []);
+}
+
 function AdminLayout() {
+  useFijarOscuroEnPanel();
   const { user } = useAuth();
   // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
   const forced = !!user?.mustChangePassword;
@@ -44,12 +67,13 @@ function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window === 'undefined' || !window.matchMedia ? true : !window.matchMedia('(max-width: 768px)').matches));
   return (
     <div className="app-layout">
-      <Sidebar open={sidebarOpen} />
+      <a href="#contenido-principal" className="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('contenido-principal')?.focus(); }}>Saltar al contenido</a>
+      <Sidebar open={sidebarOpen} sidebarId="menu-lateral" />
       <div className="main-content">
-        <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} />
-        <div className="page-content">
+        <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} menuOpen={sidebarOpen} menuControls="menu-lateral" />
+        <main className="page-content" id="contenido-principal" tabIndex={-1}>
           {forced ? <ChangePassword forced /> : <Outlet />}
-        </div>
+        </main>
       </div>
     </div>
   );

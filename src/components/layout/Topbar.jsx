@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Search, ChevronDown, Globe, MapPin, Lock, LogOut, Settings, User, KeyRound } from 'lucide-react';
+import { Menu, ChevronDown, Globe, MapPin, Lock, LogOut, Settings, User, KeyRound } from 'lucide-react';
 import { useCinema } from '../../context/CinemaContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../shared/permissions';
 import './Topbar.css';
 
-export default function Topbar({ onMenuToggle }) {
+export default function Topbar({ onMenuToggle, menuOpen, menuControls }) {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const {
     currentCinemaId, setCinema, activeBranch, isGlobal,
@@ -17,6 +16,12 @@ export default function Topbar({ onMenuToggle }) {
   const { logout } = useAuth();
   const userMenuRef = useRef(null);
   const userBtnRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  const items = () => [...(dropdownRef.current?.querySelectorAll('[role="menuitem"]') ?? [])];
+
+  // Al abrir el menú el foco pasa a su primer elemento (patrón de menú de botón de WAI-ARIA).
+  useEffect(() => { if (userMenuOpen) items()[0]?.focus(); }, [userMenuOpen]);
 
   // El menú de usuario se cierra con Escape (devolviendo el foco al botón) o al hacer clic fuera.
   useEffect(() => {
@@ -28,6 +33,17 @@ export default function Topbar({ onMenuToggle }) {
     return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
   }, [userMenuOpen]);
 
+  // Flechas, Inicio y Fin recorren las opciones; Tab sale del menú y lo cierra.
+  const onMenuKeyDown = (e) => {
+    const list = items(); const i = list.indexOf(document.activeElement);
+    const go = (n) => { e.preventDefault(); list[(n + list.length) % list.length]?.focus(); };
+    if (e.key === 'ArrowDown') go(i + 1);
+    else if (e.key === 'ArrowUp') go(i - 1);
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(list.length - 1);
+    else if (e.key === 'Tab') setUserMenuOpen(false);
+  };
+
   const handleLogout = async () => {
     setUserMenuOpen(false);
     await logout();
@@ -37,8 +53,12 @@ export default function Topbar({ onMenuToggle }) {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="btn btn-ghost btn-icon" onClick={onMenuToggle} id="menu-toggle">
-          <Menu size={18} />
+        <button
+          type="button" className="btn btn-ghost btn-icon" onClick={onMenuToggle} id="menu-toggle"
+          aria-label={menuOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
+          aria-expanded={!!menuOpen} aria-controls={menuControls}
+        >
+          <Menu size={18} aria-hidden="true" />
         </button>
 
         {/* ── Selector de Cine (Cinema Context) ── */}
@@ -50,6 +70,7 @@ export default function Topbar({ onMenuToggle }) {
               </div>
               <select
                 className="cinema-select"
+                aria-label="Cine activo"
                 value={currentCinemaId}
                 onChange={e => setCinema(e.target.value === 'all' ? 'all' : Number(e.target.value))}
               >
@@ -70,14 +91,6 @@ export default function Topbar({ onMenuToggle }) {
           )}
         </div>
 
-        <div className="search-bar" style={{ width: 260 }}>
-          <Search size={15} color="var(--text-muted)" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar funciones, películas, salas..."
-          />
-        </div>
       </div>
 
       <div className="topbar-right">
@@ -85,6 +98,7 @@ export default function Topbar({ onMenuToggle }) {
           <button
             type="button" className="topbar-user-btn" ref={userBtnRef}
             aria-haspopup="menu" aria-expanded={userMenuOpen}
+            aria-label={`Menú de usuario: ${currentUser.name}`}
             onClick={() => setUserMenuOpen(o => !o)}
           >
             <span className="avatar avatar-sm" aria-hidden="true">{currentUser.avatar}</span>
@@ -96,7 +110,11 @@ export default function Topbar({ onMenuToggle }) {
           </button>
 
           {userMenuOpen && (
-            <div className="user-dropdown-menu" role="menu">
+            <div className="user-dropdown-menu" role="menu" aria-label="Menú de usuario" ref={dropdownRef} onKeyDown={onMenuKeyDown}>
+              <div className="user-dropdown-head" role="presentation">
+                <span className="topbar-username">{currentUser.name}</span>
+                <span className="topbar-role">{ROLE_LABELS[currentUser.role] || currentUser.role}</span>
+              </div>
               {isAdminCentral && (
                 <>
                   <button type="button" role="menuitem" className="user-dropdown-item" onClick={() => { setUserMenuOpen(false); navigate('/settings'); }}>

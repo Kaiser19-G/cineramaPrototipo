@@ -17,11 +17,11 @@
 }
 .brand-logo {
   width: 36px; height: 36px;
-  background: var(--action-red);
+  background: var(--accent-solid);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 900; font-size: 18px; color: #fff;
+  font-weight: 900; font-size: 18px; color: var(--on-accent);
   flex-shrink: 0;
   box-shadow: var(--shadow-red);
   letter-spacing: -1px;
@@ -34,7 +34,7 @@
 }
 .brand-tag {
   font-size: 9px; font-weight: 600;
-  color: var(--action-red); text-transform: uppercase;
+  color: var(--accent-text); text-transform: uppercase;
   letter-spacing: 1px; margin-top: 1px;
 }
 
@@ -62,7 +62,7 @@
 }
 .nav-item.active {
   background: var(--action-red-dim);
-  color: var(--action-red);
+  color: var(--accent-text);
   font-weight: 700;
   border-color: rgba(229,9,20,0.2);
   box-shadow: inset 3px 0 0 var(--action-red);
@@ -76,4 +76,7 @@
   padding: 14px;
   border-top: 1px solid var(--border);
 }
-.sidebar-version { font-size: 10px; color: var(--text-dim); text-align: center; }
+.sidebar-version { font-size: 10px; color: var(--text-muted); text-align: center; }
+
+/* Foco visible con el anillo propio (T7), dentro del borde para que el aside (overflow:hidden) no lo recorte. */
+.nav-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
