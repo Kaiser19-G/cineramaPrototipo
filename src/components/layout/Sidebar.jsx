@@ -41,14 +41,14 @@ const navBlocked = [
   { icon: Settings,  label: 'Configuración Global' },
 ];
 
-export default function Sidebar({ open }) {
+export default function Sidebar({ open, sidebarId }) {
   const { isAdminCentral } = useCinema();
   const { user } = useAuth();
   // Solo se listan las pantallas que el rol puede abrir (el servidor aplica los mismos permisos).
   const nav = (isAdminCentral ? navAdmin : navLocal).filter((i) => !i.any || hasAnyPerm(user, i.any));
 
   return (
-    <aside className={`sidebar ${open ? 'open' : 'collapsed'}`}>
+    <aside id={sidebarId} className={`sidebar ${open ? 'open' : 'collapsed'}`} aria-label="Menú lateral">
       <div className="sidebar-brand">
         <div className="brand-logo">C</div>
         {open && (
@@ -61,7 +61,7 @@ export default function Sidebar({ open }) {
         )}
       </div>
 
-      <nav className="sidebar-nav">
+      <nav className="sidebar-nav" aria-label="Navegación principal">
         {/* Sección principal */}
         {open && (
           <div className="nav-section-label">
@@ -72,6 +72,7 @@ export default function Sidebar({ open }) {
           <NavLink
             key={to}
             to={to}
+            aria-label={label}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <Icon size={18} />
@@ -84,7 +85,7 @@ export default function Sidebar({ open }) {
           <>
             {open && <div className="nav-section-label" style={{ marginTop: 12 }}>Acceso Restringido</div>}
             {navBlocked.map(({ icon: Icon, label }) => (
-              <div key={label} className="nav-item nav-item-locked" title="Requiere Admin Central">
+              <div key={label} className="nav-item nav-item-locked" title="Requiere Admin Central" aria-disabled="true">
                 <Icon size={18} />
                 {open && <span>{label}</span>}
                 {open && <Lock size={11} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />}

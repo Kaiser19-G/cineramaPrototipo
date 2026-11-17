@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Bell, Lock, Globe, CreditCard, Plug } from 'lucide-react';
 import DemoNotice from '../components/DemoNotice';
 
@@ -6,6 +6,7 @@ const tabs = ['General', 'Precios', 'Impuestos', 'Notificaciones', 'Seguridad', 
 const tabIcons = { General: Globe, Precios: CreditCard, Impuestos: CreditCard, Notificaciones: Bell, Seguridad: Lock, Integraciones: Plug };
 
 export default function Settings() {
+  useEffect(() => { document.title = 'Configuración · Cinerama'; }, []);
   const [activeTab, setActiveTab] = useState('General');
   const [general, setGeneral] = useState({ cinemaName: 'Cinerama', timezone: 'America/Lima', currency: 'PEN', locale: 'es-ES', email: 'admin@cinerama.com' });
   const [pricing, setPricing] = useState({ base2D: 18, base3D: 25, weekendSurcharge: 10, holidaySurcharge: 20 });
