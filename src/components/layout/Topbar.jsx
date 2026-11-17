@@ -4,6 +4,7 @@ import { Menu, ChevronDown, Globe, MapPin, Lock, LogOut, Settings, User, KeyRoun
 import { useCinema } from '../../context/CinemaContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../shared/permissions';
+import PanelAccessibility from './PanelAccessibility';
 import './Topbar.css';
 
 export default function Topbar({ onMenuToggle, menuOpen, menuControls }) {
@@ -94,6 +95,7 @@ export default function Topbar({ onMenuToggle, menuOpen, menuControls }) {
       </div>
 
       <div className="topbar-right">
+        <PanelAccessibility />
         <div className="topbar-user" ref={userMenuRef}>
           <button
             type="button" className="topbar-user-btn" ref={userBtnRef}

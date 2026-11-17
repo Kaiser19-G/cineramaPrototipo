@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CinemaProvider } from './context/CinemaContext';
@@ -18,6 +18,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { SALES_PERMS, REPORT_PERMS, MENU_PERMS } from './shared/permissions';
 import WebHome from './pages/WebHome';
 import WebLayout from './components/layout/WebLayout';
@@ -36,42 +37,58 @@ import WebMovieDetails from './pages/WebMovieDetails';
 import WebCinemaDetails from './pages/WebCinemaDetails';
 
 // Marco del panel de administración (solo se monta con sesión de personal).
-// TEMPORAL (entrega 6b): el panel ya sigue el TEMA guardado (claro u oscuro,
-// clave cinerama-a11y, el mismo del sitio público). Los MODOS DE VISIÓN y el
-// TAMAÑO DE LETRA aún no están listos en el panel (entrega 6c), así que
-// mientras esté montado se fijan data-vision="default" y data-font-scale="100"
-// en <html> y al salir se restauran los valores del usuario. En la entrega 6c:
-// poner FIJAR_VISION_Y_LETRA_EN_PANEL en false (o borrar la constante y el
-// hook) cuando el widget y los modos estén listos en el panel.
-const FIJAR_VISION_Y_LETRA_EN_PANEL = true;
-
-function useFijarVisionYLetraEnPanel() {
+// Mientras está montado, <html> lleva data-shell="panel": el CSS lo usa para
+// escalar el tamaño de letra con zoom sobre .app-layout (en vez de rem) y para
+// el tope de 130 % en pantallas angostas (ver index.css, "ESCALA DE LETRA").
+// Tema, tamaño de letra y modo de visión salen de las mismas preferencias que
+// el sitio público (clave cinerama-a11y), que cambia PanelAccessibility en la barra superior.
+function useMarcoDelPanel() {
   useLayoutEffect(() => {
-    if (!FIJAR_VISION_Y_LETRA_EN_PANEL) return undefined;
     const html = document.documentElement;
-    const previo = { vision: html.getAttribute('data-vision'), escala: html.getAttribute('data-font-scale') };
-    html.setAttribute('data-vision', 'default');
-    html.setAttribute('data-font-scale', '100');
-    return () => {
-      if (previo.vision) html.setAttribute('data-vision', previo.vision);
-      if (previo.escala) html.setAttribute('data-font-scale', previo.escala);
-    };
+    html.setAttribute('data-shell', 'panel');
+    return () => html.removeAttribute('data-shell');
   }, []);
 }
 
+// Pantallas angostas: el menú lateral es una capa superpuesta (no empuja el contenido).
+const TELEFONO = '(max-width: 768px)';
+
 function AdminLayout() {
-  useFijarVisionYLetraEnPanel();
+  useMarcoDelPanel();
   const { user } = useAuth();
   // Con contraseña temporal solo se ve la pantalla de cambio (en cualquier ruta del panel); el servidor además rechaza la API.
   const forced = !!user?.mustChangePassword;
-  // En pantallas angostas el menú lateral empieza plegado: abierto dejaba ~100 px al contenido a 375 px (se abre con el botón de menú).
-  const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window === 'undefined' || !window.matchMedia ? true : !window.matchMedia('(max-width: 768px)').matches));
+  // Escritorio: el menú lateral empieza desplegado y empuja el contenido (se pliega a una columna de íconos).
+  // Teléfono: empieza cerrado y, abierto, es una capa superpuesta con fondo; el estado de cada modo es independiente.
+  const telefono = useMediaQuery(TELEFONO);
+  const [menuEscritorio, setMenuEscritorio] = useState(true);
+  const [menuTelefono, setMenuTelefono] = useState(false);
+  const sidebarOpen = telefono ? menuTelefono : menuEscritorio;
+  const toggleMenu = () => (telefono ? setMenuTelefono((o) => !o) : setMenuEscritorio((o) => !o));
+  const cerrarMenuTelefono = () => setMenuTelefono(false);
+  const capaAbierta = telefono && menuTelefono;
+
+  // Capa abierta: el foco pasa al primer enlace, Esc la cierra y, al cerrarse, el foco vuelve al botón de menú.
+  const estabaAbierta = useRef(false);
+  useEffect(() => {
+    if (capaAbierta && !estabaAbierta.current) document.querySelector('#menu-lateral a')?.focus();
+    if (!capaAbierta && estabaAbierta.current) document.getElementById('menu-toggle')?.focus();
+    estabaAbierta.current = capaAbierta;
+  }, [capaAbierta]);
+  useEffect(() => {
+    if (!capaAbierta) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); setMenuTelefono(false); } };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [capaAbierta]);
+
   return (
     <div className="app-layout">
       <a href="#contenido-principal" className="skip-link" onClick={(e) => { e.preventDefault(); document.getElementById('contenido-principal')?.focus(); }}>Saltar al contenido</a>
-      <Sidebar open={sidebarOpen} sidebarId="menu-lateral" />
-      <div className="main-content">
-        <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} menuOpen={sidebarOpen} menuControls="menu-lateral" />
+      <Sidebar open={sidebarOpen} phone={telefono} sidebarId="menu-lateral" onNavigate={telefono ? cerrarMenuTelefono : undefined} />
+      {capaAbierta && <div className="sidebar-backdrop" onClick={cerrarMenuTelefono} aria-hidden="true" />}
+      <div className="main-content" inert={capaAbierta}>
+        <Topbar onMenuToggle={toggleMenu} menuOpen={sidebarOpen} menuControls="menu-lateral" />
         <main className="page-content" id="contenido-principal" tabIndex={-1}>
           {forced ? <ChangePassword forced /> : <Outlet />}
         </main>
