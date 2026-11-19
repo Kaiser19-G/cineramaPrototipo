@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Star, ShieldAlert } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
 import { adminApi } from '../api/admin';
+import DialogHead from '../components/DialogHead';
 import {
   GENRES, RATINGS, FORMATS, LANGUAGES, LANGUAGE_LABELS, MOVIE_STATUSES, MOVIE_STATUS_LABELS, isValidPosterUrl,
 } from '../shared/catalogOptions';
@@ -99,6 +101,12 @@ function MovieDialog({ movie, branches, onClose, onSaved }) {
   const initialBranches = useMemo(() => (movie ? movie.branches.filter((b) => b.active).map((b) => b.branchId) : []), [movie]);
   const [form, setForm] = useState(() => (movie ? fromMovie(movie) : EMPTY_FORM));
   const [selected, setSelected] = useState(initialBranches);
+  // Periodo de habilitación por sede (desde / hasta); vacío = sin límite. Es el que limita la programación de funciones.
+  const initialDates = useMemo(() => Object.fromEntries((movie?.branches ?? []).map((b) => [b.branchId, { startDate: b.startDate ?? '', endDate: b.endDate ?? '' }])), [movie]);
+  const [bDates, setBDates] = useState(initialDates);
+  const setBDate = (id, k, v) => setBDates((p) => ({ ...p, [id]: { startDate: '', endDate: '', ...p[id], [k]: v } }));
+  const branchItems = () => selected.map((branchId) => ({ branchId, ...(bDates[branchId] ? { startDate: bDates[branchId].startDate || null, endDate: bDates[branchId].endDate || null } : {}) }));
+  const datesChanged = selected.some((id) => (bDates[id]?.startDate ?? '') !== (initialDates[id]?.startDate ?? '') || (bDates[id]?.endDate ?? '') !== (initialDates[id]?.endDate ?? ''));
   const [version, setVersion] = useState(movie?.version ?? null);
   const [base, setBase] = useState(movie ?? null);              // lo que se cargó al abrir (o tras guardar a medias)
   const [errors, setErrors] = useState({});
@@ -134,7 +142,7 @@ function MovieDialog({ movie, branches, onClose, onSaved }) {
     const payload = toPayload(form);
     let res;
     if (!editing) {
-      res = await adminApi.movies.create({ ...payload, branches: selected.map((branchId) => ({ branchId })) });
+      res = await adminApi.movies.create({ ...payload, branches: branchItems() });
     } else {
       res = await adminApi.movies.update(movie.id, { ...payload, version: overrideVersion ?? version });
     }
@@ -157,8 +165,8 @@ function MovieDialog({ movie, branches, onClose, onSaved }) {
       return;
     }
     let saved = res.data.movie;
-    if (editing && !sameSet(selected, initialBranches)) {
-      const br = await adminApi.movies.setBranches(movie.id, selected.map((branchId) => ({ branchId })));
+    if (editing && (!sameSet(selected, initialBranches) || datesChanged)) {
+      const br = await adminApi.movies.setBranches(movie.id, branchItems());
       if (!br.ok) {
         setBusy(false);
         // La película sí se guardó: se conserva la versión nueva para que reintentar solo cambie las sedes.
@@ -189,7 +197,7 @@ function MovieDialog({ movie, branches, onClose, onSaved }) {
   return (
     <dialog ref={ref} className="mv-dialog" aria-labelledby="mv-form-title" onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <h2 id="mv-form-title">{todayCaption}</h2>
+        <DialogHead id="mv-form-title" title={todayCaption} onClose={() => ref.current?.close()} />
         <p className="mv-hint" style={{ marginBottom: 12 }}>Los campos marcados con (obligatorio) hay que llenarlos para guardar.</p>
 
         <div ref={summaryRef} tabIndex={-1}>
@@ -355,13 +363,27 @@ function MovieDialog({ movie, branches, onClose, onSaved }) {
           {branchErrors && <p className="mv-field-error" role="alert">{branchErrors}</p>}
           <div className="mv-branch-list">
             {branches.map((b) => (
-              <label key={b.id} className="mv-check">
-                <input type="checkbox" checked={selected.includes(b.id)} onChange={() => setSelected((s) => toggle(s, b.id))} />
-                <span>{b.name} <span className="mv-sub">({b.city})</span></span>
-              </label>
+              <div key={b.id} className="mv-branch-item">
+                <label className="mv-check">
+                  <input type="checkbox" checked={selected.includes(b.id)} onChange={() => setSelected((s) => toggle(s, b.id))} />
+                  <span>{b.name} <span className="mv-sub">({b.city})</span></span>
+                </label>
+                {selected.includes(b.id) && (
+                  <div className="mv-row mv-branch-dates">
+                    <div className="mv-field">
+                      <label htmlFor={`mv-bs-${b.id}`}>Habilitada desde ({b.name})</label>
+                      <input id={`mv-bs-${b.id}`} className="input" type="date" value={bDates[b.id]?.startDate ?? ''} onChange={(e) => setBDate(b.id, 'startDate', e.target.value)} />
+                    </div>
+                    <div className="mv-field">
+                      <label htmlFor={`mv-be-${b.id}`}>Habilitada hasta ({b.name})</label>
+                      <input id={`mv-be-${b.id}`} className="input" type="date" value={bDates[b.id]?.endDate ?? ''} onChange={(e) => setBDate(b.id, 'endDate', e.target.value)} />
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-          <p className="mv-hint" style={{ marginTop: 6 }}>Quitar una sede no es posible si tiene funciones futuras de esta película.</p>
+          <p className="mv-hint" style={{ marginTop: 6 }}>Las fechas de cada sede limitan cuándo se pueden programar funciones allí (junto con las de la película); vacías = sin límite. Quitar una sede no es posible si tiene funciones futuras de esta película.</p>
         </fieldset>
 
         <div className="mv-dialog-actions">
@@ -386,6 +408,12 @@ export default function MovieManagement() {
   const headingRef = useRef(null);
 
   useEffect(() => { document.title = 'Películas · Cinerama'; headingRef.current?.focus(); }, []);
+  // Viene de Programación ("Editar las fechas de la película"): abre directamente la edición de esa película.
+  const location = useLocation();
+  const wantedId = location.state?.editMovieId ?? null;
+  const [dismissedFor, setDismissedFor] = useState(null);
+  const autoMovie = wantedId && dismissedFor !== wantedId && can('edit_movie') ? (adminMovies ?? []).find((x) => x.id === wantedId) : null;
+  const shownDialog = dialog ?? (autoMovie ? { movie: autoMovie } : null);
 
   const movies = adminMovies;
   const canWrite = can('edit_movie');
@@ -553,8 +581,8 @@ export default function MovieManagement() {
         </>
       )}
 
-      {dialog && (
-        <MovieDialog key={dialog.movie?.id ?? 'new'} movie={dialog.movie} branches={branches} onClose={() => setDialog(null)} onSaved={onSaved} />
+      {shownDialog && (
+        <MovieDialog key={shownDialog.movie?.id ?? 'new'} movie={shownDialog.movie} branches={branches} onClose={() => { setDialog(null); setDismissedFor(wantedId); }} onSaved={onSaved} />
       )}
       {confirm && (
         <ConfirmDialog

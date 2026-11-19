@@ -17,7 +17,11 @@ agrega columnas y tablas, convierte las clasificaciones antiguas (G/PG → APT, 
 a las sedes que declaran salas y no tienen ninguna.
 
 `npm run seed` **ya no pisa datos**: solo carga las tablas que están vacías. Para recrearlo todo: `npm run seed -- --reset`. Para renovar
-solo las fechas de las funciones de ejemplo: `npm run seed -- --refresh-screenings` (las funciones se programan desde el panel).
+solo las fechas de los datos de ejemplo: `npm run seed -- --refresh-screenings`. Esa opción (1) vuelve a crear las funciones de ejemplo
+(ids 1 a 10) alrededor de hoy y (2) renueva las fechas de estreno/cierre de las **películas de ejemplo** y las de su habilitación por sede
+(`movie_branch`), también alrededor de hoy. Una película cuenta como de ejemplo solo si su id **y** su título coinciden con los de la
+semilla; las películas creadas en el panel, o una de ejemplo a la que le cambiaste el título, no se tocan. Tampoco se tocan órdenes,
+estados, usuarios ni sedes extra. Úsala cuando el formulario "Programar función" diga que la película ya no tiene fechas disponibles.
 Si el personal no puede iniciar sesión, ejecuta `npm run seed:auth`.
 
 ## Dónde viven los datos

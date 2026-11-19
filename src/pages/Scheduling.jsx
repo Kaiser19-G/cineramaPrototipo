@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, ShieldAlert } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
 import { adminApi } from '../api/admin';
 import HallStatusControl from '../components/HallStatusControl';
+import DialogHead from '../components/DialogHead';
 import { LANGUAGES } from '../shared/catalogOptions';
 import {
   CLEANING_MINUTES, MIN_LEAD_MINUTES, START_STEP_MINUTES, MAX_TICKET_PRICE, SCREENING_STATUS_LABELS,
-  hallSupportsFormat, endTimeOf, fromMinutes, toMinutes, screeningSpan, TIME_RE,
+  hallSupportsFormat, endTimeOf, fromMinutes, toMinutes, screeningSpan, screeningWindow, TIME_RE,
 } from '../shared/scheduling';
 import { absMinutes, todayInLima } from '../data/limaDate';
 import { money } from '../utils/money';
@@ -15,6 +17,23 @@ import './MovieManagement.css';
 const STATUS_BADGE = { draft: 'badge-muted', scheduled: 'badge-blue', active: 'badge-green', sold_out: 'badge-red', finished: 'badge-muted', cancelled: 'badge-orange' };
 const FIELD_LABEL = { branchId: 'Sede', movieId: 'Película', hallId: 'Sala', date: 'Fecha', startTime: 'Hora de inicio', format: 'Formato', language: 'Idioma', price: 'Precio', status: 'Estado' };
 const FOCUS_ORDER = ['branchId', 'movieId', 'hallId', 'date', 'startTime', 'format', 'language', 'price'];
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = Array.from({ length: 60 / START_STEP_MINUTES }, (_, i) => String(i * START_STEP_MINUTES).padStart(2, '0'));
+
+// '2026-11-17' -> '17 de noviembre de 2026'
+const longDate = (ymd) => new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${ymd}T12:00:00Z`));
+
+// Rango en que se puede programar una película en una sede, con la misma regla del servidor (screeningWindow) y "hoy en Lima"
+// como mínimo. Devuelve { from, to, empty, ended }: `ended` = el periodo ya terminó; `empty` = no queda ningún día.
+function availableRange(movie, branchId, today) {
+  if (!movie) return null;
+  const mb = movie.branches.find((b) => b.branchId === branchId);
+  const w = screeningWindow(movie, mb);
+  const from = w.from && w.from > today ? w.from : today;
+  const empty = !!w.to && from > w.to;
+  return { from, to: w.to, empty, ended: !!w.to && w.to < today, periodEnd: w.to };
+}
 
 const dayLabel = (ymd) => {
   const t = new Intl.DateTimeFormat('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${ymd}T12:00:00Z`));
@@ -28,13 +47,14 @@ function messageFor(code, data = {}) {
     case 'invalid': case 'invalid_option': return 'Elige una opción válida.';
     case 'invalid_date': return 'La fecha no es válida.';
     case 'invalid_time': return 'La hora no es válida (usa el formato 24 horas).';
-    case 'invalid_step': return `La hora de inicio va en pasos de ${START_STEP_MINUTES} minutos (por ejemplo 15:05 o 15:10).`;
+    case 'time_incomplete': return 'Elige la hora y también los minutos.';
+    case 'invalid_step': return `La hora de inicio va en pasos de ${START_STEP_MINUTES} minutos (00, 05, 10… 55). Elige otros minutos.`;
     case 'out_of_range': return `El precio debe ser mayor que 0 y hasta S/ ${MAX_TICKET_PRICE}.`;
     case 'invalid_decimals': return 'El precio admite como máximo 2 decimales.';
     case 'movie_inactive': return 'Esta película no se puede programar: solo las que están en cartelera, o próximas con preventa.';
     case 'movie_not_enabled': return 'La película no está habilitada en esta sede. El administrador central debe habilitarla.';
     case 'branch_inactive': return 'La sede no está activa.';
-    case 'outside_window': return `Fuera de las fechas de la película${data.from || data.to ? ` (del ${data.from ?? 'inicio'} al ${data.to ?? 'sin cierre'})` : ''}.`;
+    case 'outside_window': return `Fuera de las fechas de la película${data.from || data.to ? ` (del ${data.from ? longDate(data.from) : 'inicio'} al ${data.to ? longDate(data.to) : 'sin cierre'})` : ''}.`;
     case 'in_the_past': return `La función debe empezar con al menos ${data.minLeadMinutes ?? MIN_LEAD_MINUTES} minutos de anticipación.`;
     case 'hall_in_maintenance': return 'La sala está en mantenimiento.';
     case 'format_not_supported_by_hall': return `Esta sala (${data.hallType ?? ''}) no puede proyectar ese formato.`;
@@ -55,7 +75,7 @@ function FieldErr({ id, text }) {
 
 // ───────────────────────── Formulario de función ─────────────────────────
 function ScreeningDialog({ screening, onClose, onSaved }) {
-  const { branches, halls, adminMovies, adminScreenings, currentUser, isAdminCentral } = useCinema();
+  const { branches, halls, adminMovies, adminScreenings, currentUser, isAdminCentral, can } = useCinema();
   const ref = useRef(null);
   const summaryRef = useRef(null);
   const editing = !!screening;
@@ -64,7 +84,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
   const initialBranch = screening?.branchId ?? (isAdminCentral ? (branches[0]?.id ?? '') : myBranch);
   const [form, setForm] = useState(() => ({
     branchId: initialBranch ?? '', movieId: screening ? String(screening.movieId) : '', hallId: screening ? String(screening.hallId) : '',
-    date: screening?.date ?? '', startTime: screening?.startTime ?? '', format: screening?.format ?? '', language: screening?.language ?? 'ES',
+    date: screening?.date ?? '', hh: screening?.startTime?.slice(0, 2) ?? '', mm: screening?.startTime?.slice(3, 5) ?? '', format: screening?.format ?? '', language: screening?.language ?? 'ES',
     price: screening ? String(screening.price) : '', draft: screening?.storedStatus === 'draft',
   }));
   const [priceTouched, setPriceTouched] = useState(editing);
@@ -81,10 +101,16 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
   const programmable = useMemo(() => (adminMovies ?? []).filter((m) => (m.status === 'active' || (m.status === 'upcoming' && m.presale))
     && m.branches.some((b) => b.branchId === branchId && b.active)), [adminMovies, branchId]);
   const movie = (adminMovies ?? []).find((m) => m.id === Number(form.movieId));
+  const startTime = form.hh && form.mm ? `${form.hh}:${form.mm}` : '';
+  const today = todayInLima();
+  const range = availableRange(movie, branchId, today);
+  const noDates = (m) => availableRange(m, branchId, today)?.empty;
+  const offStep = !!form.mm && !MINUTES.includes(form.mm);
   const mbFormats = movie?.branches.find((b) => b.branchId === branchId)?.formats ?? movie?.format ?? [];
   const formatOptions = movie && hall ? movie.format.filter((f) => mbFormats.includes(f) && hallSupportsFormat(hall.type, f)) : (movie?.format ?? []);
 
   const set = (k, v) => { setForm((p) => ({ ...p, [k]: v })); setErrors((p) => { if (!p[k]) return p; const n = { ...p }; delete n[k]; return n; }); };
+  const setTime = (k, v) => { setForm((p) => ({ ...p, [k]: v })); setErrors((p) => { if (!p.startTime) return p; const n = { ...p }; delete n.startTime; return n; }); };
   const changeBranch = (v) => { setForm((p) => ({ ...p, branchId: v, movieId: '', hallId: '', format: '' })); setErrors({}); };
   const changeHall = (v) => {
     const h = halls.find((x) => x.id === Number(v));
@@ -93,12 +119,12 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
   };
 
   // Vista previa: hora de fin y aviso de choque (orientativo; manda el servidor).
-  const validStart = TIME_RE.test(form.startTime) && form.date;
-  const endTime = movie && TIME_RE.test(form.startTime) ? endTimeOf(form.startTime, movie.duration) : null;
-  const busyUntil = movie && TIME_RE.test(form.startTime) ? fromMinutes(toMinutes(form.startTime) + movie.duration + CLEANING_MINUTES) : null;
+  const validStart = TIME_RE.test(startTime) && form.date;
+  const endTime = movie && TIME_RE.test(startTime) ? endTimeOf(startTime, movie.duration) : null;
+  const busyUntil = movie && TIME_RE.test(startTime) ? fromMinutes(toMinutes(startTime) + movie.duration + CLEANING_MINUTES) : null;
   let localClash = null;
   if (movie && hall && validStart && endTime) {
-    const s0 = absMinutes(form.date, toMinutes(form.startTime)); const e0 = s0 + movie.duration;
+    const s0 = absMinutes(form.date, toMinutes(startTime)); const e0 = s0 + movie.duration;
     localClash = (adminScreenings ?? []).find((o) => {
       if (o.hallId !== hall.id || o.id === screening?.id || o.storedStatus === 'cancelled') return false;
       const span = screeningSpan(o.date, o.startTime, o.endTime);
@@ -113,7 +139,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
     if (!form.movieId) e.movieId = 'required';
     if (!form.hallId) e.hallId = 'required';
     if (!form.date) e.date = 'required';
-    if (!form.startTime) e.startTime = 'required'; else if (!TIME_RE.test(form.startTime)) e.startTime = 'invalid_time'; else if (toMinutes(form.startTime) % START_STEP_MINUTES) e.startTime = 'invalid_step';
+    if (!form.hh && !form.mm) e.startTime = 'required'; else if (!form.hh || !form.mm) e.startTime = 'time_incomplete'; else if (!TIME_RE.test(startTime)) e.startTime = 'invalid_time'; else if (toMinutes(startTime) % START_STEP_MINUTES) e.startTime = 'invalid_step';
     if (!form.format) e.format = 'required';
     const p = Number(String(form.price).replace(',', '.'));
     if (!String(form.price).trim()) e.price = 'required'; else if (!(p > 0 && p <= MAX_TICKET_PRICE)) e.price = 'out_of_range'; else if (Math.abs(p * 100 - Math.round(p * 100)) > 1e-6) e.price = 'invalid_decimals';
@@ -132,7 +158,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
     if (Object.keys(le).length) { showErrors(le); return; }
     setBusy(true);
     const payload = {
-      movieId: Number(form.movieId), hallId: Number(form.hallId), date: form.date, startTime: form.startTime, language: form.language,
+      movieId: Number(form.movieId), hallId: Number(form.hallId), date: form.date, startTime, language: form.language,
       format: form.format, price: Number(String(form.price).replace(',', '.')), status: form.draft ? 'draft' : 'scheduled',
     };
     const res = editing ? await adminApi.screenings.update(screening.id, { ...payload, version: overrideVersion ?? version }) : await adminApi.screenings.create(payload);
@@ -162,7 +188,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
   return (
     <dialog ref={ref} className="mv-dialog" aria-labelledby="sc-title" onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <h2 id="sc-title">{editing ? 'Editar función' : 'Programar función'}</h2>
+        <DialogHead id="sc-title" title={editing ? 'Editar función' : 'Programar función'} onClose={() => ref.current?.close()} />
         <p className="mv-hint" style={{ marginBottom: 12 }}>
           Los campos marcados con (obligatorio) hay que llenarlos. El servidor revisa cada regla al guardar.
         </p>
@@ -185,7 +211,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
               <div className="mv-dialog-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
                 <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => { setVersion(stale.version); const v = stale.version; setStale(null); submit(null, v); }}>Guardar mis cambios encima</button>
                 <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => {
-                  setForm({ branchId: stale.branchId, movieId: String(stale.movieId), hallId: String(stale.hallId), date: stale.date, startTime: stale.startTime, format: stale.format, language: stale.language, price: String(stale.price), draft: stale.storedStatus === 'draft' });
+                  setForm({ branchId: stale.branchId, movieId: String(stale.movieId), hallId: String(stale.hallId), date: stale.date, hh: stale.startTime.slice(0, 2), mm: stale.startTime.slice(3, 5), format: stale.format, language: stale.language, price: String(stale.price), draft: stale.storedStatus === 'draft' });
                   setVersion(stale.version); setStale(null); setErrors({});
                 }}>Descartar los míos y cargar lo actual</button>
               </div>
@@ -212,7 +238,7 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
             <select className="select" {...fp('movieId', { hint: true })} value={form.movieId} disabled={locked}
               onChange={(e) => { set('movieId', e.target.value); setForm((p) => ({ ...p, movieId: e.target.value, format: '' })); }}>
               <option value="">Elige una película</option>
-              {programmable.map((m) => <option key={m.id} value={m.id}>{m.title} ({m.duration} min)</option>)}
+              {programmable.map((m) => <option key={m.id} value={m.id}>{m.title} ({m.duration} min){noDates(m) ? ' (sin fechas disponibles)' : ''}</option>)}
               {movie && !programmable.some((m) => m.id === movie.id) && <option value={movie.id}>{movie.title} (ya no programable)</option>}
             </select>
             <p id={hintId('movieId')} className="mv-hint">{lockNote ?? 'Solo películas en cartelera, o próximas con preventa, habilitadas en esta sede.'}</p>
@@ -238,16 +264,42 @@ function ScreeningDialog({ screening, onClose, onSaved }) {
           <div className="mv-row">
             <div className="mv-field">
               <label htmlFor="sc-date">Fecha (obligatorio)</label>
-              <input className="input" type="date" {...fp('date', { hint: !!lockNote })} value={form.date} disabled={locked} onChange={(e) => set('date', e.target.value)} />
-              {lockNote && <p id={hintId('date')} className="mv-hint">{lockNote}</p>}
+              <input className="input" type="date" {...fp('date', { hint: true })} value={form.date} disabled={locked} onChange={(e) => set('date', e.target.value)}
+                min={range && !range.empty ? range.from : undefined} max={range && !range.empty && range.to ? range.to : undefined} />
+              <p id={hintId('date')} className="mv-hint">
+                {lockNote ?? (!range ? 'Elige una película para ver las fechas en que se puede programar.'
+                  : range.empty ? `Esta película ya no tiene fechas disponibles en esta sede${range.periodEnd ? ` (su periodo ${range.ended ? 'terminó' : 'termina'} el ${longDate(range.periodEnd)})` : ''}.`
+                    : `Puedes programar ${range.to ? `del ${longDate(range.from)} al ${longDate(range.to)}` : `desde el ${longDate(range.from)}, sin fecha de cierre`}.`)}
+              </p>
+              {!lockNote && range?.empty && (
+                can('edit_movie')
+                  ? <Link className="btn btn-secondary btn-sm mv-wrap" style={{ alignSelf: 'flex-start' }} to="/movies" state={{ editMovieId: movie.id }}>Editar las fechas de {movie.title}</Link>
+                  : <p className="mv-hint">Pide al administrador central que actualice las fechas de esta película.</p>
+              )}
               <FieldErr id="sc-date-err" text={errText('date')} />
             </div>
-            <div className="mv-field">
-              <label htmlFor="sc-startTime">Hora de inicio (obligatorio)</label>
-              <input className="input" type="time" step={START_STEP_MINUTES * 60} {...fp('startTime', { hint: true })} value={form.startTime} disabled={locked} onChange={(e) => set('startTime', e.target.value)} />
-              <p id={hintId('startTime')} className="mv-hint">{lockNote ?? `En pasos de ${START_STEP_MINUTES} minutos, con al menos ${MIN_LEAD_MINUTES} minutos de anticipación.`}</p>
+            <fieldset className="mv-time" disabled={locked}>
+              <legend>Hora de inicio (obligatorio)</legend>
+              <div className="mv-time-selects">
+                <div className="mv-field">
+                  <label htmlFor="sc-startTime">Hora</label>
+                  <select className="select" {...fp('startTime', { hint: true })} value={form.hh} onChange={(e) => setTime('hh', e.target.value)}>
+                    <option value="">--</option>
+                    {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+                <div className="mv-field">
+                  <label htmlFor="sc-startTime-mm">Minutos</label>
+                  <select className="select" {...fp('startTime', { hint: true })} id="sc-startTime-mm" value={form.mm} onChange={(e) => setTime('mm', e.target.value)}>
+                    <option value="">--</option>
+                    {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
+                    {offStep && <option value={form.mm}>{form.mm} (fuera de paso)</option>}
+                  </select>
+                </div>
+              </div>
+              <p id={hintId('startTime')} className="mv-hint">{lockNote ?? `En pasos de ${START_STEP_MINUTES} minutos, con al menos ${MIN_LEAD_MINUTES} minutos de anticipación.${offStep ? ' Esta función tiene minutos fuera de paso: elige otros para guardar.' : ''}`}</p>
               <FieldErr id="sc-startTime-err" text={errText('startTime')} />
-            </div>
+            </fieldset>
           </div>
           <p className="mv-hint" role="status" aria-live="polite" id="sc-preview">
             {endTime ? `Termina a las ${endTime}. La sala queda ocupada hasta las ${busyUntil} (incluye ${CLEANING_MINUTES} minutos de limpieza).` : 'Elige película y hora para ver a qué hora termina.'}

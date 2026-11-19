@@ -40,3 +40,12 @@ export function effectiveStatus(row, nowAbs) {
   if (row.status === 'sold_out') return 'sold_out';
   return start <= nowAbs ? 'active' : row.status;
 }
+
+// Periodo en el que se puede programar una película en una sede: desde el último de (estreno de la película, inicio en la
+// sede) hasta el primero de (fin de la película, fin en la sede). Una fecha ausente no limita. Lo usan el servidor (regla
+// `outside_window`) y el formulario (para mostrar el rango antes de guardar).
+export function screeningWindow({ releaseDate, endDate }, { startDate, endDate: branchEnd } = {}) {
+  const los = [releaseDate, startDate].filter(Boolean).sort();
+  const his = [endDate, branchEnd].filter(Boolean).sort();
+  return { from: los.at(-1) ?? null, to: his[0] ?? null };
+}

@@ -2,7 +2,7 @@
 // la usan para comprobar que los datos de ejemplo las cumplen.
 import { absMinutes } from '../../src/data/limaDate.js';
 import {
-  CLEANING_MINUTES, MIN_LEAD_MINUTES, hallSupportsFormat, toMinutes, screeningSpan, endTimeOf,
+  CLEANING_MINUTES, MIN_LEAD_MINUTES, hallSupportsFormat, toMinutes, screeningSpan, endTimeOf, screeningWindow,
 } from '../../src/shared/scheduling.js';
 
 export function createRules(db) {
@@ -36,9 +36,7 @@ export function createRules(db) {
     if (!ok) return { err: fail(409, 'movie_inactive', { field: 'movieId', status: movie.status }), ctx };
     const mb = q.mb.get(movie.id, hall.branch_id);
     if (!mb || !mb.active) return { err: fail(409, 'movie_not_enabled', { field: 'movieId' }), ctx };
-    const los = [movie.release_date, mb.start_date].filter(Boolean).sort();
-    const his = [movie.end_date, mb.end_date].filter(Boolean).sort();
-    const from = los.at(-1) ?? null; const to = his[0] ?? null;
+    const { from, to } = screeningWindow({ releaseDate: movie.release_date, endDate: movie.end_date }, { startDate: mb.start_date, endDate: mb.end_date });
     if ((from && input.date < from) || (to && input.date > to)) return { err: fail(409, 'outside_window', { field: 'date', from, to }), ctx };
     const startAbs = absMinutes(input.date, toMinutes(input.startTime));
     if (!skipPast && startAbs < nowAbs + MIN_LEAD_MINUTES) {
