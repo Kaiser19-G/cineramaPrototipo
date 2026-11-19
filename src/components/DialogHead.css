@@ -1,0 +1,27 @@
+/* Diálogos-formulario del panel (mv-dialog y claims-dialog): cabecera y barra de acciones siempre visibles.
+   El diálogo conserva su desplazamiento propio (overflow: auto) y sus topes de ancho/alto, que ya dividen entre
+   --panel-zoom; aquí solo se fijan (position: sticky) la cabecera arriba y las acciones abajo. */
+.mv-dialog-head {
+  position: sticky; top: -24px; z-index: 3; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  margin: -24px -24px 14px; padding: 16px 16px 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border-interactive);
+}
+.mv-dialog-head h2, .mv-dialog .mv-dialog-head h2, .claims-dialog .mv-dialog-head h2 { margin: 0; padding-top: 4px; overflow-wrap: anywhere; }
+.mv-dialog-head h2:focus { outline: none; }
+.mv-dialog-head h2:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mv-dialog-x {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; cursor: pointer;
+  border: 1px solid var(--border-interactive); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-main);
+}
+.mv-dialog-x:hover:not(:disabled) { background: var(--surface-3); }
+.mv-dialog-x:disabled { opacity: 0.55; cursor: not-allowed; }
+.mv-dialog-x:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Barra de acciones fija al pie del diálogo mientras se desplaza el contenido */
+.mv-dialog form > .mv-dialog-actions, .mv-dialog > .mv-dialog-actions, .claims-dialog form > .claims-dialog-actions {
+  position: sticky; bottom: -24px; z-index: 3; margin: 16px -24px -24px; padding: 12px 24px;
+  background: var(--surface); border-top: 1px solid var(--border-interactive);
+}
+
+/* Al tabular, el campo enfocado no debe quedar tapado por la cabecera ni por la barra de acciones fijas */
+.mv-dialog, .claims-dialog { scroll-padding-block: 110px 130px; }
+.mv-dialog .btn.mv-wrap { white-space: normal; text-align: left; height: auto; min-height: 32px; max-width: 100%; }

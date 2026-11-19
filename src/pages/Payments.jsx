@@ -4,6 +4,7 @@ import { useCinema } from '../context/CinemaContext';
 import { adminApi } from '../api/admin';
 import { useAdminQuery } from '../hooks/useAdminQuery';
 import { QueryGate, Pager } from '../components/SalesParts';
+import DialogHead from '../components/DialogHead';
 import { CHANNEL_LABELS, dayLabel } from '../utils/salesFormat';
 import { money } from '../utils/money';
 import './MovieManagement.css';
@@ -49,7 +50,7 @@ function OrderDialog({ order, onClose }) {
   const sc = order.screening;
   return (
     <dialog ref={ref} className="mv-dialog" aria-labelledby="pay-dlg-title" onClose={onClose}>
-      <h2 id="pay-dlg-title">Orden {order.code}</h2>
+      <DialogHead id="pay-dlg-title" title={`Orden ${order.code}`} onClose={() => ref.current?.close()} />
       <dl className="sl-dl">
         <dt>Estado</dt><dd><StatusTag status={order.status} /></dd>
         <dt>Cliente</dt><dd>{order.customerName}{order.emailMasked ? ` · ${order.emailMasked}` : ' · sin correo (venta en mostrador)'}</dd>

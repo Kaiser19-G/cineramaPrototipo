@@ -3,6 +3,7 @@ import { Plus, ShieldAlert, Copy } from 'lucide-react';
 import { useCinema } from '../context/CinemaContext';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/admin';
+import DialogHead from '../components/DialogHead';
 import { PERMS, ROLE_LABELS, PERM_LABELS } from '../shared/permissions';
 import './MovieManagement.css';
 
@@ -142,7 +143,7 @@ function UserDialog({ user, self, branches, onClose, onSaved }) {
     <dialog {...props} className="mv-dialog" style={{ width: 'min(600px, calc(100vw - 32px))' }} aria-labelledby={issued ? 'us-temp-title' : 'us-title'}>
       {issued ? <TempPassword password={issued.password} email={issued.email} onClose={() => ref.current?.close()} /> : (
         <form onSubmit={submit} noValidate>
-          <h2 id="us-title">{editing ? `Editar a ${user.name}` : 'Crear personal'}</h2>
+          <DialogHead id="us-title" title={editing ? `Editar a ${user.name}` : 'Crear personal'} onClose={() => ref.current?.close()} />
           {!editing && <p className="mv-hint" style={{ marginBottom: 12 }}>Se genera una contraseña temporal que se muestra una sola vez. La persona deberá cambiarla en su primer ingreso.</p>}
           <div ref={summaryRef} tabIndex={-1}>
             {entries.length > 0 && (
@@ -223,7 +224,7 @@ function ActionDialog({ kind, user, onClose, onDone }) {
     <dialog {...props} className="mv-dialog" style={{ width: 'min(560px, calc(100vw - 32px))' }} aria-labelledby={issued ? 'us-temp-title' : 'us-act-title'}>
       {issued ? <TempPassword password={issued.password} email={issued.email} onClose={() => ref.current?.close()} /> : (
         <>
-          <h2 id="us-act-title">{title}</h2>
+          <DialogHead id="us-act-title" title={title} onClose={() => ref.current?.close()} />
           <p>
             {kind === 'deactivate' && 'Se cierran sus sesiones abiertas y no podrá iniciar sesión hasta que la actives de nuevo. No se borra nada.'}
             {kind === 'activate' && 'Podrá iniciar sesión de nuevo con su contraseña actual.'}

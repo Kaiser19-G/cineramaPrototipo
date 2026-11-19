@@ -124,3 +124,12 @@
 .mv-page .btn-primary:hover, .mv-dialog .btn-primary:hover { background: var(--accent-solid-light); color: var(--on-accent); }
 .mv-page .tab { border: 1px solid transparent; }
 .mv-page .tab.active { border-color: var(--border-interactive); }
+
+/* Hora de inicio: dos listas (hora y minutos) en un grupo con leyenda */
+.mv-time { border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
+.mv-time > legend { padding: 0; margin-bottom: 4px; font-weight: 600; color: var(--text-primary); }
+.mv-time-selects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mv-time-selects .mv-field { margin-bottom: 4px; }
+.mv-branch-item { min-width: 0; }
+.mv-branch-dates { margin: 0 0 8px 34px; }
+.mv-branch-list { grid-template-columns: minmax(0, 1fr); }

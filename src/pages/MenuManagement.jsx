@@ -4,6 +4,7 @@ import { useCinema } from '../context/CinemaContext';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/admin';
 import FieldError from '../components/FieldError';
+import DialogHead from '../components/DialogHead';
 import ProductArt from '../components/ProductArt';
 import {
   PRODUCT_CATEGORIES, CATEGORY_LABELS, ART_KEYS, ART_LABELS, VARIANT_LABELS, STOCK_LABELS, TEXT_LIMITS, MAX_PRODUCT_PRICE,
@@ -196,7 +197,7 @@ function ProductDialog({ product, products, onClose, onSaved }) {
   return (
     <dialog ref={ref} className="mv-dialog mn-dialog" aria-labelledby="mn-dialog-title" onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <h2 id="mn-dialog-title">{editing ? `Editar ${product.name}` : 'Nuevo producto'}</h2>
+        <DialogHead id="mn-dialog-title" title={editing ? `Editar ${product.name}` : 'Nuevo producto'} onClose={() => ref.current?.close()} />
         <div ref={summaryRef} tabIndex={-1} className="mn-summary-wrap">
           {list.length > 0 && (
             <div className="mv-summary" role="alert">
