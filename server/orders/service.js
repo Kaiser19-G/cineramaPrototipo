@@ -357,6 +357,15 @@ export function createOrderService(db, clock = Date.now) {
   };
   const inBranch = (scope, branchId) => scope === null || (scope !== 'none' && branchId === scope);
   const hhmm = (abs) => fromMinutes(abs % 1440);
+  // "Hoy" operativo de una funcion: su fecha es hoy (Lima) o empezo antes y SIGUE en curso (cruza la medianoche).
+  // Una funcion de madrugada de manana (fecha futura) no cuenta hasta que llegue su dia.
+  function isOperatingToday(startsOn, startTime, endTime) {
+    const now = nowInLima(new Date(clock()));
+    if (startsOn === now.date) return true;
+    if (startsOn > now.date) return false;
+    const span = screeningSpan(startsOn, startTime, endTime);
+    return span.start <= now.abs && now.abs < span.end;
+  }
 
   // Estado de venta en mostrador de una funcion (lo que ve el cajero): open | closed | finished | sold_out | not_on_sale
   // | presale_requires_account. `closesAt` = hora (HH:MM, Lima) hasta la que vende el mostrador.
@@ -492,8 +501,7 @@ export function createOrderService(db, clock = Date.now) {
     if (o.status === 'rejected') return out('rejected');
     if (o.status !== 'approved' || !s) return out('cancelled');
     if (seats.length && seats.every((r) => r.checked_in_at)) return out('used');
-    const today = nowInLima(new Date(clock())).date;
-    if (s.starts_on !== today) return out('wrong_day');
+    if (!isOperatingToday(s.starts_on, s.start_time, s.end_time)) return out('wrong_day');
     const span = screeningSpan(s.starts_on, s.start_time, s.end_time);
     if (nowAbs() >= span.end) return out('finished');
     if (nowAbs() < span.start - CHECKIN_OPENS_MINUTES_BEFORE) return out('too_early', { opensAt: hhmm(span.start - CHECKIN_OPENS_MINUTES_BEFORE) });
@@ -558,7 +566,7 @@ export function createOrderService(db, clock = Date.now) {
     queue: db.prepare(`SELECT f.rowid AS pid, f.*, o.id AS code, o.status AS order_status, s.starts_on, s.start_time, s.end_time, m.title AS movie_title, h.name AS hall_name
       FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
         JOIN movies m ON m.id = s.movie_id JOIN halls h ON h.id = s.hall_id
-      WHERE (? IS NULL OR f.branch_id = ?) AND f.status IN ('ordered','preparing','ready') AND o.status = 'approved' AND s.starts_on = ?`),
+      WHERE (? IS NULL OR f.branch_id = ?) AND f.status IN ('ordered','preparing','ready') AND o.status = 'approved' AND s.starts_on <= ?`),
     one: db.prepare(`SELECT f.rowid AS pid, f.*, o.id AS code, s.id AS screening_id, o.status AS order_status, s.starts_on, s.start_time, s.end_time, m.title AS movie_title, h.name AS hall_name
       FROM fulfillments f JOIN orders o ON o.id = f.order_id JOIN screenings s ON s.id = o.screening_id
         JOIN movies m ON m.id = s.movie_id JOIN halls h ON h.id = s.hall_id WHERE f.order_id = ?`),
@@ -591,8 +599,7 @@ export function createOrderService(db, clock = Date.now) {
     const open = ['ordered', 'preparing', 'ready'].includes(f.status);
     if (!open) return { actions: [], blocked: f.status };
     if (f.order_status !== 'approved') return { actions: [], blocked: 'not_approved' };
-    const today = nowInLima(new Date(clock())).date;
-    if (f.starts_on !== today) return { actions: [], blocked: 'wrong_day' };
+    if (!isOperatingToday(f.starts_on, f.start_time, f.end_time)) return { actions: [], blocked: 'wrong_day' };
     if (f.status === 'ordered' && f.timing === 'at_showtime' && f.prepare_from_ms !== null && clock() < f.prepare_from_ms) return { actions: [], blocked: 'too_early' };
     const actions = f.status === 'ordered' ? ['start', 'ready', 'deliver'] : f.status === 'preparing' ? ['ready', 'deliver'] : ['revert', 'deliver'];
     return { actions, blocked: null };
@@ -621,7 +628,7 @@ export function createOrderService(db, clock = Date.now) {
     const sections = { waitingArrival: [], toPrepare: [], preparing: [], ready: [] };
     let later = 0;
     if (scope !== 'none') {
-      const rows = pk.queue.all(scope, scope, date);
+      const rows = pk.queue.all(scope, scope, date).filter((f) => isOperatingToday(f.starts_on, f.start_time, f.end_time));
       const key = (f) => f.arrived_at ?? f.prepare_from_ms ?? f.created_ms;
       rows.sort((a, b) => (a.status === 'ordered' && a.timing === 'on_arrival' ? 0 : 1) - (b.status === 'ordered' && b.timing === 'on_arrival' ? 0 : 1)
         || key(a) - key(b) || a.pid - b.pid);
