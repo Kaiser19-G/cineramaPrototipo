@@ -1,3 +1,21 @@
+import { formatDayShort } from './dateHelpers.js';
+
+// Preventa: primera fecha con funciones comprables por película (opcionalmente en una sede).
+// No depende de la ventana de 7 días de la grilla: sirve para anunciar "desde cuándo hay funciones".
+// Devuelve { [movieId]: 'YYYY-MM-DD' } solo para películas en preventa.
+export function presaleFirstDates({ movies, screenings, branchId = null }) {
+  const presale = new Set(movies.filter((m) => m.presale).map((m) => m.id));
+  const first = {};
+  screenings.forEach((s) => {
+    if (!BOOKABLE_STATUSES.has(s.status) || !presale.has(s.movieId)) return;
+    if (branchId !== null && s.branchId !== branchId) return;
+    if (!first[s.movieId] || s.date < first[s.movieId]) first[s.movieId] = s.date;
+  });
+  return first;
+}
+
+export const presaleFromText = (date) => `Preventa · desde el ${formatDayShort(date)}`;
+
 // Funciones que el sitio muestra: las comprables (active, scheduled) y las agotadas (sold_out, visibles pero no
 // comprables). Borradores, canceladas y terminadas no se ofrecen (el servidor ya no las envía).
 const BOOKABLE_STATUSES = new Set(['active', 'scheduled', 'sold_out']);

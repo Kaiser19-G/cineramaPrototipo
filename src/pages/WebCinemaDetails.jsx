@@ -8,7 +8,7 @@ import PosterTags from '../components/PosterTags';
 import { movieLabel } from '../utils/movieLabel';
 import WebNotFound from './WebNotFound';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
-import { buildScreeningEntries } from '../data/screeningEntries';
+import { buildScreeningEntries, presaleFirstDates, presaleFromText } from '../data/screeningEntries';
 import './WebPages.css';
 
 export default function WebCinemaDetails() {
@@ -56,6 +56,12 @@ function CinemaDetailsView({ cinema }) {
     }))
     .filter(({ showtimes }) => showtimes.length > 0);
 
+  // Preventa con funciones solo después de la ventana de 7 días: no entran en la grilla de horarios,
+  // pero se anuncian aparte (sin repetir las que ya salen en algún día de la grilla).
+  const presaleFrom = presaleFirstDates({ movies: enabledMovies, screenings: activeScreenings, branchId: cinema.id });
+  const inWindow = new Set(cinemaEntries.filter((e) => e.dayLabel).map((e) => e.movie.id));
+  const presaleLater = enabledMovies.filter((m) => presaleFrom[m.id] && !inWindow.has(m.id));
+
   const posterGrid = useGridKeyboardNav(enabledMovies.length, 5);
 
   return (
@@ -92,12 +98,17 @@ function CinemaDetailsView({ cinema }) {
               />
             </div>
 
-            {moviesWithShowtimes.length === 0 ? (
+            {moviesWithShowtimes.length === 0 && presaleLater.length === 0 ? (
               <p className="no-functions-message" role="status">
                 No hay funciones programadas en esta sede para esta fecha.
               </p>
             ) : (
               <div className="cinema-movies-list">
+                {moviesWithShowtimes.length === 0 && (
+                  <p className="no-functions-message" role="status">
+                    No hay funciones programadas en esta sede para esta fecha.
+                  </p>
+                )}
                 {moviesWithShowtimes.map(({ movie, showtimes }) => (
                   <div key={movie.id} className="cinema-movie-list-item">
 
@@ -139,6 +150,26 @@ function CinemaDetailsView({ cinema }) {
                       </div>
                     </div>
 
+                  </div>
+                ))}
+                {presaleLater.map((movie) => (
+                  <div key={`pre-${movie.id}`} className="cinema-movie-list-item">
+                    <div className="cinema-movie-poster-col">
+                      <div className="poster-wrapper">
+                        <Poster movie={movie} alt={movie.title} />
+                        <PosterTags movie={movie} />
+                      </div>
+                    </div>
+                    <div className="cinema-movie-info-col">
+                      <div className="movie-card-info">
+                        <h4>{movie.title}</h4>
+                        <p>{movie.genre}, {Math.floor(movie.duration / 60)}h {movie.duration % 60}min, {movie.rating}.</p>
+                      </div>
+                      <p className="presale-from-note">{presaleFromText(presaleFrom[movie.id])}</p>
+                      <button type="button" className="presale-from-link" onClick={() => navigate(`/web/pelicula/${movie.id}`)}>
+                        Ver ficha y comprar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
