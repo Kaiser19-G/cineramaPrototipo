@@ -1,7 +1,8 @@
 // Carga inicial: traslada src/data/store.js a la base de datos.
 // NO pisa datos existentes: cada tabla se carga solo si esta vacia (lo que editan las personas del panel
 // se conserva). `--reset` borra el archivo antes y recrea todo. `--refresh-screenings` actualiza solo las
-// fechas de las funciones de ejemplo (ids de store.js), para renovar la cartelera de demostracion.
+// fechas de las funciones de ejemplo (ids de store.js) y de las peliculas de ejemplo (id y titulo de store.js) y su
+// habilitacion por sede, para renovar la cartelera de demostracion.
 // Las fechas de las funciones se calculan en store.js a partir del dia en que
 // se ejecuta (hoy, +-1, +2; dia de calendario en America/Lima, igual que el cliente) y aqui se
 // escriben como fechas fijas.
@@ -83,6 +84,20 @@ const run = (db, { refreshScreenings = false } = {}) => {
     up('users', ['id','name','email','role','branch_id','status','last_login','avatar'],
       users.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, branch_id: u.branchId,
         status: u.status, last_login: u.lastLogin, avatar: u.avatar })));
+
+    // --refresh-screenings: ademas de las funciones, renueva las fechas de las PELICULAS DE EJEMPLO y de su habilitacion por
+    // sede para que queden alrededor de hoy (igual que store.js). Una pelicula es "de ejemplo" solo si coinciden su id Y su
+    // titulo con los de la semilla: una pelicula creada en el panel (otro id) o una de ejemplo renombrada no se toca. Solo se
+    // escriben release_date/end_date y start_date/end_date de los pares (pelicula, sede) de la semilla; nada mas (ni
+    // estado, ni sedes extra, ni ordenes).
+    if (refreshScreenings) {
+      const mv = db.prepare('UPDATE movies SET release_date = ?, end_date = ? WHERE id = ? AND title = ?');
+      const mb = db.prepare('UPDATE movie_branch SET start_date = ?, end_date = ? WHERE movie_id = ? AND branch_id = ?');
+      for (const m of movies) {
+        if (!mv.run(m.releaseDate, m.endDate, m.id, m.title).changes) continue;
+        for (const p of pairs.values()) if (p.movie_id === m.id) mb.run(p.start_date, p.end_date, p.movie_id, p.branch_id);
+      }
+    }
 
     // Sedes que declaran salas y no tienen ninguna (solo si las salas se cargaron en esta pasada).
     if (!skip.has('halls')) ensureSampleHalls(db);

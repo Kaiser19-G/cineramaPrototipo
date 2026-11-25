@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import { claimsApi } from '../api/claims';
+import DialogHead from '../components/DialogHead';
 import './Claims.css';
 
 const KIND_LABEL = { dni_front: 'DNI por delante', dni_back: 'DNI por detrás', letter: 'Carta firmada', selfie: 'Selfie con el DNI' };
@@ -181,7 +182,7 @@ function Decision({ mode, detail, onClose, onDone }) {
   return (
     <dialog ref={ref} className="claims-dialog" aria-labelledby="decision-title" onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <h2 id="decision-title">{approve ? 'Aprobar reclamo' : 'Rechazar reclamo'}</h2>
+        <DialogHead id="decision-title" title={approve ? 'Aprobar reclamo' : 'Rechazar reclamo'} onClose={() => ref.current?.close()} disabled={busy} />
         {approve ? (
           <>
             <p>
