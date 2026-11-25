@@ -23,3 +23,12 @@ export function formatDateLong(ymd) {
   return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
     .format(new Date(`${ymd}T12:00:00Z`));
 }
+
+// "sáb 12 dic" a partir de una fecha de calendario YYYY-MM-DD (sin zona horaria).
+export function formatDayShort(ymd) {
+  if (!ymd) return '';
+  const d = new Date(`${ymd}T12:00:00Z`);
+  const wd = new Intl.DateTimeFormat('es-PE', { weekday: 'short', timeZone: 'UTC' }).format(d).replace('.', '').toLowerCase();
+  const mo = new Intl.DateTimeFormat('es-PE', { month: 'short', timeZone: 'UTC' }).format(d).replace('.', '').toLowerCase();
+  return `${wd} ${d.getUTCDate()} ${mo}`;
+}

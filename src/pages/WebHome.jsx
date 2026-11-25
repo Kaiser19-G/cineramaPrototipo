@@ -8,7 +8,7 @@ import Poster from '../components/Poster';
 import PosterTags from '../components/PosterTags';
 import { movieLabel } from '../utils/movieLabel';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
-import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
+import { buildScreeningEntries, computeCascadingOptions, presaleFirstDates, presaleFromText } from '../data/screeningEntries';
 import cineramaBanner from '../assets/CineramaBanner.png';
 
 const HOME_DIMENSIONS = {
@@ -50,6 +50,12 @@ export default function WebHome() {
   const entries = useMemo(
     () => buildScreeningEntries({ movies: enabledMovies, branches, screenings: activeScreenings, days }),
     [enabledMovies, branches, activeScreenings, days]
+  );
+
+  // Preventa: desde cuándo hay funciones, aunque queden más allá de los 7 días de la grilla.
+  const presaleFrom = useMemo(
+    () => presaleFirstDates({ movies: enabledMovies, screenings: activeScreenings }),
+    [enabledMovies, activeScreenings]
   );
 
   // Buscador en cascada: cada opción que se ofrece, combinada con lo que ya
@@ -207,13 +213,14 @@ export default function WebHome() {
               onClick={() => navigate(`/web/pelicula/${movie.id}`)}
               onFocus={() => posterGrid.setFocusedIndex(i)}
               style={{ position: 'relative' }}
-              aria-label={movieLabel(movie)}
+              aria-label={presaleFrom[movie.id] ? `${movieLabel(movie)}, ${presaleFromText(presaleFrom[movie.id])}` : movieLabel(movie)}
             >
               <Poster movie={movie} />
               <PosterTags movie={movie} />
               <div className="movie-hover-overlay">
                 <span aria-hidden="true">Ver detalle ⟩</span>
               </div>
+              {presaleFrom[movie.id] && <span className="poster-presale-from">{presaleFromText(presaleFrom[movie.id])}</span>}
             </button>
           ))}
         </div>}
