@@ -68,7 +68,7 @@
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   background-color: var(--surface-2);
   color: var(--text-primary);
   font-size: 1rem;
@@ -82,7 +82,7 @@
 
 .btn-auth, .btn-solid {
   background-color: var(--accent-solid);
-  color: var(--on-accent);
+  color: white;
   border: none;
   border-radius: 8px;
   padding: 0.8rem 1.5rem;
@@ -188,28 +188,6 @@
   overflow: hidden;
   border-radius: 8px;
   box-shadow: var(--shadow-md);
-}
-
-/* Póster del inicio y de la página de sede. Antes estas tres reglas llegaban por accidente desde el CSS del panel de
-   administración (MovieManagement.css); ahora son explícitas y el aspecto público no cambia. */
-.movie-poster {
-  position: relative;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-}
-.movie-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.movie-poster::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 60%;
-  background: linear-gradient(to top, rgba(15, 15, 15, 0.9) 0%, transparent 100%);
-  pointer-events: none;
 }
 
 /* Respaldo cuando una imagen externa (póster o foto de cine) falla al
@@ -325,7 +303,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: bold;
-  color: var(--accent-text);
+  color: var(--action-red);
 }
 
 /* === Web Movies (Layout con Sidebar) === */
@@ -376,8 +354,8 @@
   transition: color 0.2s;
   color: var(--text-main);
 }
-.filter-title:hover { color: var(--accent-text); }
-.active-text { color: var(--accent-text); }
+.filter-title:hover { color: var(--action-red); }
+.active-text { color: var(--action-red); }
 
 .filter-options {
   padding: 10px 0 10px 10px;
@@ -398,7 +376,7 @@
   cursor: pointer;
 }
 .filter-options button:hover { color: var(--text-main); }
-.filter-options .active-option { color: var(--accent-text); font-weight: bold; }
+.filter-options .active-option { color: var(--action-red); font-weight: bold; }
 .filter-options button:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
 
 /* Lista de Películas */
@@ -413,7 +391,7 @@
   margin-bottom: 2rem;
 }
 .movies-top-bar h3 { margin: 0; font-size: 1.2rem; font-weight: normal; color: var(--text-primary); }
-.movies-top-bar .count { color: var(--accent-text); font-weight: bold; font-size: 1.4rem; }
+.movies-top-bar .count { color: var(--action-red); font-weight: bold; font-size: 1.4rem; }
 
 .active-filters-pills {
   display: flex;
@@ -421,7 +399,7 @@
 }
 .active-filters-pills .pill {
   border: 1px solid var(--action-red);
-  color: var(--accent-text);
+  color: var(--action-red);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -462,7 +440,7 @@
   top: 15px;
   left: -35px;
   background-color: var(--accent-solid);
-  color: var(--on-accent);
+  color: white;
   padding: 5px 40px;
   transform: rotate(-45deg);
   font-weight: bold;
@@ -476,7 +454,7 @@
 
 .btn-comprar {
   background-color: var(--accent-solid);
-  color: var(--on-accent);
+  color: white;
   border: none;
   padding: 12px 24px;
   border-radius: 30px;
@@ -600,14 +578,133 @@
   flex-shrink: 0;
 }
 .booking-step.current { color: var(--text-main); }
-.booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: var(--on-accent); }
-.booking-step.done .step-num, .booking-step.skipped .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: var(--on-accent-success); }
+.booking-step.current .step-num { background: var(--accent-solid); border-color: var(--action-red); color: #fff; }
+.booking-step.done .step-num { background: var(--accent-solid-success); border-color: var(--emerald); color: #fff; }
 .step-arrow { color: var(--text-muted); }
 
 /* width:100% evita que .booking-main (align-items:center) encoja este
    contenedor a su max-content — sin esto, el mapa de butacas con overflow-x
    empuja el ancho de todos sus ancestros en vez de desbordar solo adentro. */
 .seats-selection { width: 100%; }
+
+/* Pantalla */
+.screen-indicator { margin-bottom: 2.5rem; text-align: center; width: 100%; }
+.screen-bar {
+  height: 6px;
+  background: var(--action-red-dim);
+  border: 1px solid var(--action-red);
+  border-radius: 4px;
+  margin: 0 auto 12px;
+  width: 70%;
+  box-shadow: 0 0 15px var(--action-red-glow);
+}
+.screen-label {
+  font-size: 0.75rem;
+  color: var(--action-red);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+/* Mapa de butacas — el scroll horizontal, si ocurre, queda contenido aquí */
+.seats-map-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 1.5rem;
+}
+.seats-map {
+  display: grid;
+  grid-template-columns: repeat(10, 2.25rem);
+  gap: 0.625rem;
+  justify-content: center;
+  width: max-content;
+  margin: 0 auto;
+}
+
+/* El tamaño de la butaca se expresa en rem (no px) junto con su texto, para
+   que ambos escalen como unidad: con texto más grande a 150% pero caja fija
+   en px, el número de butaca se cortaría. */
+.seat-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition);
+}
+.seat-btn:hover:not(.seat-occupied) { border-color: var(--action-red); color: var(--text-primary); }
+.seat-btn:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
+
+.seat-btn.seat-selected {
+  background: var(--accent-solid);
+  border-color: var(--action-red);
+  color: #fff;
+}
+.seat-btn.seat-occupied {
+  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
+  background-color: var(--surface);
+  border-color: var(--border-interactive);
+  border-style: dashed;
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+.seat-icon {
+  position: absolute;
+  top: -0.4375rem;
+  right: -0.4375rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  line-height: 1;
+}
+.seat-selected .seat-icon { background: #fff; color: var(--accent-solid); }
+.seat-occupied .seat-icon { background: var(--surface-3); color: var(--text-muted); }
+
+.seats-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  list-style: none;
+  padding: 0;
+}
+.seats-legend li { display: flex; align-items: center; gap: 8px; }
+.legend-swatch {
+  width: 1.125rem; height: 1.125rem; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.625rem; flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.legend-available { background: transparent; }
+.legend-selected { background: var(--accent-solid); border-color: var(--action-red); color: #fff; font-weight: 800; }
+.legend-occupied {
+  background-image: repeating-linear-gradient(45deg, var(--surface-3) 0 4px, transparent 4px 8px);
+  background-color: var(--surface);
+  border-color: var(--border-interactive);
+  border-style: dashed;
+  color: var(--text-muted);
+  font-weight: 800;
+}
 
 .booking-actions {
   display: flex;
@@ -643,6 +740,8 @@
     gap: 0.75rem;
     margin-bottom: 96px;
   }
+  .seats-map { grid-template-columns: repeat(10, 2rem); gap: 0.375rem; }
+  .seat-btn { width: 2rem; height: 2rem; font-size: 0.5625rem; }
 }
 
 .booking-success-overlay {
@@ -703,7 +802,7 @@
 .info-strong { color: var(--text-main); font-weight: bold; }
 
 .summary-movie-title { margin: 0 0 8px 0; font-size: 1.5rem; color: var(--text-main); }
-.highlight-text { font-weight: bold; color: var(--accent-text); margin: 0 0 8px 0; }
+.highlight-text { font-weight: bold; color: var(--action-red); margin: 0 0 8px 0; }
 .summary-meta { color: var(--text-secondary); margin: 0 0 4px 0; }
 .summary-subtitle { color: var(--text-main); margin-bottom: 1rem; }
 .summary-label { color: var(--text-secondary); margin: 0 0 10px 0; }
@@ -792,7 +891,7 @@
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   background-color: var(--surface-2);
   color: var(--text-primary);
   font-size: 1rem;
@@ -809,7 +908,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--error-text);
+  color: var(--error);
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -895,8 +994,8 @@
    fijo: en tema claro un botón blanco sobre fondo claro sería invisible. */
 .btn-comprar-top {
   background-color: var(--surface);
-  color: var(--accent-text);
-  border: 2px solid var(--accent-text);
+  color: var(--action-red);
+  border: 2px solid var(--action-red);
   border-radius: 30px;
   padding: 12px 30px;
   font-size: 1.1rem;
@@ -907,7 +1006,7 @@
 }
 .btn-comprar-top:hover {
   background-color: var(--accent-solid);
-  color: var(--on-accent);
+  color: #fff;
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -959,7 +1058,7 @@
 
 .synopsis-card h2 {
   font-size: 1.8rem;
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   margin: 0 0 1rem 0;
   font-weight: bold;
 }
@@ -988,7 +1087,7 @@
 
 .lang-badge {
   border: 1.5px solid var(--action-red);
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   padding: 4px 12px;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -1054,10 +1153,6 @@
 }
 .custom-dd-btn.open {
   background: var(--surface-3);
-  /* Contorno del desplegable abierto: el relleno solo difería 1.09:1 del fondo (mínimo 3:1, WCAG 1.4.11).
-     El borde de 1px se compensa en el padding para que no se mueva nada. */
-  border: 1px solid var(--border-interactive);
-  padding: calc(1rem - 1px) calc(1.5rem - 1px);
 }
 
 .custom-dd-inner {
@@ -1105,9 +1200,6 @@
   margin: 0;
   padding: 6px 0;
   z-index: 100;
-  /* Con 7 días u otras listas largas el menú se desplaza en vez de salirse de la pantalla. */
-  max-height: min(60vh, 22rem);
-  overflow-y: auto;
   animation: ddFadeIn 0.15s ease;
 }
 
@@ -1128,7 +1220,7 @@
   color: var(--text-main);
 }
 .custom-dd-item.selected {
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   font-weight: 700;
 }
 .custom-dd-item.clear-item {
@@ -1206,21 +1298,17 @@
 
 .showtime-buttons-grid {
   display: flex;
-  flex-wrap: wrap; /* con 7 días hay más horarios por sede: pasan a otra línea en vez de salirse */
   gap: 1.5rem;
 }
-.showtime-day { margin: 0.9rem 0 0.5rem; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
-.showtime-day-group:first-of-type .showtime-day { margin-top: 0.25rem; }
 
 /* "Ticket" de horario: metáfora de boleto de papel, se queda blanco con
-   texto en rojo-marca a propósito en ambos temas (como el chip de VISA).
-   El texto usa --accent-on-white (acento oscuro apto para fondo blanco). */
+   texto en rojo-marca a propósito en ambos temas (como el chip de VISA). */
 .showtime-btn {
   display: flex;
   align-items: center;
   gap: 10px;
   background: #ffffff;
-  color: var(--accent-on-white);
+  color: var(--accent-solid);
   padding: 10px 24px;
   border: none;
   font-weight: bold;
@@ -1241,16 +1329,8 @@
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
-/* En tema claro el ticket blanco quedaba sin límite visible sobre la página
-   blanca (1.0:1): borde con token, y 1px menos de padding para que mida lo mismo. */
-html[data-theme="light"] .showtime-btn {
-  border: 1px solid var(--border-interactive);
-  padding: 9px 23px;
-}
-
 .showtime-btn:hover:not(.disabled) {
-  /* #f0f0f0 daba 4.2:1 con el rojo de marca; #fafafa da 4.6:1. */
-  background-color: #fafafa;
+  background-color: #f0f0f0;
   transform: translateY(-2px);
   filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
 }
@@ -1371,6 +1451,10 @@ html[data-theme="light"] .showtime-btn {
    controles interactivos y un patrón propio para "seleccionada" (distinto
    del rayado de "ocupada"), además del ícono que ya existe en todos los modos.
    ══════════════════════════════════════════ */
+html[data-vision="mono"] .seat-btn,
+html[data-vision="mono"] .legend-swatch {
+  border-width: 3px;
+}
 html[data-vision="mono"] .input-web,
 html[data-vision="mono"] .custom-dd-btn {
   border-width: 2px;
@@ -1378,10 +1462,10 @@ html[data-vision="mono"] .custom-dd-btn {
 html[data-vision="mono"] .btn-outline {
   border-width: 2px;
 }
-/* Placeholder: el gris por defecto del navegador (#757575) no llega a 4.5:1
-   sobre los campos oscuros. */
-.web-container input::placeholder,
-.web-container textarea::placeholder { color: var(--text-muted); opacity: 1; }
+html[data-vision="mono"] .seat-btn.seat-selected,
+html[data-vision="mono"] .legend-selected {
+  background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 7px);
+}
 
 /* ══════════════════════════════════════════
    RESET DE <button> NATIVO — accesibilidad por teclado (APF3)
@@ -1429,7 +1513,6 @@ html[data-vision="mono"] .btn-outline {
 .filter-title:focus-visible,
 .active-filters-pills .pill:focus-visible,
 .custom-dd-item:focus-visible,
-.tab-btn:focus-visible,
 .carousel-indicators .dot:focus-visible,
 .carousel-control:focus-visible,
 .btn-auth:focus-visible,
@@ -1482,263 +1565,3 @@ html[data-vision="mono"] .btn-outline {
   .movies-grid-view { grid-template-columns: minmax(0, 1fr); }
   .active-filters-pills { flex-wrap: wrap; }
 }
-
-/* ══════════════════════════════════════════
-   CUENTAS (fase 2): inicio de sesión, registro, verificación, política
-   Solo variables del tema (claro/oscuro), sin colores fijos.
-   ══════════════════════════════════════════ */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  margin: -1px; padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.auth-title { margin: 0 0 1rem; color: var(--text-main); font-size: 1.6rem; }
-.auth-title:focus { outline: none; }
-.auth-lead { margin: 0 0 1.5rem; color: var(--text-secondary); line-height: 1.5; }
-
-.auth-notice {
-  margin: 0 0 1.5rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--electric-blue);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-.auth-notice:focus { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-
-.form-error {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--error);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-.form-error:focus { outline: 2px solid var(--error); outline-offset: 2px; }
-
-.field-hint { margin: 0; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.45; }
-.field-error a { color: inherit; text-decoration: underline; }
-
-.check-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.45;
-  cursor: pointer;
-}
-.check-row input[type="checkbox"],
-.form-group .check-row input[type="checkbox"] {
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
-  margin: 0.15rem 0 0;
-  padding: 0;
-  accent-color: var(--action-red);
-  cursor: pointer;
-}
-.check-row input[type="checkbox"]:focus-visible,
-.form-group .check-row input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--electric-blue);
-  outline-offset: 2px;
-}
-.check-row a, .auth-switch a, .legal-page a { color: var(--text-main); text-decoration: underline; font-weight: 600; }
-.check-row a:focus-visible, .auth-switch a:focus-visible, .legal-page a:focus-visible,
-.link-btn:focus-visible, .field-error a:focus-visible {
-  outline: 2px solid var(--electric-blue);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-.auth-switch { margin: 1.5rem 0 0; text-align: center; color: var(--text-secondary); font-size: 0.95rem; }
-
-.auth-secondary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; margin-top: 1.25rem; }
-.link-btn {
-  background: none;
-  border: none;
-  padding: 0.25rem 0;
-  color: var(--text-main);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.link-btn[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
-
-/* Cuadro de la simulación del SMS: inconfundible, con texto (no solo color). */
-.sim-box {
-  margin: 0 0 1.5rem;
-  padding: 1rem;
-  border: 2px dashed var(--border-interactive);
-  border-radius: 8px;
-  background: var(--surface-3);
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-.sim-box p { margin: 0 0 0.5rem; }
-.sim-box p:last-child { margin-bottom: 0; }
-.sim-box-tag { color: var(--text-main); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.sim-box-code strong { display: inline-block; margin-left: 0.25rem; color: var(--text-main); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.6rem; letter-spacing: 0.2em; }
-
-.legal-page {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-.legal-page .legal-title { margin: 0 0 1rem; color: var(--text-main); font-size: 2rem; }
-.legal-page h2 { margin: 2rem 0 0.5rem; color: var(--text-main); font-size: 1.2rem; }
-.legal-page ul { padding-left: 1.25rem; }
-.legal-page li { margin-bottom: 0.4rem; }
-.legal-draft {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--cinema-gold);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-primary);
-}
-.legal-page strong { color: var(--text-main); }
-
-.session-gate { padding: 3rem 1.5rem; text-align: center; color: var(--text-secondary); }
-
-/* Bordes de los campos de cuentas con contraste de componente (>=3:1, WCAG 1.4.11). */
-.auth-form .form-group input:not([type="checkbox"]) { border-color: var(--border-interactive); }
-.auth-form .form-group input:not([type="checkbox"]):focus { border-color: var(--action-red); }
-.auth-form .form-group input:not([type="checkbox"])[aria-invalid="true"] { border-color: var(--error); }
-
-/* index.css define .form-row como grid de 2 columnas (admin): en móvil el registro apila los campos. */
-@media (max-width: 768px) {
-  .auth-form .form-row { grid-template-columns: minmax(0, 1fr); }
-}
-/* El ícono del error no se encoge cuando el mensaje ocupa varias líneas. */
-.auth-form .field-error svg { flex: none; }
-
-
-/* ── Etiquetas sobre pósters: Preventa y Próximamente (texto visible, pareja de tokens con contraste verificado) ── */
-.poster-chip {
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
-  max-width: calc(100% - 16px);
-  z-index: 2; /* por encima del degradado (.movie-poster::after) */
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1.2;
-  background-color: var(--accent-solid);
-  color: var(--on-accent);
-  box-shadow: var(--shadow-sm);
-}
-.poster-chip-soon {
-  background-color: var(--surface-3);
-  color: var(--text-primary);
-  border: 1px solid var(--border-interactive);
-}
-
-/* Avisos en la ficha de la película (preventa, próximamente) */
-.movie-notice {
-  margin: 1rem 0 0;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-interactive);
-  background: var(--surface-2);
-  color: var(--text-primary);
-  font-size: 1rem;
-  line-height: 1.4;
-}
-.movie-notice strong { color: var(--text-main); }
-
-
-/* Función agotada: visible, no comprable, con texto (no solo color). */
-.showtime-btn.soldout {
-  background-color: var(--surface-3);
-  color: var(--text-primary);
-  border: 1px dashed var(--border-interactive);
-  padding: 9px 23px;
-  cursor: not-allowed;
-  filter: none;
-}
-.showtime-btn.soldout .time-lbl { text-decoration: line-through; }
-.showtime-btn.soldout:hover { transform: none; background-color: var(--surface-3); filter: none; }
-.soldout-lbl { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.showtime-btn.soldout:focus-visible { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-
-
-
-/* === Compra real (fase 4a) === */
-.booking-step-title { align-self: flex-start; margin: 0 0 1rem; font-size: 1.6rem; color: var(--text-main); }
-.booking-step-title:focus { outline: none; }
-.booking-note { margin: 0 0 1rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.45; }
-.booking-sim-flag { margin: 0.75rem 0 0; }
-.booking-alert {
-  width: 100%;
-  margin: 0 0 1.25rem;
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
-  border: 2px solid var(--error);
-  background: var(--surface);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
-.booking-alert p { margin: 0; }
-.booking-alert:focus { outline: 2px solid var(--electric-blue); outline-offset: 2px; }
-.booking-autopick {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem;
-  width: 100%; margin: 0 0 1.5rem;
-}
-.booking-autopick .input-web { width: auto; min-width: 5rem; }
-.booking-autopick .btn-outline { padding: 0.7rem 1rem; font-size: 1rem; }
-.sim-notice {
-  width: 100%;
-  margin: 0 0 1.25rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-interactive);
-  border-left-width: 4px;
-  border-radius: 8px;
-  background: var(--surface-3);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
-.sim-notice strong { color: var(--text-main); }
-.sim-outcome { border: 1px solid var(--border-interactive); border-radius: 8px; padding: 0.75rem 1rem; margin: 0; }
-.sim-outcome legend { padding: 0 0.4rem; color: var(--text-main); font-size: 0.9rem; font-weight: 600; }
-.sim-outcome label { display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1.5rem; color: var(--text-primary); }
-.sim-outcome .booking-note { margin: 0.5rem 0 0; font-size: 0.85rem; }
-.booking-success-wide { max-width: 460px; width: calc(100vw - 2rem); max-height: calc(100vh - 2rem); overflow-y: auto; padding: 2rem; }
-.booking-success-wide:focus { outline: none; }
-.booking-success-wide h2 { font-size: 1.5rem; }
-.booking-success-modal h2:focus { outline: none; }
-.booking-success-wide p { margin-bottom: 1rem; }
-.order-code-label { margin-bottom: 0.25rem !important; font-size: 0.85rem; }
-.order-code {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border: 2px solid var(--border-interactive);
-  border-radius: 8px;
-  background: var(--surface-3);
-  color: var(--text-main);
-  font-size: 1.1rem; font-weight: 800; letter-spacing: 0.04em;
-  user-select: all;
-  overflow-wrap: anywhere;
-}
-.booking-success-link { display: block; width: 100%; box-sizing: border-box; text-align: center; text-decoration: none; }
-.booking-copy-status { text-align: center !important; min-height: 1.2em; margin: 0.5rem 0 1rem !important; }
-.order-summary { text-align: left; margin: 0 0 1.25rem; display: grid; gap: 0.35rem; }
-.order-summary div { display: flex; gap: 0.75rem; justify-content: space-between; font-size: 0.92rem; }
-.order-summary dt { color: var(--text-secondary); }
-.order-summary dd { margin: 0; color: var(--text-primary); text-align: right; font-weight: 600; }

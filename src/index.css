@@ -30,11 +30,6 @@
      que --action-red (cero cambio visual). */
   --error:      #E50914;
   --error-dim:  rgba(229,9,20,0.12);
-  /* Solo para TEXTO de error: #E50914 da 3.78:1 sobre --surface oscuro (<4.5).
-     --error se queda para bordes/contornos (>=3:1, WCAG 1.4.11). Los bloques
-     de tema claro y de visión redefinen este token como var(--error), que ya
-     cumple >=4.5:1 en ellos. */
-  --error-text: #FF6B6B;
 
   /* Para botones de relleno sólido + texto blanco encima (p.ej. .btn-solid).
      En modo "mono" + tema oscuro, --action-red/--emerald pasan a ser blancos
@@ -43,33 +38,9 @@
      variables existen solo para ese caso de uso (relleno) y se fijan a un
      gris oscuro neutro únicamente en esa combinación; en todo lo demás
      siguen el color de marca/éxito normalmente. */
-  /* Hover de relleno (tema oscuro, modo por defecto): --action-red-light
-     (#FF1F2E) da 3.83:1 con texto blanco (<4.5). Este tono, algo mas cercano
-     al rojo de marca, da 4.56:1; el hover se sigue notando por la elevacion
-     y el resplandor. --action-red-light no cambia (lo usa el admin). */
   --accent-solid:         var(--action-red);
-  --accent-solid-light:   #EB0E1A;
+  --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-
-  /* TEXTO/ICONO sobre los rellenos de arriba (--accent-solid, -light y
-     -success). Siempre se usa junto con ellos, nunca un blanco fijo: en
-     oscuro los acentos de protan-deutan y tritan son claros (blanco = 2.7:1 y
-     3.4:1) y el verde de exito (#2EC771) tampoco admite blanco (2.2:1).
-     Medido con WCAG: minimo 4.5:1 en reposo, hover y foco, en los 8
-     tema x modo. Por defecto (oscuro) el texto sigue blanco sobre el rojo. */
-  --on-accent:         #FFFFFF;
-  --on-accent-success: var(--deep-night);
-
-  /* ACENTO COMO COLOR DE TEXTO/ICONO sobre las superficies oscuras y sobre
-     --page-bg (#6a1a1b en oscuro). --action-red (#E50914) da 2.5-3.8:1 como
-     texto ahi; este tono da >=4.5:1 sobre --page-bg y las superficies.
-     Los bordes y rellenos siguen con --action-red. -light: textos que usaban
-     --action-red-light (logo, titulos grandes): no cambian salvo en claro
-     protan-deutan/tritan, donde no llegaban a 4.5:1 sobre el crema. */
-  --accent-text:       #FF7A7A;
-  --accent-text-light: var(--action-red-light);
-  /* Acento como texto sobre BLANCO fijo (tickets de horario). */
-  --accent-on-white:   var(--accent-solid);
 
   /* Para el "contorno" del hover de pósters/cines (.movie-hover-overlay,
      .cinema-hover-overlay): ese elemento siempre va encima de una foto
@@ -81,11 +52,6 @@
   --overlay-accent: #E50914;
 
   --deep-night:   #0F0F0F;
-  /* Fondo de la aplicación (html/body), detrás de cualquier página. */
-  --app-bg:       var(--deep-night);
-  /* Anillo de foco propio (WCAG 2.4.7 / 1.4.11): #6CA0FF = 6.1:1 sobre las
-     superficies oscuras; en claro #1D4ED8 = 6.7:1 sobre blanco. */
-  --focus-ring:   #6CA0FF;
   --dark-grey:    #1C1C1C;
   --surface:      #161616;
   --surface-2:    #1E1E1E;
@@ -113,29 +79,11 @@
   --violet:       #8B5CF6;
   --violet-dim:   rgba(139,92,246,0.12);
 
-  /* ── Semánticos del PANEL (texto, borde y relleno de badges, alertas, KPI y
-     gráficos). Versión oscura aquí; versión clara en html[data-theme="light"].
-     Los --electric-blue, --cinema-gold... de arriba NO cambian (los usa el
-     sitio público). Contraste medido sobre su propio tinte y sobre las
-     superficies del panel (ver la entrega 6b). ── */
-  --info:         #6CA0FF;
-  --info-dim:     rgba(59,130,246,0.14);
-  --info-solid:   #2563EB;   /* relleno con texto blanco (5.2:1) */
-  --success-text: var(--emerald);   /* texto/icono de éxito (en claro, un verde algo más oscuro) */
-  --warning:      #E67E22;
-  --warning-dim:  rgba(230,126,34,0.12);
-  --gold-text:    #F5C518;   /* texto/icono dorado */
-  --gold-border:  #F5C518;   /* borde / elemento gráfico dorado */
-  --gold-dim:     rgba(245,197,24,0.13);
-  --violet-text:  #A78BFA;
-
   /* Text */
   --text-main:    #FFFFFF;
   --text-primary: #F0F0F0;
   --text-secondary: #B3B3B3;
-  /* #A6A6A6: 7.4/6.9/6.3:1 sobre --surface/-2/-3 y 4.86:1 sobre --page-bg
-     (antes #666666 = 3.15:1 en el panel; el sitio ya lo sobreescribía). */
-  --text-muted:   #A6A6A6;
+  --text-muted:   #666666;
   --text-dim:     #444444;
 
   /* Layout */
@@ -166,16 +114,18 @@
 }
 
 /* ══════════════════════════════════════════
-   TEMA CLARO — SISTEMA DE TOKENS COMPARTIDO (sitio público y panel)
-   Los bloques de tema y de visión cuelgan de <html> (un solo sistema de
-   tokens para el sitio y el panel de administración). El panel sigue el tema,
-   el modo de visión y el tamaño de letra guardados (los cambia PanelAccessibility).
+   TEMA CLARO — SOLO SITIO PÚBLICO
+   Scoped a .web-container (no a :root) a propósito: --surface, --text-*,
+   --action-red, --emerald, --border, etc. son tokens compartidos con el
+   panel de administración (Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css). Si se sobreescribieran en :root[data-theme="light"], el
+   cambio de tema del sitio público se filtraría al admin (fuera de alcance)
+   porque ambos cuelgan del mismo <html>. Por eso el selector exige estar
+   dentro de .web-container.
    Valores verificados con la fórmula de luminancia relativa WCAG
    (contraste ≥4.5:1 texto normal, ≥3:1 texto grande / bordes interactivos).
    ══════════════════════════════════════════ */
-html[data-theme="light"] {
-  --app-bg:       #F5F5F5;
-  --focus-ring:   #1D4ED8;
+html[data-theme="light"] .web-container {
   --page-bg:      #F5F5F5;
   /* "Hueso"/crema ligado al dorado de marca (--label-accent de los
      dropdowns) para las zonas que en oscuro son negras (navbar, footer,
@@ -198,7 +148,7 @@ html[data-theme="light"] {
   --text-main:      #111111;
   --text-primary:   #1A1A1A;
   --text-secondary: #595959;
-  --text-muted:     #666666; /* #707070 daba 4.1-4.2:1 sobre --surface-3 y el crema */
+  --text-muted:     #707070;
   --text-dim:       #9A9A9A;
 
   --action-red:        #B00710;
@@ -208,7 +158,6 @@ html[data-theme="light"] {
 
   --error:      #B00710;
   --error-dim:  rgba(176,7,16,0.10);
-  --error-text: var(--error);
 
   --emerald:      #1C7A43;
   --emerald-dim:  rgba(28,122,67,0.10);
@@ -216,31 +165,12 @@ html[data-theme="light"] {
   /* Reafirma la referencia: una custom property se resuelve en el elemento
      donde se DECLARA, no donde se hereda. Si --accent-solid solo existiera
      en :root (html), quedaría "congelada" con el --action-red de :root y
-     nunca vería este --action-red más específico de html[data-theme]. */
+     nunca vería este --action-red más específico de .web-container. */
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --on-accent:         #FFFFFF;
-  --on-accent-success: #FFFFFF;
-  --accent-text:       var(--action-red);
-  --accent-text-light: var(--action-red-light);
-  --accent-on-white:   var(--accent-solid);
 
-  --label-accent: #7A5C16; /* #8A6A1F daba 3.97:1 con el hover --surface-hover (#E4E4E4) */
-
-  /* Semánticos del panel en claro (medidos sobre blanco y sobre su tinte). */
-  --dark-grey:    #F7F7F7;   /* hover de .card (en oscuro #1C1C1C) */
-  --success-text: color-mix(in srgb, var(--emerald) 85%, #000);
-  --info:         #1D4ED8;
-  --info-dim:     rgba(29,78,216,0.10);
-  --info-solid:   #1D4ED8;
-  --warning:      #8A5A00;
-  --warning-dim:  rgba(138,90,0,0.12);
-  --gold-text:    #7A5C16;
-  --gold-border:  #A67C00;
-  --gold-dim:     rgba(166,124,0,0.13);
-  --violet-text:  #5B2FC0;
-  --violet-dim:   rgba(91,47,192,0.10);
+  --label-accent: #8A6A1F;
 
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
@@ -248,8 +178,9 @@ html[data-theme="light"] {
 }
 
 /* ══════════════════════════════════════════
-   MODOS DE VISIÓN (daltonismo)
-   Cuelgan de <html> igual que el tema claro (ver arriba). Cada modo redefine
+   MODOS DE VISIÓN (daltonismo) — SOLO SITIO PÚBLICO
+   Scoped a .web-container por la misma razón que el tema claro (ver arriba):
+   no debe filtrarse al panel de administración. Cada modo redefine
    variables de color de marca/estado — NO son filtros que "simulan"
    daltonismo, son una paleta alternativa pensada para esos usuarios.
    "default" no necesita regla: hereda los valores del tema activo.
@@ -269,7 +200,7 @@ html[data-theme="light"] {
    ══════════════════════════════════════════ */
 
 /* Protanopia/Deuteranopia (rojo-verde) — paleta Okabe-Ito */
-html[data-theme="dark"][data-vision="protan-deutan"] {
+html[data-theme="dark"][data-vision="protan-deutan"] .web-container {
   --action-red:       #4FA6D9;
   --action-red-light: #6FBBE8;
   --action-red-dim:   rgba(79,166,217,0.15);
@@ -278,19 +209,13 @@ html[data-theme="dark"][data-vision="protan-deutan"] {
   --emerald-dim:  rgba(79,166,217,0.15);
   --error:      #E69F00;
   --error-dim:  rgba(230,159,0,0.15);
-  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --on-accent:         var(--deep-night);
-  --on-accent-success: var(--deep-night);
-  --accent-text:       #6FBBE8;
-  --accent-text-light: var(--action-red-light);
-  --accent-on-white:   #0072B2;
   /* Mismo valor en ambos temas a propósito: ver nota de --overlay-accent en :root. */
   --overlay-accent: #4FA6D9;
 }
-html[data-theme="light"][data-vision="protan-deutan"] {
+html[data-theme="light"][data-vision="protan-deutan"] .web-container {
   --action-red:       #0072B2;
   --action-red-light: #1C84C4;
   --action-red-dim:   rgba(0,114,178,0.10);
@@ -299,22 +224,14 @@ html[data-theme="light"][data-vision="protan-deutan"] {
   --emerald-dim:  rgba(0,114,178,0.10);
   --error:      #8A5A00;
   --error-dim:  rgba(138,90,0,0.10);
-  --error-text: var(--error);
   --accent-solid:         var(--action-red);
-  /* --action-red-light (#1C84C4) da 4.08:1 con blanco; este da 4.59:1. */
-  --accent-solid-light:   #0F7BBB;
+  --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --on-accent:         #FFFFFF;
-  --on-accent-success: #FFFFFF;
-  /* #0072B2 da 4.33:1 sobre el crema del pie (--footer-bg); #006AA6 da 4.9:1. */
-  --accent-text:       #006AA6;
-  --accent-text-light: #006AA6;
-  --accent-on-white:   var(--accent-solid);
   --overlay-accent: #4FA6D9;
 }
 
 /* Tritanopia (azul-amarillo) — rojo/magenta + verde azulado, nunca azul/amarillo */
-html[data-theme="dark"][data-vision="tritan"] {
+html[data-theme="dark"][data-vision="tritan"] .web-container {
   --action-red:       #E8569A;
   --action-red-light: #F17FB0;
   --action-red-dim:   rgba(232,86,154,0.15);
@@ -323,18 +240,12 @@ html[data-theme="dark"][data-vision="tritan"] {
   --emerald-dim:  rgba(79,191,176,0.15);
   --error:      #FF6659;
   --error-dim:  rgba(255,102,89,0.15);
-  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --on-accent:         var(--deep-night);
-  --on-accent-success: var(--deep-night);
-  --accent-text:       #F17FB0;
-  --accent-text-light: var(--action-red-light);
-  --accent-on-white:   #C2185B;
   --overlay-accent: #E8569A;
 }
-html[data-theme="light"][data-vision="tritan"] {
+html[data-theme="light"][data-vision="tritan"] .web-container {
   --action-red:       #C2185B;
   --action-red-light: #D6478B;
   --action-red-dim:   rgba(194,24,91,0.10);
@@ -343,16 +254,9 @@ html[data-theme="light"][data-vision="tritan"] {
   --emerald-dim:  rgba(0,105,92,0.10);
   --error:      #C62828;
   --error-dim:  rgba(198,40,40,0.10);
-  --error-text: var(--error);
   --accent-solid:         var(--action-red);
-  /* --action-red-light (#D6478B) da 4.09:1 con blanco; este da 4.55:1. */
-  --accent-solid-light:   #D13A7E;
+  --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --on-accent:         #FFFFFF;
-  --on-accent-success: #FFFFFF;
-  --accent-text:       var(--action-red);
-  --accent-text-light: var(--action-red);
-  --accent-on-white:   var(--accent-solid);
   --overlay-accent: #E8569A;
 }
 
@@ -360,8 +264,7 @@ html[data-theme="light"][data-vision="tritan"] {
    "tinta" neutro del tema activo (ya es texto/superficie, no color), y se
    refuerzan borde grueso + patrón en los componentes clave (ver WebPages.css
    y WebHome.css) porque el color deja de ser una señal disponible. */
-html[data-vision="mono"] {
-  --focus-ring: var(--text-main);
+html[data-vision="mono"] .web-container {
   --action-red:       var(--text-main);
   --action-red-light: var(--text-main);
   --action-red-dim:   var(--surface-3);
@@ -370,13 +273,9 @@ html[data-vision="mono"] {
   --emerald-dim:  var(--surface-3);
   --error:      var(--text-main);
   --error-dim:  var(--surface-3);
-  --error-text: var(--error);
   --accent-solid:         var(--action-red);
   --accent-solid-light:   var(--action-red-light);
   --accent-solid-success: var(--emerald);
-  --accent-text:       var(--action-red);
-  --accent-text-light: var(--action-red);
-  --accent-on-white:   var(--accent-solid);
   --label-accent: var(--text-secondary);
 
   /* "Mono" es escala de grises de verdad: el fondo de página, el navbar/
@@ -396,74 +295,29 @@ html[data-vision="mono"] {
 /* Único caso donde mono necesita distinguir tema: en oscuro, --text-main es
    blanco, y los botones de relleno sólido llevan texto blanco escrito
    encima — sin esto el texto desaparecería sobre su propio fondo. */
-html[data-theme="dark"][data-vision="mono"] {
-  /* Grises con 3:1 contra las superficies (#161616-#252525, limite del
-     control, WCAG 1.4.11) y >=4.5:1 con texto blanco: #767676 = 4.54 con
-     blanco y 3.8 contra #1C1C1C. Antes #2B2B2B (1.2:1 contra la tarjeta). */
-  --accent-solid:         #767676;
-  --accent-solid-light:   #6B6B6B;
-  --accent-solid-success: #767676;
-  --accent-on-white:      #595959; /* #767676 sobre blanco/#fafafa no llega a 4.5:1 */
-  --on-accent:         #FFFFFF;
-  --on-accent-success: #FFFFFF;
-}
-
-/* PANEL en mono: los tokens semánticos del panel (info, aviso, dorado, violeta) y los
-   colores fijos de marca que usan el panel y sus componentes compartidos (dorado de
-   ProductArt y de las píldoras, azul de los anillos de foco de FileField/FoodStep, sombras
-   rojas/doradas) NO deben dejar color en una pantalla "monocromática". Se declaran solo con
-   data-shell="panel" para no tocar el sitio público. Los estados siguen distinguiéndose por su
-   texto e ícono (y por el borde/tinte de superficie), nunca por el matiz. */
-html[data-shell="panel"][data-vision="mono"] {
-  --info:         var(--text-main);
-  --info-dim:     var(--surface-3);
-  --info-solid:   var(--accent-solid);
-  --on-info-solid: var(--on-accent);
-  --warning:      var(--text-main);
-  --warning-dim:  var(--surface-3);
-  --gold-text:    var(--text-main);
-  --gold-border:  var(--text-main);
-  --gold-dim:     var(--surface-3);
-  --violet-text:  var(--text-main);
-  --violet-dim:   var(--surface-3);
-  --cinema-gold:  var(--accent-solid);
-  --on-gold:      var(--on-accent);
-  --cinema-gold-dim: var(--surface-3);
-  --cinema-gold-glow: transparent;
-  --electric-blue: var(--text-main);
-  --electric-blue-dim: var(--surface-3);
-  --intense-orange: var(--text-main);
-  --intense-orange-dim: var(--surface-3);
-  --violet:       var(--text-main);
-  --shadow-red:   0 4px 28px rgba(0,0,0,0.3);
-  --shadow-gold:  0 4px 20px rgba(0,0,0,0.25);
+html[data-theme="dark"][data-vision="mono"] .web-container {
+  --accent-solid:         #2B2B2B;
+  --accent-solid-light:   #3D3D3D;
+  --accent-solid-success: #2B2B2B;
 }
 
 /* ══════════════════════════════════════════
    ESCALA DE LETRA (4 niveles)
-   Sitio público: se aplica al <html> (font-size) y todo lo que usa rem escala.
-   PANEL (html[data-shell="panel"], ver AdminLayout): su CSS usa px, así que la
-   escala se aplica con zoom sobre .app-layout (variable --panel-zoom) y el
-   font-size de <html> se fija en 100 % para que lo que ya usa rem (mapa de
-   butacas, confitería) no se escale dos veces. Por debajo de 768 px el panel
-   no pasa de 130 % (la preferencia guardada no cambia: solo cambia lo aplicado).
+   Se aplica al <html> globalmente: ninguna hoja de estilo del admin usa
+   unidades rem (verificado — Dashboard.css, MovieManagement.css, Sidebar.css,
+   Topbar.css, App.css solo usan px), así que esto no afecta al panel de
+   administración aunque comparta el mismo <html>; solo reescala el texto de
+   las páginas Web* que sí usan rem para font-size.
    ══════════════════════════════════════════ */
 html[data-font-scale="100"] { font-size: 100%; }
 html[data-font-scale="115"] { font-size: 115%; }
 html[data-font-scale="130"] { font-size: 130%; }
 html[data-font-scale="150"] { font-size: 150%; }
-html[data-shell="panel"][data-font-scale] { font-size: 100%; }
-html[data-shell="panel"][data-font-scale="115"] { --panel-zoom: 1.15; }
-html[data-shell="panel"][data-font-scale="130"] { --panel-zoom: 1.3; }
-html[data-shell="panel"][data-font-scale="150"] { --panel-zoom: 1.5; }
-@media (max-width: 768px) {
-  html[data-shell="panel"][data-font-scale="150"] { --panel-zoom: 1.3; }
-}
 
 html, body, #root {
   height: 100%;
   font-family: 'Inter', 'Roboto', sans-serif;
-  background: var(--app-bg);
+  background: var(--deep-night);
   color: var(--text-primary);
   overflow: hidden;
 }
@@ -477,12 +331,6 @@ html, body, #root {
 /* ── Typography (Montserrat for headings) ── */
 h1, h2, .heading { font-family: 'Montserrat', 'Poppins', sans-serif; font-weight: 900; }
 h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-weight: 700; }
-
-/* Foco por defecto del PANEL: el anillo propio (--focus-ring: 6.1:1 en oscuro, 6.7:1
-   en claro) en vez del azul #005FCC del navegador (2.8:1 sobre las superficies
-   oscuras). Especificidad 0,1,0 y declarado antes que los componentes: cualquier
-   regla propia de un control (p. ej. .input, .cinema-select) tiene prioridad. */
-:where(.app-layout) :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ══════════════════════════════════════════
    BUTTONS
@@ -498,13 +346,13 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 
 /* Action Red — solid */
 .btn-primary {
-  background: var(--accent-solid);
-  color: var(--on-accent);
+  background: var(--action-red);
+  color: #fff;
   box-shadow: var(--shadow-red);
 }
 .btn-primary:hover {
-  background: var(--accent-solid-light);
-  box-shadow: 0 6px 36px var(--action-red-glow);
+  background: var(--action-red-light);
+  box-shadow: 0 6px 36px rgba(229,9,20,0.45);
   transform: translateY(-2px);
 }
 .btn-primary:active { transform: translateY(0); }
@@ -518,7 +366,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 .btn-glow:hover {
   box-shadow: 0 0 18px var(--action-red-glow), inset 0 0 18px var(--action-red-dim);
-  color: var(--text-main);
+  color: #fff;
   background: var(--action-red-dim);
 }
 
@@ -526,11 +374,11 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 .btn-secondary {
   background: var(--surface-2);
   color: var(--text-primary);
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
 }
 .btn-secondary:hover {
   background: var(--surface-3);
-  border-color: var(--text-muted);
+  border-color: var(--text-dim);
   transform: translateY(-1px);
 }
 
@@ -562,17 +410,17 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 
 /* Emerald Green — Reserved / Active */
-.badge-green  { background: var(--emerald-dim); color: var(--success-text); }
+.badge-green  { background: var(--emerald-dim); color: var(--emerald); }
 /* Action Red — Error / Sold Out */
 .badge-red    { background: var(--action-red-dim); color: var(--action-red); }
 /* Cinema Gold — VIP / Featured */
-.badge-gold   { background: var(--gold-dim); color: var(--gold-text); }
+.badge-gold   { background: var(--cinema-gold-dim); color: var(--cinema-gold); }
 /* Intense Orange — Alert / Warning */
-.badge-orange { background: var(--warning-dim); color: var(--warning); }
+.badge-orange { background: var(--intense-orange-dim); color: var(--intense-orange); }
 /* Electric Blue — Info / Format */
-.badge-blue   { background: var(--info-dim); color: var(--info); }
+.badge-blue   { background: var(--electric-blue-dim); color: var(--electric-blue); }
 /* Violet — Premium / Special */
-.badge-purple { background: var(--violet-dim); color: var(--violet-text); }
+.badge-purple { background: var(--violet-dim); color: var(--violet); }
 /* Muted — Inactive / Archived */
 .badge-muted  { background: var(--surface-3); color: var(--text-secondary); }
 
@@ -621,7 +469,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 .select {
   padding: 10px 14px;
   background: var(--surface-2);
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 14px; font-family: 'Inter', sans-serif;
@@ -646,33 +494,21 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 }
 .pill:hover { border-color: var(--text-dim); color: var(--text-primary); }
 .pill.active {
-  background: var(--accent-solid);
-  border-color: var(--accent-solid);
-  color: var(--on-accent);
+  background: var(--action-red);
+  border-color: var(--action-red);
+  color: #fff;
   box-shadow: 0 0 12px var(--action-red-glow);
 }
-.pill.gold.active { background: var(--cinema-gold); border-color: var(--cinema-gold); color: var(--on-gold, var(--deep-night)); box-shadow: var(--shadow-gold); }
-.pill.green.active { background: var(--accent-solid-success); border-color: var(--accent-solid-success); color: var(--on-accent-success); }
-.pill.blue.active { background: var(--info-solid); border-color: var(--info-solid); color: var(--on-info-solid, #fff); }
+.pill.gold.active { background: var(--cinema-gold); border-color: var(--cinema-gold); color: var(--deep-night); box-shadow: var(--shadow-gold); }
+.pill.green.active { background: var(--emerald); border-color: var(--emerald); color: var(--deep-night); }
+.pill.blue.active { background: var(--electric-blue); border-color: var(--electric-blue); color: #fff; }
 
 /* ══════════════════════════════════════════
    LAYOUT
    ══════════════════════════════════════════ */
-.app-layout { display: flex; height: calc(100vh / var(--panel-zoom, 1)); overflow: hidden; zoom: var(--panel-zoom, 1); }
+.app-layout { display: flex; height: 100vh; overflow: hidden; }
 .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .page-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
-.page-content:focus { outline: none; } /* destino del enlace "Saltar al contenido" */
-
-/* Enlace "Saltar al contenido": solo visible con el foco del teclado. */
-.skip-link {
-  position: fixed; top: 8px; left: 8px; z-index: 1000;
-  padding: 10px 16px; border-radius: var(--radius);
-  background: var(--surface); color: var(--text-main);
-  border: 2px solid var(--focus-ring);
-  font-size: 14px; font-weight: 700; text-decoration: none;
-  transform: translateY(-200%);
-}
-.skip-link:focus { transform: none; outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ══════════════════════════════════════════
    PAGE HEADER
@@ -722,7 +558,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
    TABS
    ══════════════════════════════════════════ */
 .tabs {
-  display: flex; flex-wrap: wrap; gap: 4px;
+  display: flex; gap: 4px;
   background: var(--surface-2);
   padding: 4px; border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -738,7 +574,7 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
   background: var(--surface);
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
 }
 .tab:hover:not(.active) { color: var(--text-primary); background: var(--surface-3); }
 
@@ -785,6 +621,27 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
   text-transform: uppercase; letter-spacing: 0.6px;
 }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ══════════════════════════════════════════
+   SEARCH BAR
+   ══════════════════════════════════════════ */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.search-bar:focus-within {
+  border-color: var(--action-red);
+  box-shadow: 0 0 0 3px var(--action-red-dim);
+}
+.search-bar input {
+  background: transparent; border: none; outline: none;
+  color: var(--text-primary); font-size: 14px;
+  width: 100%; padding: 10px 0; font-family: 'Inter', sans-serif;
+}
+.search-bar input::placeholder { color: var(--text-muted); }
 
 /* ══════════════════════════════════════════
    MISC UTILITIES
@@ -857,6 +714,13 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 .avatar-md { width: 40px; height: 40px; }
 .avatar-lg { width: 48px; height: 48px; font-size: 16px; }
 
+/* Notification dot */
+.notif-dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--action-red); border: 2px solid var(--surface);
+}
+
 /* Animations */
 @keyframes fadeIn  { from { opacity: 0; }  to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -876,13 +740,3 @@ h3, h4, .subheading { font-family: 'Poppins', 'Montserrat', sans-serif; font-wei
 /* Glow utility */
 .glow-red  { box-shadow: 0 0 24px var(--action-red-glow); }
 .glow-gold { box-shadow: 0 0 24px var(--cinema-gold-glow); }
-
-/* Pestañas de Configuración (nav vertical del panel): el activo lleva un borde
-   de 3:1 como mínimo (el relleno tenue solo daba ~1.1:1, WCAG 1.4.11). */
-.settings-nav .nav-item.active { border-color: var(--action-red); }
-
-/* Configuración: navegación + contenido; en pantallas angostas se apilan. */
-.settings-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; }
-@media (max-width: 768px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } }
-
-@media (max-width: 640px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }

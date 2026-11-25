@@ -1,53 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useCinema } from '../../context/CinemaContext';
+import { Outlet, useNavigate } from 'react-router-dom';
 import AccessibilityWidget from '../AccessibilityWidget';
 import './WebLayout.css';
 
-// Estado de carga / error del catálogo (API). Las páginas públicas asumen que
-// los datos ya existen, así que no se montan hasta tenerlos.
-function CatalogState({ loading, error, onRetry }) {
-  const boxRef = useRef(null);
-  // Tras pulsar "Reintentar" el botón desaparece: el foco pasa al aviso de carga.
-  const wasError = useRef(false);
-  useEffect(() => {
-    if (loading && wasError.current) boxRef.current?.focus();
-    wasError.current = !!error;
-  }, [loading, error]);
-
-  if (error) {
-    return (
-      <div className="catalog-state" role="alert">
-        <h2>No pudimos cargar la cartelera</h2>
-        <p>Revisa tu conexión o inténtalo de nuevo en unos segundos.</p>
-        <button type="button" className="catalog-state-retry" onClick={onRetry}>Reintentar</button>
-      </div>
-    );
-  }
-  return (
-    <div className="catalog-state" role="status" tabIndex={-1} ref={boxRef}>
-      <span className="catalog-state-spinner" aria-hidden="true" />
-      <p>Cargando cartelera…</p>
-    </div>
-  );
-}
-
-// Paginas que no usan el catalogo: no deben quedar bloqueadas si la cartelera falla.
-const NO_CATALOG_PATHS = ['/web/login', '/web/registro', '/web/privacidad', '/web/reclamo-dni', '/web/reclamo-dni/estado'];
-
 export default function WebLayout() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const { catalogLoading, catalogError, reloadCatalog } = useCinema();
-  const { user, loading: authLoading, logout } = useAuth();
-  const catalogReady = NO_CATALOG_PATHS.includes(pathname) || (!catalogLoading && !catalogError);
-  const isStaff = user && user.tier !== 'customer';
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/web/login', { replace: true, state: { loggedOut: true } });
-  };
 
   return (
     <div className="web-container">
@@ -59,27 +15,12 @@ export default function WebLayout() {
         <div className="web-nav-links">
           <button className="nav-link" onClick={() => navigate('/web/peliculas')}>Peliculas</button>
           <button className="nav-link" onClick={() => navigate('/web/cines')}>Cines</button>
-          {!authLoading && !user && (
-            <>
-              <button className="nav-link highlight" onClick={() => navigate('/web/login')}>Iniciar Sesión</button>
-              <button className="nav-link" onClick={() => navigate('/web/registro')}>Registrarse</button>
-            </>
-          )}
-          {!authLoading && user && (
-            <>
-              <span className="nav-user">Hola, {user.name.split(' ')[0]}</span>
-              {user.tier === 'customer' && <button className="nav-link" onClick={() => navigate('/web/mis-entradas')}>Mis entradas</button>}
-              {isStaff && <button className="nav-link" onClick={() => navigate('/dashboard')}>Panel de administración</button>}
-              <button className="nav-link highlight" onClick={handleLogout}>Cerrar sesión</button>
-            </>
-          )}
+          <button className="nav-link highlight" onClick={() => navigate('/web/login')}>Iniciar Sesión</button>
         </div>
       </nav>
       
       <div className="web-content-area">
-        {catalogReady
-          ? <Outlet />
-          : <CatalogState loading={catalogLoading} error={catalogError} onRetry={reloadCatalog} />}
+        <Outlet />
       </div>
 
       {/* Footer Público */}
@@ -114,7 +55,10 @@ export default function WebLayout() {
 
         <div className="footer-bottom">
           <div className="payment-methods">
-            <span>Los pagos de este sitio son simulados: no se cobra nada.</span>
+            <span>Pagos 100% seguros con</span>
+            <div className="payment-icons">
+              <span className="pay-card">VISA</span>
+            </div>
           </div>
         </div>
       </footer>

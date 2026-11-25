@@ -1,24 +1,18 @@
 // ─── STORE EXPANDIDO — ADMIN CENTRAL ARCHITECTURE ───────────────────────────
-import { todayInLima, addDaysToDate } from './limaDate.js';
-
-// Fechas de ejemplo relativas al dia de siembra (dia de Lima): estrenos recientes y cierres a futuro.
-const today = todayInLima();
-const addDays = addDaysToDate;
 
 export const movies = [
-  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
-  { id: 2, title: 'Exit 8', genre: 'Terror', duration: 95, rating: 'APT', status: 'active', format: ['2D'], director: 'Genki Kawamura', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/8_ban_deguchi-289035682-large.jpg', synopsis: 'Película basada en el videojuego de Kotake Create The Exit 8...', featured: false, releaseDate: addDays(today, -14), endDate: addDays(today, 60) },
-  { id: 3, title: 'El Diablo Viste a la Moda 2', genre: 'Drama', duration: 120, rating: 'APT', status: 'active', format: ['2D'], director: 'David Frankel', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/diablos.jpg', synopsis: 'Casi veinte años después de dar vida a los icónicos personajes...', featured: false, releaseDate: addDays(today, -15), endDate: addDays(today, 60) },
-  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: addDays(today, -20), endDate: addDays(today, 60) },
-  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: '+14', status: 'active', format: ['2D','3D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: addDays(today, -23), endDate: addDays(today, 60) },
-  { id: 6, title: 'La Posesion de la Momia', genre: 'Terror', duration: 135, rating: '+14', status: 'active', format: ['2D'], director: 'Lee Cronin', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/Sin%20t%C3%ADtulo1.jpg', synopsis: 'Tras el éxito de Evil Dead, el director Lee Cronin regresa...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
-  { id: 7, title: 'Boulevard', genre: 'Romance', duration: 115, rating: '+14', status: 'active', format: ['2D'], director: 'Sonia Méndez', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/boule.jpg', synopsis: 'Dos marginados de preparatoria forman un vínculo...', featured: false, releaseDate: addDays(today, -28), endDate: addDays(today, 60) },
-  { id: 8, title: 'Super Mario Galaxy La Pelicula', genre: 'Animación', duration: 103, rating: 'APT', status: 'active', format: ['3D','2D'], director: 'Aaron Horvath, Michael Jelenic', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/unnamed.jpg', synopsis: 'Super Mario Galaxy: La Película es una película animada...', featured: true, releaseDate: addDays(today, -40), endDate: addDays(today, 60) },
-  // Ejemplos para el sitio: una pelicula en preventa (estreno a futuro) y una proxima (sin funciones).
-  { id: 9, title: 'Aventura en el Fin del Mundo', genre: 'Aventura', duration: 118, rating: 'APT', status: 'active', format: ['2D','3D'], director: 'Marina Salas', language: 'ES', poster: null, synopsis: 'Una expedición improvisada cruza el continente para llegar a tiempo al último amanecer. Pelicula de ejemplo en preventa.', featured: false, presale: true, releaseDate: addDays(today, 10), endDate: addDays(today, 70) },
-  { id: 10, title: 'La Ciudad Dormida', genre: 'Thriller', duration: 104, rating: '+14', status: 'upcoming', format: ['2D'], director: 'Tomás Rey', language: 'ES', poster: null, synopsis: 'Una noche sin luz deja a una ciudad entera en silencio. Película de ejemplo próxima a estrenarse.', featured: false, presale: false, releaseDate: addDays(today, 45), endDate: addDays(today, 100) },
+  { id: 1, title: 'El Mago del Kremlin', genre: 'Drama', duration: 152, rating: 'PG', status: 'active', format: ['2D'], director: 'Olivier Assayas', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/PosterMain4.jpg', synopsis: 'En la Rusia posterior al colapso soviético, un asesor político brillante...', featured: true, releaseDate: '2026-04-30', endDate: '2026-06-30' },
+  { id: 2, title: 'Exit 8', genre: 'Terror', duration: 95, rating: 'PG', status: 'active', format: ['2D'], director: 'Genki Kawamura', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/8_ban_deguchi-289035682-large.jpg', synopsis: 'Película basada en el videojuego de Kotake Create The Exit 8...', featured: false, releaseDate: '2026-04-30', endDate: '2026-06-30' },
+  { id: 3, title: 'El Diablo Viste a la Moda 2', genre: 'Drama', duration: 120, rating: 'PG', status: 'active', format: ['2D'], director: 'David Frankel', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/diablos.jpg', synopsis: 'Casi veinte años después de dar vida a los icónicos personajes...', featured: false, releaseDate: '2026-04-29', endDate: '2026-06-30' },
+  { id: 4, title: 'Mortal Kombat II', genre: 'Acción', duration: 116, rating: 'PG', status: 'active', format: ['2D'], director: 'Simon McQuoid', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/mortale.jpg', synopsis: '', featured: true, releaseDate: '2026-04-24', endDate: '2026-06-30' },
+  { id: 5, title: 'Michael', genre: 'Musical', duration: 127, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Antoine Fuqua', language: 'EN', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/michael-335783380-large.jpg', synopsis: 'Muestra el viaje de Michael Jackson más allá de la música...', featured: false, releaseDate: '2026-04-21', endDate: '2026-06-30' },
+  { id: 6, title: 'La Posesion de la Momia', genre: 'Terror', duration: 135, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Lee Cronin', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/Sin%20t%C3%ADtulo1.jpg', synopsis: 'Tras el éxito de Evil Dead, el director Lee Cronin regresa...', featured: false, releaseDate: '2026-04-16', endDate: '2026-06-30' },
+  { id: 7, title: 'Boulevard', genre: 'Romance', duration: 115, rating: 'PG-14', status: 'active', format: ['2D'], director: 'Sonia Méndez', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/boule.jpg', synopsis: 'Dos marginados de preparatoria forman un vínculo...', featured: false, releaseDate: '2026-04-16', endDate: '2026-06-30' },
+  { id: 8, title: 'Super Mario Galaxy La Pelicula', genre: 'Animación', duration: 103, rating: 'PG', status: 'active', format: ['3D','2D'], director: 'Aaron Horvath, Michael Jelenic', language: 'ES', poster: 'https://www.cinerama.com.pe/_admin/assets/images/peliculas/unnamed.jpg', synopsis: 'Super Mario Galaxy: La Película es una película animada...', featured: true, releaseDate: '2026-04-01', endDate: '2026-06-30' },
 ];
 
+export const genres = ['Acción','Aventura','Comedia','Drama','Terror','Romance','Sci-Fi','Thriller','Animación','Documental'];
+export const formats = ['2D','3D'];
 
 export const branches = [
   { id: 1, name: 'Cinerama Pacífico',  city: 'Lima',     address: 'Av. José Pardo 121, Miraflores - Lima - Lima', status: 'active',      halls: 5, manager: 'Sarah Mitchell', formats: '2D, 3D, REGULAR', img: 'https://www.cinerama.com.pe/_admin/assets/images/cines/pacifico.jpg' },
@@ -51,45 +45,37 @@ export const halls = [
 // El Admin Central gestiona estas asignaciones.
 export const movieCinema = [
   // Duna: Parte Tres → Cinerama Centro (3D,2D), Complejo Mall (3D,2D)
-  { id: 1, movieId: 1, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'], precioBase: 35 },
-  { id: 2, movieId: 1, branchId: 2, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],       precioBase: 28 },
+  { id: 1, movieId: 1, branchId: 1, activa: true, fechaInicio: '2026-04-01', fechaFin: '2026-06-15', formatos: ['3D','2D'], precioBase: 35 },
+  { id: 2, movieId: 1, branchId: 2, activa: true, fechaInicio: '2026-04-05', fechaFin: '2026-06-15', formatos: ['3D','2D'],       precioBase: 28 },
   // Batman: El Regreso → Cinerama Centro, Cine Suburbia
-  { id: 3, movieId: 2, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],       precioBase: 25 },
-  { id: 4, movieId: 2, branchId: 3, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 16 },
+  { id: 3, movieId: 2, branchId: 1, activa: true, fechaInicio: '2026-03-15', fechaFin: '2026-06-01', formatos: ['3D','2D'],       precioBase: 25 },
+  { id: 4, movieId: 2, branchId: 3, activa: true, fechaInicio: '2026-03-20', fechaFin: '2026-06-01', formatos: ['2D'],            precioBase: 16 },
   // Inception → Solo Cinerama Centro
-  { id: 5, movieId: 3, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D','3D'],     precioBase: 30 },
+  { id: 5, movieId: 3, branchId: 1, activa: true, fechaInicio: '2026-04-10', fechaFin: '2026-05-30', formatos: ['2D','3D'],     precioBase: 30 },
   // Avatar → Cinerama Centro (3D,2D)
-  { id: 6, movieId: 4, branchId: 1, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['3D','2D'],    precioBase: 45 },
+  { id: 6, movieId: 4, branchId: 1, activa: true, fechaInicio: '2026-07-04', fechaFin: '2026-10-01', formatos: ['3D','2D'],    precioBase: 45 },
   // Oppenheimer → Complejo Mall, Cine Suburbia
-  { id: 7, movieId: 6, branchId: 2, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 18 },
-  { id: 8, movieId: 6, branchId: 3, activa: true, fechaInicio: addDays(today, -30), fechaFin: addDays(today, 60), formatos: ['2D'],            precioBase: 14 },
+  { id: 7, movieId: 6, branchId: 2, activa: true, fechaInicio: '2026-04-25', fechaFin: '2026-06-10', formatos: ['2D'],            precioBase: 18 },
+  { id: 8, movieId: 6, branchId: 3, activa: true, fechaInicio: '2026-05-01', fechaFin: '2026-06-10', formatos: ['2D'],            precioBase: 14 },
 ];
 
-const fmt   = (d) => d;
+const today = new Date();
+const fmt   = (d) => d.toISOString().split('T')[0];
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 
-// Funciones de ejemplo coherentes con las reglas de programacion: sin solapes en la misma sala (con 15 min de
-// limpieza), hora de fin = inicio + duracion de la pelicula, formato compatible con la pelicula, la sede y la sala.
-const endAt = (start, movieId) => {
-  const [h, m] = start.split(':').map(Number);
-  const t = h * 60 + m + movies.find((x) => x.id === movieId).duration;
-  return `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
-};
-const scr = (id, movieId, hallId, branchId, date, startTime, language, format, price, status, bookedSeats, totalSeats) =>
-  ({ id, movieId, hallId, branchId, date, startTime, endTime: endAt(startTime, movieId), language, format, price, status, bookedSeats, totalSeats });
 export const screenings = [
-  scr(1,  1, 1, 1, fmt(today),            '14:00', 'ES', '3D', 35, 'active',    210, 280),
-  scr(2,  2, 2, 1, fmt(today),            '15:30', 'ES', '2D', 25, 'scheduled', 80,  180),
-  scr(3,  3, 3, 1, fmt(today),            '18:00', 'EN', '2D', 18, 'active',    140, 150),
-  scr(4,  4, 5, 1, fmt(addDays(today,1)), '20:30', 'ES', '3D', 45, 'scheduled', 30,  120),
-  scr(5,  5, 1, 1, fmt(addDays(today,1)), '16:00', 'EN', '3D', 35, 'scheduled', 0,   280),
-  scr(6,  6, 6, 2, fmt(today),            '19:00', 'ES', '2D', 18, 'active',    90,  200),
-  scr(7,  7, 7, 2, fmt(addDays(today,2)), '21:00', 'EN', '2D', 25, 'draft',     0,   160),
-  scr(8,  1, 3, 1, fmt(today),            '14:30', 'ES', '2D', 18, 'sold_out',  150, 150),
-  scr(9,  2, 6, 2, fmt(addDays(today,-1)),'18:00', 'ES', '2D', 18, 'finished',  180, 200),
-  scr(10, 6, 8, 3, fmt(addDays(today,1)), '20:00', 'ES', '2D', 14, 'scheduled', 20,  130),
+  { id: 1,  movieId: 1, hallId: 1, branchId: 1, date: fmt(today),           startTime: '14:00', endTime: '16:35', language: 'ES', format: '3D',   price: 35, status: 'active',    bookedSeats: 210, totalSeats: 280 },
+  { id: 2,  movieId: 2, hallId: 2, branchId: 1, date: fmt(today),           startTime: '15:30', endTime: '17:52', language: 'ES', format: '3D',   price: 25, status: 'scheduled', bookedSeats: 80,  totalSeats: 180 },
+  { id: 3,  movieId: 3, hallId: 3, branchId: 1, date: fmt(today),           startTime: '18:00', endTime: '20:28', language: 'EN', format: '2D',   price: 18, status: 'active',    bookedSeats: 140, totalSeats: 150 },
+  { id: 4,  movieId: 4, hallId: 5, branchId: 1, date: fmt(addDays(today,1)),startTime: '20:30', endTime: '23:32', language: 'ES', format: '3D',   price: 45, status: 'scheduled', bookedSeats: 30,  totalSeats: 120 },
+  { id: 5,  movieId: 5, hallId: 1, branchId: 1, date: fmt(addDays(today,1)),startTime: '16:00', endTime: '18:49', language: 'EN', format: '3D',   price: 35, status: 'scheduled', bookedSeats: 0,   totalSeats: 280 },
+  { id: 6,  movieId: 6, hallId: 6, branchId: 2, date: fmt(today),           startTime: '19:00', endTime: '22:15', language: 'ES', format: '2D',   price: 18, status: 'active',    bookedSeats: 90,  totalSeats: 200 },
+  { id: 7,  movieId: 7, hallId: 7, branchId: 2, date: fmt(addDays(today,2)),startTime: '21:00', endTime: '23:18', language: 'EN', format: '3D',   price: 25, status: 'draft',     bookedSeats: 0,   totalSeats: 160 },
+  { id: 8,  movieId: 1, hallId: 3, branchId: 1, date: fmt(today),           startTime: '17:30', endTime: '20:05', language: 'ES', format: '2D',   price: 18, status: 'sold_out',  bookedSeats: 150, totalSeats: 150 },
+  { id: 9,  movieId: 2, hallId: 6, branchId: 2, date: fmt(addDays(today,-1)),startTime:'18:00', endTime: '20:22', language: 'ES', format: '2D',   price: 18, status: 'finished',  bookedSeats: 180, totalSeats: 200 },
+  { id: 10, movieId: 6, hallId: 8, branchId: 3, date: fmt(addDays(today,1)),startTime: '20:00', endTime: '22:28', language: 'ES', format: '2D',   price: 14, status: 'scheduled', bookedSeats: 20,  totalSeats: 130 },
 ];
 
-// Solo como fixture de server/test/migration4.test.js (ordenes de ejemplo que la migracion 4 borra). Ya no se muestra en el panel.
 export const orders = [
   { id: 'TXN-001245', screeningId: 1, movieTitle: 'Duna: Parte Tres',           branchId: 1, branch: 'Cinerama Centro', customer: 'Carlos Méndez',  email: 'c.mendez@mail.com',  seats: ['A5','A6'],       amount: 70, method: 'credit_card', status: 'approved', date: '2026-05-13 14:30' },
   { id: 'TXN-001246', screeningId: 2, movieTitle: 'Batman: El Regreso',         branchId: 1, branch: 'Cinerama Centro', customer: 'Ana Torres',      email: 'a.torres@mail.com',  seats: ['C8'],            amount: 25, method: 'cash',        status: 'approved', date: '2026-05-13 14:45' },
@@ -110,4 +96,52 @@ export const users = [
   { id: 6, name: 'Lisa Brown',       email: 'lisa.brown@cinerama.com',        role: 'cashier',  branchId: 2,    status: 'active', lastLogin: '2026-05-13 07:00', avatar: 'LB' },
   { id: 7, name: 'James Wilson',     email: 'james.wilson@cinerama.com',      role: 'support',  branchId: 1,    status: 'active', lastLogin: '2026-05-12 22:15', avatar: 'JW' },
   { id: 8, name: 'Anna Martinez',    email: 'anna.martinez@cinerama.com',     role: 'operator', branchId: 2,    status: 'active', lastLogin: '2026-05-13 11:00', avatar: 'AM' },
+];
+
+// ── Chart data ────────────────────────────────────────────────────────────────
+export const revenueByDay = [
+  { day: 'Lun', revenue: 18200, centro: 12000, mall: 4200, suburbia: 2000 },
+  { day: 'Mar', revenue: 22400, centro: 14800, mall: 5600, suburbia: 2000 },
+  { day: 'Mié', revenue: 19800, centro: 13200, mall: 4600, suburbia: 2000 },
+  { day: 'Jue', revenue: 28600, centro: 18500, mall: 7100, suburbia: 3000 },
+  { day: 'Vie', revenue: 35200, centro: 22000, mall: 9200, suburbia: 4000 },
+  { day: 'Sáb', revenue: 44800, centro: 28000, mall: 12000,suburbia: 4800 },
+  { day: 'Dom', revenue: 38500, centro: 24000, mall: 10000,suburbia: 4500 },
+];
+
+export const genreData = [
+  { name: 'Sci-Fi',   value: 38, color: 'var(--electric-blue)' },
+  { name: 'Acción',   value: 28, color: 'var(--action-red)' },
+  { name: 'Drama',    value: 18, color: 'var(--cinema-gold)' },
+  { name: 'Comedia',  value: 10, color: 'var(--emerald)' },
+  { name: 'Terror',   value: 6,  color: 'var(--violet)' },
+];
+
+export const occupancyByHall = [
+  { hall: 'Sala 1', occupancy: 75, branchId: 1 },
+  { hall: 'Sala 2', occupancy: 44, branchId: 1 },
+  { hall: 'Sala 3', occupancy: 93, branchId: 1 },
+  { hall: 'Sala 4', occupancy: 0,  branchId: 1 },
+  { hall: 'Sala 5', occupancy: 25, branchId: 1 },
+  { hall: 'Sala 6', occupancy: 60, branchId: 2 },
+  { hall: 'Sala 7', occupancy: 35, branchId: 2 },
+  { hall: 'Sala 8', occupancy: 55, branchId: 3 },
+];
+
+export const recentActivity = [
+  { id: 1, message: 'Nueva función creada: Duna Pt3 — Sala 1, 14:00',       time: 'hace 2 min',   level: 'info',    branchId: 1 },
+  { id: 2, message: 'Avatar pasó a Preventa — habilitado en Cinerama Centro',time: 'hace 15 min',  level: 'success', branchId: 1 },
+  { id: 3, message: 'Pago rechazado: TXN-001251 — $70.00',                   time: 'hace 31 min',  level: 'error',   branchId: 1 },
+  { id: 4, message: 'Nuevo usuario registrado: Elena Ríos',                  time: 'hace 1 hora',  level: 'info',    branchId: null },
+  { id: 5, message: 'Reembolso procesado: TXN-001249 — $36.00',             time: 'hace 2 horas', level: 'warning', branchId: 1 },
+  { id: 6, message: 'Sala 4 puesta en modo Mantenimiento',                   time: 'hace 3 horas', level: 'warning', branchId: 1 },
+  { id: 7, message: 'Oppenheimer habilitado en Cine Suburbia',               time: 'hace 5 horas', level: 'success', branchId: null },
+];
+
+export const alerts = [
+  { id: 1, message: 'Conflicto: Sala 1 — 14:00 y 15:00 en riesgo de traslape',  level: 'error',   branchId: 1 },
+  { id: 2, message: 'Sala 4 en mantenimiento — 3 funciones afectadas',     level: 'warning', branchId: 1 },
+  { id: 3, message: '2 funciones por debajo del 20% de ocupación esta semana',   level: 'warning', branchId: 2 },
+  { id: 4, message: '3 pagos fallidos en la última hora',                         level: 'error',   branchId: 1 },
+  { id: 5, message: 'Inception Remasterizado deja cartelera en 12 días',          level: 'info',    branchId: 1 },
 ];

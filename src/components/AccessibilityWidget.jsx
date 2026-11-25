@@ -1,12 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
-import { useA11yPrefs, FONT_SCALES, VISION_MODES } from '../hooks/useA11yPrefs';
 import './AccessibilityWidget.css';
+
+const STORAGE_KEY = 'cinerama-a11y';
+const FONT_SCALES = [100, 115, 130, 150];
+const DEFAULT_PREFS = { theme: 'dark', fontScale: 100, vision: 'default' };
+
+const VISION_MODES = [
+  { value: 'default', label: 'Normal', swatches: ['#E50914', '#2EC771'], desc: 'Paleta de marca original.' },
+  { value: 'protan-deutan', label: 'Protanopia / Deuteranopia', swatches: ['#0072B2', '#E69F00'], desc: 'Azul para acción y éxito, naranja para error.' },
+  { value: 'tritan', label: 'Tritanopia', swatches: ['#C2185B', '#00695C'], desc: 'Magenta para acción, verde azulado para éxito.' },
+  { value: 'mono', label: 'Monocromático', swatches: ['#111111', '#9A9A9A'], desc: 'Escala de grises de alto contraste, con borde e ícono reforzados.' },
+];
+
+function loadPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (saved && saved.theme && saved.fontScale && saved.vision) return saved;
+  } catch {
+    /* localStorage inaccesible: se usan los valores por defecto */
+  }
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia
+    && window.matchMedia('(prefers-color-scheme: light)').matches;
+  return { ...DEFAULT_PREFS, theme: prefersLight ? 'light' : 'dark' };
+}
+
+function savePrefs(prefs) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    /* modo privado u otra restricción: la preferencia solo dura la sesión */
+  }
+}
 
 export default function AccessibilityWidget() {
   const [open, setOpen] = useState(false);
-  const { prefs, setTheme, setVision, stepFont, resetFont, resetAll, fontIdx } = useA11yPrefs();
+  const [prefs, setPrefs] = useState(loadPrefs);
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', prefs.theme);
+    html.setAttribute('data-font-scale', String(prefs.fontScale));
+    html.setAttribute('data-vision', prefs.vision);
+    savePrefs(prefs);
+  }, [prefs]);
 
   // Foco atrapado + Esc para cerrar
   useEffect(() => {
@@ -42,6 +80,20 @@ export default function AccessibilityWidget() {
     setOpen(false);
     buttonRef.current?.focus();
   };
+
+  const setTheme = (theme) => setPrefs((p) => ({ ...p, theme }));
+  const setVision = (vision) => setPrefs((p) => ({ ...p, vision }));
+
+  const stepFont = (dir) => setPrefs((p) => {
+    const idx = FONT_SCALES.indexOf(p.fontScale);
+    const nextIdx = Math.min(Math.max(idx + dir, 0), FONT_SCALES.length - 1);
+    return { ...p, fontScale: FONT_SCALES[nextIdx] };
+  });
+
+  const resetFont = () => setPrefs((p) => ({ ...p, fontScale: 100 }));
+  const resetAll = () => setPrefs({ ...DEFAULT_PREFS });
+
+  const fontIdx = FONT_SCALES.indexOf(prefs.fontScale);
 
   return (
     <>

@@ -1,47 +1,81 @@
 /* Glassmorphism Topbar — Style Guide */
 .topbar {
   height: var(--topbar-height);
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  background: rgba(22, 22, 22, 0.85);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid color-mix(in srgb, var(--text-main) 5%, transparent);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: space-between;
-  gap: 8px;
   padding: 0 24px;
   flex-shrink: 0;
   position: relative; z-index: 100;
 }
-.topbar-left  { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
-/* Derecha: control de accesibilidad (PanelAccessibility) y menú de usuario. */
-.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.cinema-selector { min-width: 0; }
-/* El selector de cine se encoge (con elipsis) en vez de pasar por debajo de los controles de la derecha: con letra grande (zoom) ya no cabe entero. */
-.topbar .cinema-select-wrap { min-width: 0; max-width: 100%; }
-.topbar .cinema-select { min-width: 0; width: 100%; text-overflow: ellipsis; }
-.topbar .cinema-select-locked { min-width: 0; }
-.topbar .cinema-select-locked span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.topbar #menu-toggle { flex-shrink: 0; }
-.topbar #menu-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.topbar-left  { display: flex; align-items: center; gap: 16px; }
+.topbar-right { display: flex; align-items: center; gap: 6px; }
 
-/* Menú de usuario */
-.topbar-user { position: relative; display: flex; align-items: center; margin-left: 6px; }
-.topbar-user-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 14px; border: none; border-radius: var(--radius);
-  background: none; color: var(--text-primary); font: inherit; text-align: left; cursor: pointer;
-  transition: background var(--transition);
+/* Notification badge */
+.notif-wrap { position: relative; }
+.notif-badge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 16px; height: 16px;
+  background: var(--action-red); color: #fff;
+  border-radius: 50%; font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface);
+  animation: glow-pulse 2.5s infinite;
 }
-.topbar-user-btn:hover { background: var(--surface-2); }
-.topbar-user-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Notification Panel — Glassmorphism */
+.notif-panel {
+  position: absolute; top: calc(100% + 12px); right: 0;
+  width: 370px;
+  background: rgba(22,22,22,0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  animation: slideUp 0.2s ease;
+  max-height: 490px; overflow-y: auto;
+}
+.notif-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.notif-section-label {
+  padding: 10px 18px 4px;
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.9px;
+}
+.notif-item {
+  display: flex; gap: 11px; padding: 12px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition); cursor: pointer;
+}
+.notif-item:hover { background: var(--surface-2); }
+.notif-msg  { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
+.notif-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* User chip */
+.topbar-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px; border-radius: var(--radius);
+  cursor: pointer; transition: background var(--transition);
+  margin-left: 6px;
+}
+.topbar-user:hover { background: var(--surface-2); }
 .topbar-user-info { display: flex; flex-direction: column; }
 .topbar-username { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .topbar-role     { font-size: 10px; color: var(--text-muted); letter-spacing: 0.3px; }
 
+/* User Dropdown Menu */
 .user-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 220px; max-width: calc((100vw - 16px) / var(--panel-zoom, 1));
+  width: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -50,9 +84,6 @@
   z-index: 200;
   animation: slideUp 0.2s ease;
 }
-/* Cabecera del menú: nombre y rol (en teléfono la barra solo muestra el avatar). */
-.user-dropdown-head { display: flex; flex-direction: column; padding: 6px 16px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
-.user-dropdown-head .topbar-username { display: block; overflow-wrap: anywhere; }
 
 .user-dropdown-item {
   display: flex;
@@ -65,11 +96,10 @@
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-button.user-dropdown-item {
-  width: 100%; border: none; background: none; font: inherit; font-size: 13px; text-align: left;
+
+.user-dropdown-item:hover {
+  background: var(--surface-2);
 }
-button.user-dropdown-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-.user-dropdown-item:hover { background: var(--surface-2); }
 
 .dropdown-divider {
   height: 1px;
@@ -77,18 +107,11 @@ button.user-dropdown-item:focus-visible { outline: 2px solid var(--focus-ring); 
   margin: 6px 0;
 }
 
-/* "Cerrar sesión": --accent-text da >=4.5:1 sobre la superficie (--action-red solo 3.78:1). */
-.logout-item { color: var(--accent-text); }
-.logout-item:hover { background: var(--action-red-dim); color: var(--accent-text); }
+.logout-item {
+  color: var(--action-red);
+}
 
-/* Teléfono: el nombre y el rol pasan a la cabecera del menú; el selector de cine se encoge. */
-@media (max-width: 600px) {
-  .topbar { padding: 0 12px; }
-  .topbar-left { gap: 8px; }
-  .topbar-user { margin-left: 0; }
-  .topbar-user-btn { padding: 6px 8px; gap: 6px; }
-  .topbar-user-btn .topbar-user-info { display: none; }
-  .topbar .cinema-select-wrap { padding-left: 6px; padding-right: 8px; gap: 6px; }
-  .topbar .cinema-select-icon { display: none; }
-  .topbar .cinema-select-locked { padding: 5px 8px; }
+.logout-item:hover {
+  background: rgba(229, 9, 20, 0.1);
+  color: var(--action-red);
 }

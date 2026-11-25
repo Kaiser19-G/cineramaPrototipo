@@ -1,12 +1,10 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import './WebHome.css';
 import { useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
 import { getNextDays } from '../data/dateHelpers';
-import Poster from '../components/Poster';
-import PosterTags from '../components/PosterTags';
-import { movieLabel } from '../utils/movieLabel';
+import { handlePosterError } from '../utils/posterFallback';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import cineramaBanner from '../assets/CineramaBanner.png';
@@ -18,26 +16,11 @@ const HOME_DIMENSIONS = {
   date: (e) => e.dayLabel,
 };
 
-const TABS = [
-  { key: 'cartelera', label: 'En Cartelera', gridLabel: 'Películas en cartelera', empty: 'No hay películas en cartelera por ahora.',
-    pick: (m) => m.status === 'active' && !m.presale },
-  { key: 'preventa', label: 'En Preventa', gridLabel: 'Películas en preventa', empty: 'No hay películas en preventa por ahora.',
-    pick: (m) => m.presale },
-  { key: 'proximamente', label: 'Próximamente', gridLabel: 'Películas próximamente', empty: 'No hay estrenos anunciados por ahora.',
-    pick: (m) => m.status === 'upcoming' && !m.presale },
-];
-
 export default function WebHome() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cartelera');
-  const { branches, publicMovies: enabledMovies, publicScreenings: activeScreenings } = useCinema();
-  const tabRefs = useRef([]);
-  const tab = TABS.find((t) => t.key === activeTab) ?? TABS[0];
-  // Las destacadas van primero; el resto conserva el orden del catálogo. Se muestran hasta 5 (el catálogo completo está en "Ver catálogo").
-  const carteleraMovies = useMemo(
-    () => enabledMovies.filter(tab.pick).sort((a, b) => Number(b.featured) - Number(a.featured)).slice(0, 5),
-    [enabledMovies, tab]
-  );
+  const { branches, enabledMovies, activeScreenings } = useCinema();
+  const carteleraMovies = enabledMovies.slice(0, 5);
   const posterGrid = useGridKeyboardNav(carteleraMovies.length, 5);
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -46,7 +29,7 @@ export default function WebHome() {
   const [selectedCinema, setSelectedCinema] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const days = useMemo(() => getNextDays(7), []);
+  const days = useMemo(() => getNextDays(3), []);
   const entries = useMemo(
     () => buildScreeningEntries({ movies: enabledMovies, branches, screenings: activeScreenings, days }),
     [enabledMovies, branches, activeScreenings, days]
@@ -157,44 +140,31 @@ export default function WebHome() {
         <h2 className="section-title">Peliculas</h2>
         
         <div className="movies-header">
-          <div className="movies-tabs" role="tablist" aria-label="Estado de las películas"
-            onKeyDown={(e) => {
-              const focused = tabRefs.current.indexOf(document.activeElement);
-              const i = focused >= 0 ? focused : TABS.findIndex((t) => t.key === activeTab);
-              let n = null;
-              if (e.key === 'ArrowRight') n = (i + 1) % TABS.length;
-              else if (e.key === 'ArrowLeft') n = (i - 1 + TABS.length) % TABS.length;
-              else if (e.key === 'Home') n = 0;
-              else if (e.key === 'End') n = TABS.length - 1;
-              if (n === null) return;
-              e.preventDefault();
-              setActiveTab(TABS[n].key);
-              tabRefs.current[n]?.focus();
-            }}>
-            {TABS.map((t, i) => (
-              <button
-                key={t.key}
-                type="button"
-                role="tab"
-                id={`home-tab-${t.key}`}
-                aria-selected={activeTab === t.key}
-                aria-controls="home-tabpanel"
-                tabIndex={activeTab === t.key ? 0 : -1}
-                ref={(el) => { tabRefs.current[i] = el; }}
-                className={`tab-btn ${activeTab === t.key ? 'active' : ''}`}
-                onClick={() => setActiveTab(t.key)}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div className="movies-tabs">
+            <button 
+              className={`tab-btn ${activeTab === 'cartelera' ? 'active' : ''}`}
+              onClick={() => setActiveTab('cartelera')}
+            >
+              En Cartelera
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'preventa' ? 'active' : ''}`}
+              onClick={() => setActiveTab('preventa')}
+            >
+              En Preventa
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'proximamente' ? 'active' : ''}`}
+              onClick={() => setActiveTab('proximamente')}
+            >
+              Proximamente
+            </button>
           </div>
-          <button className="btn-catalogo" onClick={() => navigate('/web/peliculas')}>Ver catálogo</button>
+          <button className="btn-catalogo" onClick={() => navigate('/web/peliculas')}>Ver catalogo</button>
         </div>
         <div className="movies-divider"></div>
 
-        <div id="home-tabpanel" role="tabpanel" aria-labelledby={`home-tab-${tab.key}`}>
-        {carteleraMovies.length === 0 && <p className="movies-empty" role="status">{tab.empty}</p>}
-        {carteleraMovies.length > 0 && <div className="movies-grid" role="grid" aria-label={tab.gridLabel} onKeyDown={posterGrid.handleGridKeyDown}>
+        <div className="movies-grid" role="grid" aria-label="Películas en cartelera" onKeyDown={posterGrid.handleGridKeyDown}>
           {carteleraMovies.map((movie, i) => (
             <button
               type="button"
@@ -207,16 +177,14 @@ export default function WebHome() {
               onClick={() => navigate(`/web/pelicula/${movie.id}`)}
               onFocus={() => posterGrid.setFocusedIndex(i)}
               style={{ position: 'relative' }}
-              aria-label={movieLabel(movie)}
+              aria-label={`Ver detalle de ${movie.title}`}
             >
-              <Poster movie={movie} />
-              <PosterTags movie={movie} />
+              <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
               <div className="movie-hover-overlay">
                 <span aria-hidden="true">Ver detalle ⟩</span>
               </div>
             </button>
           ))}
-        </div>}
         </div>
       </section>
     </>

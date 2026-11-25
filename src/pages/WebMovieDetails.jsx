@@ -1,16 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
-import { useAuth } from '../context/AuthContext';
-import { ordersApi } from '../api/orders';
 import CustomDropdown from '../components/CustomDropdown';
 import StepIndicator from '../components/StepIndicator';
-import { getNextDays, formatDateLong } from '../data/dateHelpers';
-import Poster from '../components/Poster';
-import PosterTags from '../components/PosterTags';
-import WebNotFound from './WebNotFound';
-import { cssUrl } from '../utils/cssUrl';
-import { PRESALE_MAX_TICKETS } from '../shared/presale';
+import { getNextDays } from '../data/dateHelpers';
+import { handlePosterError } from '../utils/posterFallback';
 import { buildScreeningEntries, computeCascadingOptions } from '../data/screeningEntries';
 import './WebPages.css';
 
@@ -20,38 +14,16 @@ const DETAIL_DIMENSIONS = {
   date: (e) => e.dayLabel,
 };
 
-// Una película inexistente, archivada o sin sede habilitada no se sustituye por otra: página de no encontrada.
 export default function WebMovieDetails() {
   const { id } = useParams();
-  const { publicMovies } = useCinema();
-  const movie = /^\d+$/.test(id ?? '') ? publicMovies.find(m => m.id === Number(id)) : undefined;
-  if (!movie) return <WebNotFound />;
-  return <MovieDetailsView movie={movie} />;
-}
-
-function MovieDetailsView({ movie }) {
   const navigate = useNavigate();
   const location = useLocation();
   const showtimesRef = useRef(null);
-  const { branches, publicScreenings: activeScreenings } = useCinema();
-  const upcoming = movie.status === 'upcoming';
-  const { user } = useAuth();
-  // Cupo de preventa de la cuenta (solo clientes con sesion; sin sesion queda el aviso general).
-  const [fetched, setFetched] = useState(null);
-  const isCustomer = user?.tier === 'customer';
-  useEffect(() => {
-    if (!isCustomer || !movie.presale) return undefined;
-    let off = false;
-    ordersApi.presaleQuota(movie.id).then((res) => { if (!off) setFetched({ movieId: movie.id, quota: res.ok ? res.data.presale : null }); });
-    return () => { off = true; };
-  }, [isCustomer, movie.id, movie.presale]);
-  const quota = isCustomer && movie.presale && fetched?.movieId === movie.id ? fetched.quota : null;
-  // Las próximas con preventa también se venden (el servidor solo permite programarlas si tienen preventa).
-  const sellable = !upcoming || movie.presale;
+  const { enabledMovies, branches, activeScreenings } = useCinema();
 
-  // En preventa las funciones empiezan en el estreno, que puede estar lejos: se ofrecen los próximos 30 días (el filtro de
-  // fecha solo muestra los días que de verdad tienen funciones).
-  const days = getNextDays(movie.presale ? 30 : 7);
+  const movie = enabledMovies.find(m => m.id === parseInt(id)) || enabledMovies[0];
+
+  const days = getNextDays(3);
   const [filterCity, setFilterCity] = useState(location.state?.city || null);
   const [filterCinema, setFilterCinema] = useState(location.state?.cinema || null);
   const [filterDate, setFilterDate] = useState(location.state?.date || null);
@@ -99,7 +71,7 @@ function MovieDetailsView({ movie }) {
     <div className="movie-details-page">
 
       {/* 1. Banner superior con trailer */}
-      <div className="movie-detail-banner" style={{ backgroundImage: cssUrl(movie.backdrop || movie.poster), backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="movie-detail-banner" style={{ backgroundImage: `url(${movie.backdrop || movie.poster})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <button className="btn-play-trailer">
           <span className="play-icon" style={{display: 'flex'}}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -121,38 +93,21 @@ function MovieDetailsView({ movie }) {
             <p className="movie-meta-tags">
               {movie.genre} | {Math.floor(movie.duration / 60)}h {movie.duration % 60}min | {movie.rating}
             </p>
-            {movie.presale && (
-              <p className="movie-notice" role="note">
-                <strong>Preventa:</strong> máximo {PRESALE_MAX_TICKETS} entradas por cuenta. Estreno el {formatDateLong(movie.releaseDate)}.
-              </p>
-            )}
-            {quota && (
-              <p className="movie-notice" role="status">
-                {quota.remaining === 0
-                  ? `Ya compraste tus ${quota.limit} entradas de preventa de esta película: no puedes comprar más.`
-                  : `Ya compraste ${quota.bought} de ${quota.limit} entradas de preventa. Te ${quota.remaining === 1 ? 'queda 1 entrada' : `quedan ${quota.remaining} entradas`}.`}
-              </p>
-            )}
-            {upcoming && !movie.presale && (
-              <p className="movie-notice" role="note">
-                <strong>Próximamente{movie.releaseDate ? `: estreno el ${formatDateLong(movie.releaseDate)}` : ''}.</strong> Todavía no hay funciones programadas.
-              </p>
-            )}
           </div>
-          {sellable && <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
+          <button className="btn-comprar-top" onClick={handleScrollToShowtimes}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px', verticalAlign: 'text-bottom'}}>
               <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/>
             </svg>
             Comprar
-          </button>}
+          </button>
         </div>
 
         {/* 3. Dos columnas: Póster y Sinopsis */}
         <div className="movie-info-cols">
           <div className="movie-info-left">
             <div className="poster-wrapper">
-              <Poster movie={movie} alt={movie.title} />
-              <PosterTags movie={movie} />
+              <img src={movie.poster} alt={movie.title} data-fallback-title={movie.title} onError={handlePosterError} />
+              {movie.featured && <div className="diagonal-tag">Estreno</div>}
             </div>
           </div>
 
@@ -178,7 +133,7 @@ function MovieDetailsView({ movie }) {
 
         {/* 4. Sección de funciones y horarios — H-03/H-05: siempre visibles,
             sin acordeón, con el indicador de pasos ya activo desde aquí. */}
-        {sellable && <div className="movie-showtimes-section" ref={showtimesRef}>
+        <div className="movie-showtimes-section" ref={showtimesRef}>
           <h2 className="section-title-fun">La función perfecta para ti.</h2>
 
           <div className="showtimes-filters-bar">
@@ -220,35 +175,35 @@ function MovieDetailsView({ movie }) {
                     <span className="cinema-showtimes-city">{branch.city}</span>
                   </div>
 
-                  {days.map((d) => ({ d, items: showtimes.filter((s) => s.date === d.value) })).filter((g) => g.items.length > 0).map(({ d, items }) => (
-                    <div key={d.value} className="showtime-day-group">
-                      <h4 className="showtime-day">{d.label}</h4>
-                      <div className="showtime-buttons-grid">
-                        {items.map((s) => (
-                          <button
-                            key={s.id}
-                            className={`showtime-btn${s.status === 'sold_out' ? ' soldout' : ''}`}
-                            aria-label={`${d.label}, ${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}, ${branch.name}${s.status === 'sold_out' ? ', agotada' : ''}`}
-                            aria-disabled={s.status === 'sold_out' ? 'true' : undefined}
-                            onClick={() => s.status !== 'sold_out' && navigate(`/web/compra/${s.id}`)}
-                          >
-                            <span className="time-lbl">{s.startTime}</span>
-                            {s.status === 'sold_out' && <span className="soldout-lbl" aria-hidden="true">Agotada</span>}
-                            <span className="chair-icon" style={{display: 'flex'}} aria-hidden="true">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-                              </svg>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  <div className="showtime-buttons-grid">
+                    {showtimes.map((s) => (
+                      <button
+                        key={s.id}
+                        className="showtime-btn"
+                        onClick={() => navigate('/web/compra', {
+                          state: {
+                            movie,
+                            cinema: branch.name,
+                            date: days.find((d) => d.value === s.date)?.label || s.date,
+                            time: s.startTime,
+                            roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
+                          }
+                        })}
+                      >
+                        <span className="time-lbl">{s.startTime}</span>
+                        <span className="chair-icon" style={{display: 'flex'}}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                          </svg>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           )}
-        </div>}
+        </div>
 
       </div>
 

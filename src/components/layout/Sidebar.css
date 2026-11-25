@@ -4,8 +4,7 @@
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   transition: width var(--transition-slow);
-  flex-shrink: 0; overflow: hidden;
-  /* Sin height:100vh: dentro de .app-layout con zoom (tamaño de letra) se saldría de la pantalla; estira con el contenedor. */
+  flex-shrink: 0; overflow: hidden; height: 100vh;
 }
 .sidebar.collapsed { width: 64px; }
 
@@ -18,11 +17,11 @@
 }
 .brand-logo {
   width: 36px; height: 36px;
-  background: var(--accent-solid);
+  background: var(--action-red);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 900; font-size: 18px; color: var(--on-accent);
+  font-weight: 900; font-size: 18px; color: #fff;
   flex-shrink: 0;
   box-shadow: var(--shadow-red);
   letter-spacing: -1px;
@@ -35,7 +34,7 @@
 }
 .brand-tag {
   font-size: 9px; font-weight: 600;
-  color: var(--accent-text); text-transform: uppercase;
+  color: var(--action-red); text-transform: uppercase;
   letter-spacing: 1px; margin-top: 1px;
 }
 
@@ -63,9 +62,9 @@
 }
 .nav-item.active {
   background: var(--action-red-dim);
-  color: var(--accent-text);
+  color: var(--action-red);
   font-weight: 700;
-  border-color: color-mix(in srgb, var(--action-red) 20%, transparent);
+  border-color: rgba(229,9,20,0.2);
   box-shadow: inset 3px 0 0 var(--action-red);
 }
 
@@ -77,15 +76,4 @@
   padding: 14px;
   border-top: 1px solid var(--border);
 }
-.sidebar-version { font-size: 10px; color: var(--text-muted); text-align: center; }
-
-/* Foco visible con el anillo propio (T7), dentro del borde para que el aside (overflow:hidden) no lo recorte. */
-.nav-item:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-
-/* Teléfono: el menú abierto es una capa superpuesta con fondo (no empuja ni desborda el contenido) y
-   cerrado no ocupa sitio. Se cierra con Esc, tocando el fondo o al elegir una opción (ver AdminLayout). */
-@media (max-width: 768px) {
-  .sidebar.phone { position: fixed; top: 0; bottom: 0; left: 0; z-index: 300; width: min(280px, calc((100vw - 48px) / var(--panel-zoom, 1))); box-shadow: var(--shadow-lg); transition: none; }
-  .sidebar.phone.collapsed { display: none; }
-  .sidebar-backdrop { position: fixed; inset: 0; z-index: 290; background: rgba(0, 0, 0, 0.55); }
-}
+.sidebar-version { font-size: 10px; color: var(--text-dim); text-align: center; }

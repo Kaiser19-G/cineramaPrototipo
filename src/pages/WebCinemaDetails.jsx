@@ -3,32 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useCinema } from '../context/CinemaContext';
 import CustomDropdown from '../components/CustomDropdown';
 import { getNextDays } from '../data/dateHelpers';
-import Poster from '../components/Poster';
-import PosterTags from '../components/PosterTags';
-import { movieLabel } from '../utils/movieLabel';
-import WebNotFound from './WebNotFound';
+import { handlePosterError } from '../utils/posterFallback';
 import { useGridKeyboardNav } from '../hooks/useGridKeyboardNav';
 import { buildScreeningEntries } from '../data/screeningEntries';
 import './WebPages.css';
 
 export default function WebCinemaDetails() {
   const { id } = useParams();
-  const { branches } = useCinema();
-  const cinema = /^\d+$/.test(id ?? '') ? branches.find(b => b.id === Number(id)) : undefined;
-  if (!cinema) return <WebNotFound />;
-  return <CinemaDetailsView cinema={cinema} />;
-}
-
-function CinemaDetailsView({ cinema }) {
   const navigate = useNavigate();
-  const { publicMovies, publicScreenings: activeScreenings, publicMovieCinema } = useCinema();
-  // Solo las películas habilitadas en ESTA sede (las que el administrador central asignó).
-  const enabledMovies = publicMovies.filter(
-    (m) => publicMovieCinema.some((mc) => mc.movieId === m.id && mc.branchId === cinema.id && mc.activa)
-  );
+  const { branches, enabledMovies, activeScreenings } = useCinema();
+
+  const cinema = branches.find(b => b.id === parseInt(id)) || branches[0];
 
   const [activeTab, setActiveTab] = useState('Horarios');
-  const days = getNextDays(7);
+  const days = getNextDays(3);
 
   // R1 (mismo origen que H-01/H-02/H-03/H-07): antes esta pantalla mostraba
   // las 3 primeras películas del catálogo con horarios inventados e iguales
@@ -103,8 +91,8 @@ function CinemaDetailsView({ cinema }) {
 
                     <div className="cinema-movie-poster-col">
                       <div className="poster-wrapper">
-                        <Poster movie={movie} alt={movie.title} />
-                        <PosterTags movie={movie} />
+                        <img src={movie.poster} alt={movie.title} data-fallback-title={movie.title} onError={handlePosterError} />
+                        {movie.featured && <div className="diagonal-tag">Estreno</div>}
                       </div>
                     </div>
 
@@ -122,13 +110,18 @@ function CinemaDetailsView({ cinema }) {
                         {showtimes.map((s) => (
                           <button
                             key={s.id}
-                            className={`showtime-btn${s.status === 'sold_out' ? ' soldout' : ''}`}
-                            aria-label={`${s.startTime}, ${s.format} ${s.language === 'ES' ? 'doblada' : 'subtitulada'}${s.status === 'sold_out' ? ', agotada' : ''}`}
-                            aria-disabled={s.status === 'sold_out' ? 'true' : undefined}
-                            onClick={() => s.status !== 'sold_out' && navigate(`/web/compra/${s.id}`)}
+                            className="showtime-btn"
+                            onClick={() => navigate('/web/compra', {
+                              state: {
+                                movie,
+                                cinema: cinema.name,
+                                date: selectedDate,
+                                time: s.startTime,
+                                roomType: `${s.format} ${s.language === 'ES' ? 'Doblada' : 'Subtitulada'}`,
+                              }
+                            })}
                           >
                             <span className="time-lbl">{s.startTime}</span>
-                            {s.status === 'sold_out' && <span className="soldout-lbl" aria-hidden="true">Agotada</span>}
                             <span className="chair-icon" style={{display: 'flex'}}>
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 18v3"/><path d="M20 18v3"/><path d="M5 10V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 10a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
@@ -148,8 +141,7 @@ function CinemaDetailsView({ cinema }) {
 
         {activeTab === 'Películas' && (
           <div className="cinema-peliculas-view">
-            {enabledMovies.length === 0 && <p className="no-functions-message" role="status">Esta sede todavía no tiene películas habilitadas.</p>}
-            {enabledMovies.length > 0 && <div className="movies-grid" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
+            <div className="movies-grid" role="grid" aria-label="Películas" onKeyDown={posterGrid.handleGridKeyDown}>
               {enabledMovies.map((movie, i) => (
                 <button
                   type="button"
@@ -162,16 +154,16 @@ function CinemaDetailsView({ cinema }) {
                   onClick={() => navigate(`/web/pelicula/${movie.id}`)}
                   onFocus={() => posterGrid.setFocusedIndex(i)}
                   style={{ position: 'relative' }}
-                  aria-label={movieLabel(movie)}
+                  aria-label={`Ver detalle de ${movie.title}`}
                 >
-                  <Poster movie={movie} />
-                  <PosterTags movie={movie} />
+                  <img src={movie.poster} alt="" data-fallback-title={movie.title} onError={handlePosterError} />
+                  {movie.featured && <div className="diagonal-tag">Estreno</div>}
                   <div className="movie-hover-overlay">
                     <span aria-hidden="true">Ver detalle ⟩</span>
                   </div>
                 </button>
               ))}
-            </div>}
+            </div>
           </div>
         )}
 

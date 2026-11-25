@@ -6,7 +6,7 @@
   height: 56px;
   border-radius: 50%;
   background: var(--accent-solid);
-  color: var(--on-accent);
+  color: #fff;
   border: none;
   display: flex;
   align-items: center;
@@ -85,7 +85,7 @@
 
 .a11y-segment {
   display: flex;
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -102,7 +102,7 @@
 .a11y-segment button + button { border-left: 1px solid var(--border); }
 .a11y-segment button.active {
   background: var(--accent-solid);
-  color: var(--on-accent);
+  color: #fff;
   font-weight: 700;
 }
 
@@ -116,7 +116,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-primary);
   font-weight: 700;
@@ -133,7 +133,7 @@
 .a11y-mini-reset {
   margin-left: auto;
   background: transparent;
-  border: 1px solid var(--border-interactive);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: 8px;
   padding: 7px 10px;
@@ -190,7 +190,7 @@
   border-radius: 8px;
   border: 1px solid var(--action-red);
   background: transparent;
-  color: var(--accent-text);
+  color: var(--action-red);
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
@@ -211,14 +211,6 @@
 .a11y-vision-option:focus-within {
   outline: 2px solid var(--electric-blue);
   outline-offset: 2px;
-}
-
-/* Con un diálogo modal abierto el botón quedaría visible pero inoperable y
-   sobre el fondo oscurecido; se oculta mientras dure. Cubre <dialog> nativos
-   y el modal de compra (.booking-success-overlay). Sin soporte de :has() la
-   regla se ignora y el botón sigue visible, como antes. */
-body:has(dialog:modal, .booking-success-overlay) .a11y-fab {
-  display: none;
 }
 
 @media (max-width: 480px) {

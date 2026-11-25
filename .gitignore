@@ -22,15 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Datos privados del servidor: viven fuera del proyecto (~/.cinerama-data); esto es solo red de seguridad
-server/data/
-*.db
-*.db-wal
-*.db-shm
-*.key
-.env
-.env.*
-
-# Copias de trabajo aisladas de los agentes
-.claude/worktrees/

@@ -1,8 +1,5 @@
 /* Contenedor principal de la página web pública */
 .web-container {
-  /* Bloque contenedor de los elementos absolutos (.sr-only, inputs ocultos): sin esto su contenedor es el
-     documento y, al estar el contenido dentro de este contenedor con scroll, alargaban el documento. */
-  position: relative;
   min-height: 100vh;
   height: 100vh;
   overflow-y: auto;
@@ -26,7 +23,7 @@
 
 .web-brand h1 {
   margin: 0;
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.5rem;
   letter-spacing: 2px;
@@ -61,9 +58,6 @@
   color: var(--text-main);
 }
 
-/* Nombre del usuario con sesión iniciada */
-.nav-user { color: var(--text-secondary); font-size: 1.1rem; font-weight: 500; }
-
 /* Área de contenido para el Outlet */
 .web-content-area {
   flex: 1;
@@ -79,9 +73,9 @@
   }
   .web-brand h1 { font-size: 1.8rem; }
   .web-nav-links { gap: 1rem; flex-wrap: wrap; }
-  .nav-link, .nav-user { font-size: 0.95rem; }
+  .nav-link { font-size: 0.95rem; }
 
-  .web-footer { padding: 2.5rem 1.5rem 5.75rem; }
+  .web-footer { padding: 2.5rem 1.5rem 1.5rem; }
   .footer-col { min-width: 0; }
   .footer-logo { overflow-wrap: anywhere; }
 
@@ -94,9 +88,7 @@
 .web-footer {
   background-color: var(--footer-bg);
   color: var(--text-main);
-  /* Abajo 5.75rem (92px): el botón flotante de accesibilidad (56px + 20px)
-     no debe tapar la última línea del pie al llegar al final de la página. */
-  padding: 4rem 4rem 5.75rem 4rem;
+  padding: 4rem 4rem 2rem 4rem;
   margin-top: auto;
   border-top: 3px solid var(--action-red);
 }
@@ -121,7 +113,7 @@
 .footer-logo {
   font-family: 'Impact', 'Arial Narrow Bold', sans-serif;
   font-size: 2.2rem;
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   margin: 0 0 1rem 0;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -149,12 +141,12 @@
 }
 
 .footer-powered span {
-  color: var(--accent-text);
+  color: var(--action-red);
   font-weight: bold;
 }
 
 .footer-col h3 {
-  color: var(--accent-text-light);
+  color: var(--action-red-light);
   font-size: 1.1rem;
   margin: 0 0 1.5rem 0;
   font-weight: bold;
@@ -198,7 +190,7 @@
 
 .social-icons svg:hover {
   transform: scale(1.1);
-  color: var(--accent-text);
+  color: var(--action-red);
 }
 
 .footer-bottom {
@@ -226,7 +218,7 @@
 
 /* Chip de marca de tarjeta: siempre blanco con texto oscuro a propósito,
    como el logo real de VISA — no debe cambiar con el tema. */
-.payment-methods .pay-card {
+.pay-card {
   background: #ffffff;
   color: #111111;
   font-size: 0.7rem !important;
@@ -236,44 +228,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Estado de carga / error del catálogo (API) */
-.catalog-state {
-  max-width: 480px;
-  margin: 4rem auto;
-  padding: 2rem;
-  text-align: center;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
-.catalog-state:focus { outline: none; }
-.catalog-state h2 { margin: 0 0 0.5rem; color: var(--text-main); font-size: 1.25rem; }
-.catalog-state p { margin: 0.5rem 0 0; color: var(--text-secondary); }
-.catalog-state-retry {
-  margin-top: 1.25rem;
-  padding: 0.6rem 1.5rem;
-  border: 1px solid var(--accent-solid);
-  border-radius: var(--radius-sm);
-  background: var(--accent-solid);
-  color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-.catalog-state-retry:hover { background: var(--accent-solid-light); }
-.catalog-state-spinner {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent-solid);
-  border-radius: 50%;
-  animation: catalog-spin 0.8s linear infinite;
-}
-@keyframes catalog-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .catalog-state-spinner { animation: none; }
 }
